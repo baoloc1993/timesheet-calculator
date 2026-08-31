@@ -1,0 +1,18 @@
+appId: com.example.timesheetcalculator
+productName: Timesheet Calculator
+directories:
+  output: deployment/dist
+  buildResources: build
+files:
+  - out/**/*
+  - package.json
+win:
+  target:
+    - nsis
+  artifactName: TimesheetCalculator-${version}-setup.${ext}
+nsis:
+  oneClick: false
+  perMachine: false
+  allowToChangeInstallationDirectory: true
+  createDesktopShortcut: true
+  shortcutName: Timesheet Calculator

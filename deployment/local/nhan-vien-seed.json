@@ -1,0 +1,15 @@
+[
+  {"maNhanVien": "00002", "tenMay": "NV01", "tenBangLuong": "Nhân viên 01", "nguongGioChuanNgay": 8.1, "donGiaNgay": 240000, "donGiaGioOT": 60000},
+  {"maNhanVien": "00003", "tenMay": "NV02", "tenBangLuong": "Nhân viên 02", "nguongGioChuanNgay": 8.1, "donGiaNgay": 240000, "donGiaGioOT": 60000},
+  {"maNhanVien": "00004", "tenMay": "NV03", "tenBangLuong": "Nhân viên 03", "nguongGioChuanNgay": 8.6, "donGiaNgay": 315000, "donGiaGioOT": 60000},
+  {"maNhanVien": "00006", "tenMay": "NV04", "tenBangLuong": "Nhân viên 04", "nguongGioChuanNgay": 8.6, "donGiaNgay": 275000, "donGiaGioOT": 60000},
+  {"maNhanVien": "00008", "tenMay": "NV05", "tenBangLuong": "Nhân viên 05", "nguongGioChuanNgay": 8.1, "donGiaNgay": 275000, "donGiaGioOT": 60000},
+  {"maNhanVien": "00009", "tenMay": "NV06", "tenBangLuong": "Nhân viên 06", "nguongGioChuanNgay": 8.1, "donGiaNgay": 240000, "donGiaGioOT": 60000},
+  {"maNhanVien": "00010", "tenMay": "NV07", "tenBangLuong": "Nhân viên 07", "nguongGioChuanNgay": 6.1, "donGiaNgay": 180000, "donGiaGioOT": 40000},
+  {"maNhanVien": "00011", "tenMay": "NV08", "tenBangLuong": "Nhân viên 08", "nguongGioChuanNgay": 8.1, "donGiaNgay": 240000, "donGiaGioOT": 60000},
+  {"maNhanVien": "00014", "tenMay": "NV09", "tenBangLuong": "Nhân viên 09", "nguongGioChuanNgay": 8.1, "donGiaNgay": 240000, "donGiaGioOT": 60000},
+  {"maNhanVien": "00015", "tenMay": "NV10", "tenBangLuong": "Nhân viên 10", "nguongGioChuanNgay": 10.6, "donGiaNgay": 285000, "donGiaGioOT": 60000},
+  {"maNhanVien": "00017", "tenMay": "NV11", "tenBangLuong": "Nhân viên 11", "nguongGioChuanNgay": 8.1, "donGiaNgay": 245000, "donGiaGioOT": 60000},
+  {"maNhanVien": "00020", "tenMay": "NV12", "tenBangLuong": "Nhân viên 12", "nguongGioChuanNgay": 8.1, "donGiaNgay": 285000, "donGiaGioOT": 60000},
+  {"maNhanVien": "00022", "tenMay": "NV13", "tenBangLuong": "Nhân viên 13", "nguongGioChuanNgay": 8.1, "donGiaNgay": 235000, "donGiaGioOT": 60000}
+]

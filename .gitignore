@@ -51,6 +51,10 @@ test-results/
 .playwright-mcp/
 
 
+# Dữ liệu thật của công ty dùng để dogfood — không commit (chép tay từ your data folder)
+deployment/local/mau/
+deployment/local/out/
+
 # Local database
 *.sqlite
 *.sqlite3
