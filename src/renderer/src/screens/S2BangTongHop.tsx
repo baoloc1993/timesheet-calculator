@@ -70,6 +70,7 @@ export function S2BangTongHop() {
           </button>
         </div>
 
+        <div className="table-wrap">
         <table>
           <thead>
             <tr>
@@ -103,6 +104,7 @@ export function S2BangTongHop() {
             ))}
           </tbody>
         </table>
+        </div>
         <p className="note">
           Bấm một nhân viên để xem chi tiết theo ngày và các dòng công cụ đã tự sửa.
         </p>

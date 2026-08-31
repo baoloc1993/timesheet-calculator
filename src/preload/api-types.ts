@@ -46,7 +46,7 @@ export interface Api {
     nv: Partial<NhanVien>
   ): Promise<KetQua<NhanVien[]> & { loiTruong?: LoiTruongForm[]; ky?: KetQuaKyCong | null }>
   xoaNhanVien(id: string): Promise<KetQua<NhanVien[]> & { ky?: KetQuaKyCong | null }>
-  napNhanVienTuFileKyTruoc(): Promise<KetQua<NhanVien[]>>
+  napNhanVienTuFileKyTruoc(): Promise<KetQua<NhanVien[]> & { ky?: KetQuaKyCong | null }>
   chonFileMauBangLuong(): Promise<KetQua<{ duongDan: string }>>
   layKyHienTai(): Promise<KetQuaKyCong | null>
   tinhLaiNgay(payload: {

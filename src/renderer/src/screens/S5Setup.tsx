@@ -147,6 +147,7 @@ export function S5Setup() {
             </button>
           </div>
         ) : (
+          <div className="table-wrap wide">
           <table>
             <thead>
               <tr>
@@ -187,6 +188,7 @@ export function S5Setup() {
               ))}
             </tbody>
           </table>
+          </div>
         )}
       </div>
 

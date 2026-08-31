@@ -3,6 +3,8 @@ import { useApp } from '../store'
 import { dmy } from '../App'
 import type { KetQuaNgay } from '../../../preload/api-types'
 
+const so2 = (n: number) => Math.round(n * 100) / 100
+
 export function S3RaDongVang() {
   const { ky, maNhanVienDangXem, di, datKy } = useApp()
   const th = ky?.tongHop.find((t) => t.maNhanVien === maNhanVienDangXem)
@@ -55,31 +57,33 @@ export function S3RaDongVang() {
           </p>
         )}
 
-        <table>
-          <thead>
-            <tr>
-              <th>Ngày</th>
-              <th>Vào 1</th>
-              <th>Ra 1</th>
-              <th>Vào 2</th>
-              <th>Ra 2</th>
-              <th className="num">Giờ làm</th>
-              <th className="num">Ngày công</th>
-              <th className="num">Giờ OT</th>
-              <th>Ghi chú</th>
-            </tr>
-          </thead>
-          <tbody>
-            {sap.map((d) => (
-              <DongNgay
-                key={d.ngay}
-                dong={d}
-                maNhanVien={th.maNhanVien}
-                onCapNhat={async () => datKy(await window.api.layKyHienTai())}
-              />
-            ))}
-          </tbody>
-        </table>
+        <div className="table-wrap wide">
+          <table>
+            <thead>
+              <tr>
+                <th>Ngày</th>
+                <th>Vào 1</th>
+                <th>Ra 1</th>
+                <th>Vào 2</th>
+                <th>Ra 2</th>
+                <th className="num">Giờ làm</th>
+                <th className="num">Ngày công</th>
+                <th className="num">Giờ OT</th>
+                <th>Ghi chú</th>
+              </tr>
+            </thead>
+            <tbody>
+              {sap.map((d) => (
+                <DongNgay
+                  key={d.ngay}
+                  dong={d}
+                  maNhanVien={th.maNhanVien}
+                  onCapNhat={async () => datKy(await window.api.layKyHienTai())}
+                />
+              ))}
+            </tbody>
+          </table>
+        </div>
         <p className="note">Sửa một ô giờ vào/ra rồi rời ô → công cụ tính lại dòng đó ngay.</p>
       </div>
     </>
@@ -138,10 +142,10 @@ function DongNgay({
       <td>{o(0, 'ra')}</td>
       <td>{o(1, 'vao')}</td>
       <td>{o(1, 'ra')}</td>
-      <td className="num">{dong.gioLamQ}</td>
+      <td className="num">{so2(dong.gioLamQ)}</td>
       <td className="num">{dong.ngayCongR}</td>
-      <td className="num">{dong.gioOtS}</td>
-      <td className="small muted">
+      <td className="num">{so2(dong.gioOtS)}</td>
+      <td className="small muted ghichu">
         {dong.ghiChuSua || (dong.capVaoRa.length === 0 ? 'nghỉ cả ngày' : 'bình thường')}
       </td>
     </tr>

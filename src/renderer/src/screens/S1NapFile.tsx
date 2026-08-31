@@ -43,11 +43,11 @@ export function S1NapFile() {
 
       {soNV === 0 && (
         <div className="card">
-          <div className="errorbox">
-            <strong>Chưa khai nhân viên nào trong Setup.</strong>
-            <p className="small">
-              Mở màn <b>Setup nhân viên</b> để thêm tay hoặc nạp từ file bảng lương kỳ trước.
-              File máy vẫn nạp được, nhưng sẽ báo thiếu Setup toàn bộ.
+          <div className="empty">
+            <p>
+              Chưa khai nhân viên nào trong Setup.<br />
+              Thêm tay hoặc nạp từ file bảng lương kỳ trước. File máy vẫn nạp được, nhưng sẽ
+              báo thiếu Setup toàn bộ.
             </p>
             <button className="btn" onClick={() => di('s5')}>
               Mở Setup nhân viên

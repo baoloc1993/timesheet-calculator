@@ -6,10 +6,17 @@ import type { TongHopNhanVien, KetQuaNgay } from '../../core/types'
 import { LoiDocFileMay } from './docFileMay'
 import { phutTrongNgay } from '../../core/time'
 
-const VANG: ExcelJS.Fill = {
+// Fresh object mỗi lần — exceljs chia sẻ style theo tham chiếu, dùng chung 1 const
+// làm nền vàng lan sang cả hàng (cells cùng xf). Nguồn: dogfood 2026-09-01.
+const vang = (): ExcelJS.Fill => ({
   type: 'pattern',
   pattern: 'solid',
   fgColor: { argb: 'FFFFF4CE' } // --color-warning-bg
+})
+
+/** Gán fill cho MỘT ô mà không đụng style chung của hàng. */
+function toVang(cell: ExcelJS.Cell): void {
+  cell.style = { ...cell.style, fill: vang() }
 }
 
 const RE_HEADER = /Mã nhân viên:\s*(\S+)\s+Tên nhân viên:/
@@ -89,11 +96,11 @@ export async function ghiChiTietDaLamSach(
           const cell = row.getCell(3 + k) // C..F
           if ((goc == null) !== (moi == null) || (goc != null && moi != null && goc !== moi)) {
             cell.value = moiPhang[k] ?? ''
-            cell.fill = VANG
+            toVang(cell)
           }
         }
         // S bị ép 0 hoặc dòng cảnh báo → tô vàng ô S để dễ soi
-        row.getCell(19).fill = VANG
+        toVang(row.getCell(19))
         soDongToVang++
       }
     }

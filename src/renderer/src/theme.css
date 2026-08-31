@@ -254,10 +254,22 @@ nav.rail .badge {
   background: var(--color-primary-soft);
 }
 
+.table-wrap {
+  overflow-x: auto;
+}
+.table-wrap table {
+  min-width: 640px;
+}
+.table-wrap.wide table {
+  min-width: 860px;
+}
 table {
   width: 100%;
   border-collapse: collapse;
   font-size: var(--text-base);
+}
+td.ghichu {
+  max-width: 280px;
 }
 th,
 td {

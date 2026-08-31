@@ -24,6 +24,14 @@ function win(): BrowserWindow | null {
   return BrowserWindow.getFocusedWindow() || BrowserWindow.getAllWindows()[0] || null
 }
 
+// Test seam (dogfood/e2e): Playwright không bấm được dialog OS gốc. Khi biến
+// TSC_TEST_* được đặt, handler dùng luôn đường dẫn đó thay vì mở dialog.
+// KHÔNG ảnh hưởng bản build phát hành (biến không bao giờ được đặt ở đó).
+function duongDanTest(bien: string): string | null {
+  const v = process.env[bien]
+  return v && existsSync(v) ? v : null
+}
+
 function loi(e: unknown) {
   if (e instanceof LoiDocFileMay) return { ok: false, loi: e.message, maLoi: e.ma }
   const msg = (e as Error)?.message || 'Lỗi không xác định'
@@ -54,14 +62,17 @@ export function dangKyIpc(): void {
 
   ipcMain.handle('file-may:chon-va-nap', async () => {
     try {
-      const w = win()
-      const r = await dialog.showOpenDialog(w!, {
-        title: 'Chọn file máy chấm công (.xlsx)',
-        filters: [{ name: 'Excel', extensions: ['xlsx'] }],
-        properties: ['openFile']
-      })
-      if (r.canceled || !r.filePaths[0]) return { ok: false, loi: 'Đã huỷ chọn file.' }
-      const duongDan = r.filePaths[0]
+      let duongDan = duongDanTest('TSC_TEST_FILE_MAY')
+      if (!duongDan) {
+        const w = win()
+        const r = await dialog.showOpenDialog(w!, {
+          title: 'Chọn file máy chấm công (.xlsx)',
+          filters: [{ name: 'Excel', extensions: ['xlsx'] }],
+          properties: ['openFile']
+        })
+        if (r.canceled || !r.filePaths[0]) return { ok: false, loi: 'Đã huỷ chọn file.' }
+        duongDan = r.filePaths[0]
+      }
       const file = await docFileMay(duongDan)
       const ky = xuLyKyCong(file, layNhanVien())
       kyHienTai = { fileMay: duongDan, ky }
@@ -90,21 +101,25 @@ export function dangKyIpc(): void {
 
   ipcMain.handle('nhan-vien:nap-tu-file-ky-truoc', async () => {
     try {
-      const w = win()
-      const r = await dialog.showOpenDialog(w!, {
-        title: 'Chọn file bảng lương kỳ trước',
-        filters: [{ name: 'Excel', extensions: ['xlsx'] }],
-        properties: ['openFile']
-      })
-      if (r.canceled || !r.filePaths[0]) return { ok: false, loi: 'Đã huỷ chọn file.' }
-      const { doc } = await docBangLuong(r.filePaths[0])
+      let duongDan = duongDanTest('TSC_TEST_FILE_KY_TRUOC')
+      if (!duongDan) {
+        const w = win()
+        const r = await dialog.showOpenDialog(w!, {
+          title: 'Chọn file bảng lương kỳ trước',
+          filters: [{ name: 'Excel', extensions: ['xlsx'] }],
+          properties: ['openFile']
+        })
+        if (r.canceled || !r.filePaths[0]) return { ok: false, loi: 'Đã huỷ chọn file.' }
+        duongDan = r.filePaths[0]
+      }
+      const { doc } = await docBangLuong(duongDan)
       const rut = nhanVienTuBangLuong(doc)
       if (rut.length === 0)
         return { ok: false, loi: 'Không rút được nhân viên nào từ file — kiểm tra đúng là file bảng lương.' }
       const ds = tronTuFileKyTruoc(rut)
-      lamMoiKyHienTai()
+      await lamMoiKyHienTai()
       log.info('nạp nhân viên từ file kỳ trước', `${rut.length} thẻ`)
-      return { ok: true, data: ds }
+      return { ok: true, data: ds, ky: layKyHienTai() }
     } catch (e) {
       return loi(e)
     }
@@ -112,15 +127,19 @@ export function dangKyIpc(): void {
 
   ipcMain.handle('bang-luong:chon-file-mau', async () => {
     try {
-      const w = win()
-      const r = await dialog.showOpenDialog(w!, {
-        title: 'Chọn file mẫu bảng lương (thường là kỳ trước)',
-        filters: [{ name: 'Excel', extensions: ['xlsx'] }],
-        properties: ['openFile']
-      })
-      if (r.canceled || !r.filePaths[0]) return { ok: false, loi: 'Đã huỷ chọn file.' }
-      ghiConfig({ fileMauBangLuongGanNhat: r.filePaths[0] })
-      return { ok: true, data: { duongDan: r.filePaths[0] } }
+      let duongDan = duongDanTest('TSC_TEST_FILE_MAU')
+      if (!duongDan) {
+        const w = win()
+        const r = await dialog.showOpenDialog(w!, {
+          title: 'Chọn file mẫu bảng lương (thường là kỳ trước)',
+          filters: [{ name: 'Excel', extensions: ['xlsx'] }],
+          properties: ['openFile']
+        })
+        if (r.canceled || !r.filePaths[0]) return { ok: false, loi: 'Đã huỷ chọn file.' }
+        duongDan = r.filePaths[0]
+      }
+      ghiConfig({ fileMauBangLuongGanNhat: duongDan })
+      return { ok: true, data: { duongDan } }
     } catch (e) {
       return loi(e)
     }
@@ -150,14 +169,17 @@ export function dangKyIpc(): void {
       if (!c.fileMauBangLuongGanNhat || !existsSync(c.fileMauBangLuongGanNhat))
         return { ok: false, loi: 'Chưa chọn file mẫu bảng lương. Bấm "Chọn file mẫu" trước.' }
 
-      const w = win()
-      const rDir = await dialog.showOpenDialog(w!, {
-        title: 'Chọn thư mục lưu 2 file kết quả',
-        defaultPath: c.thuMucXuatGanNhat || dirname(kyHienTai.fileMay),
-        properties: ['openDirectory', 'createDirectory']
-      })
-      if (rDir.canceled || !rDir.filePaths[0]) return { ok: false, loi: 'Đã huỷ chọn thư mục.' }
-      const thuMuc = rDir.filePaths[0]
+      let thuMuc = duongDanTest('TSC_TEST_THU_MUC_XUAT')
+      if (!thuMuc) {
+        const w = win()
+        const rDir = await dialog.showOpenDialog(w!, {
+          title: 'Chọn thư mục lưu 2 file kết quả',
+          defaultPath: c.thuMucXuatGanNhat || dirname(kyHienTai.fileMay),
+          properties: ['openDirectory', 'createDirectory']
+        })
+        if (rDir.canceled || !rDir.filePaths[0]) return { ok: false, loi: 'Đã huỷ chọn thư mục.' }
+        thuMuc = rDir.filePaths[0]
+      }
 
       const ten = tenFileXuat(kyHienTai.ky.thang)
       const pBL = join(thuMuc, ten.bangLuong)
@@ -168,7 +190,10 @@ export function dangKyIpc(): void {
         if (trung.length) return { ok: false, canXacNhanGhiDe: trung }
       }
 
-      const bl = await ghiBangLuong(c.fileMauBangLuongGanNhat, pBL, kyHienTai.ky.tongHop)
+      const bl = await ghiBangLuong(c.fileMauBangLuongGanNhat, pBL, kyHienTai.ky.tongHop, {
+        ngayBatDau: kyHienTai.ky.ngayBatDau,
+        ngayKetThuc: kyHienTai.ky.ngayKetThuc
+      })
       const ct = await ghiChiTietDaLamSach(kyHienTai.fileMay, pCT, kyHienTai.ky.tongHop)
       ghiConfig({ thuMucXuatGanNhat: thuMuc })
       log.info('xuất', thuMuc, `${bl.daGhi.length} thẻ lương, ${ct.soDongToVang} dòng vàng`)

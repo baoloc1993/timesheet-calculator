@@ -54,6 +54,7 @@ test-results/
 # Dữ liệu thật của công ty dùng để dogfood — không commit (chép tay từ your data folder)
 deployment/local/mau/
 deployment/local/out/
+deployment/local/dogfood-shots/
 
 # Local database
 *.sqlite

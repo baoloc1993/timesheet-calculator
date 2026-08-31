@@ -1,3 +1,4 @@
+import { useEffect, useRef } from 'react'
 import { AppStore, useApp } from './store'
 import type { ManHinh } from './store'
 import { S1NapFile } from './screens/S1NapFile'
@@ -81,6 +82,19 @@ export function dmy(iso: string): string {
   return m ? `${m[3]}/${m[2]}/${m[1]}` : iso
 }
 
+function Noi() {
+  const { manHinh } = useApp()
+  const ref = useRef<HTMLElement>(null)
+  useEffect(() => {
+    ref.current?.scrollTo(0, 0)
+  }, [manHinh])
+  return (
+    <main className="content" ref={ref}>
+      <ManHinhHienTai />
+    </main>
+  )
+}
+
 export function App() {
   return (
     <AppStore>
@@ -88,9 +102,7 @@ export function App() {
         <TitleBar />
         <div className="body">
           <Rail />
-          <main className="content">
-            <ManHinhHienTai />
-          </main>
+          <Noi />
         </div>
       </div>
     </AppStore>
