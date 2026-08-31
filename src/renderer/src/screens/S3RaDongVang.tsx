@@ -104,9 +104,11 @@ function DongNgay({
     { vao: dong.capVaoRa[1]?.vao ?? '', ra: dong.capVaoRa[1]?.ra ?? '' }
   ])
   const [luu, setLuu] = useState(false)
+  const [loi, setLoi] = useState<string | null>(null)
 
   async function guiSua() {
     setLuu(true)
+    setLoi(null)
     try {
       const r = await window.api.tinhLaiNgay({
         maNhanVien,
@@ -114,6 +116,7 @@ function DongNgay({
         cap: cap.map((c) => ({ vao: c.vao || null, ra: c.ra || null }))
       })
       if (r.ok) onCapNhat()
+      else setLoi(r.loi ?? 'Không tính lại được dòng này.')
     } finally {
       setLuu(false)
     }
@@ -146,7 +149,11 @@ function DongNgay({
       <td className="num">{dong.ngayCongR}</td>
       <td className="num">{so2(dong.gioOtS)}</td>
       <td className="small muted ghichu">
-        {dong.ghiChuSua || (dong.capVaoRa.length === 0 ? 'nghỉ cả ngày' : 'bình thường')}
+        {loi ? (
+          <span className="err">{loi}</span>
+        ) : (
+          dong.ghiChuSua || (dong.capVaoRa.length === 0 ? 'nghỉ cả ngày' : 'bình thường')
+        )}
       </td>
     </tr>
   )

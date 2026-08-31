@@ -33,9 +33,15 @@ export interface LoiTruongForm {
 }
 
 export interface XuatKetQua {
-  bangLuong: { duongDan: string; daGhi: number; khongKhop: string[] }
+  bangLuong: { duongDan: string; daGhi: number; khongKhop: string[]; theGiuSoCu: string[] }
   chiTiet: { duongDan: string; soDongToVang: number }
   thuMuc: string
+}
+
+export interface XacNhanXoa {
+  ten: string
+  trongKy: boolean
+  loi: string
 }
 
 export interface Api {
@@ -44,9 +50,17 @@ export interface Api {
   chonVaNapFileMay(): Promise<KetQua<NapFileKetQua>>
   themSuaNhanVien(
     nv: Partial<NhanVien>
-  ): Promise<KetQua<NhanVien[]> & { loiTruong?: LoiTruongForm[]; ky?: KetQuaKyCong | null }>
-  xoaNhanVien(id: string): Promise<KetQua<NhanVien[]> & { ky?: KetQuaKyCong | null }>
-  napNhanVienTuFileKyTruoc(): Promise<KetQua<NhanVien[]> & { ky?: KetQuaKyCong | null }>
+  ): Promise<
+    KetQua<NhanVien[]> & { loiTruong?: LoiTruongForm[]; ky?: KetQuaKyCong | null; canhBaoLamMoi?: string }
+  >
+  xoaNhanVien(
+    p: { id: string; xacNhan?: boolean }
+  ): Promise<
+    KetQua<NhanVien[]> & { ky?: KetQuaKyCong | null; canhBaoLamMoi?: string; canXacNhanXoa?: XacNhanXoa }
+  >
+  napNhanVienTuFileKyTruoc(): Promise<
+    KetQua<NhanVien[]> & { ky?: KetQuaKyCong | null; canhBaoLamMoi?: string }
+  >
   chonFileMauBangLuong(): Promise<KetQua<{ duongDan: string }>>
   layKyHienTai(): Promise<KetQuaKyCong | null>
   tinhLaiNgay(payload: {
@@ -58,4 +72,6 @@ export interface Api {
     KetQua<XuatKetQua> & { canXacNhanGhiDe?: string[] }
   >
   moThuMuc(duongDan: string): Promise<void>
+  /** Mở trình gửi mail tới địa chỉ góp ý. */
+  moGopY(): Promise<void>
 }

@@ -92,6 +92,7 @@ export function tinhKetQuaNhanVien(
         ngayCongR: 0,
         gioOtS: 0,
         daSua: false,
+        otBiEp: false,
         ghiChuSua: '',
         mucDoCanhBao: 'none'
       })
@@ -106,8 +107,15 @@ export function tinhKetQuaNhanVien(
         { vao: moc[0].phut, ra: moc[1].phut },
         { vao: moc[2].phut, ra: moc[3].phut }
       ]
-    } else if (n === 2) {
+    } else if (n === 2 && moc[0].khe % 2 === 0 && moc[1].khe % 2 === 1) {
+      // Hai mốc: một "vào", một "ra", đúng thứ tự → một cặp làm việc.
       cap = [{ vao: moc[0].phut, ra: moc[1].phut }]
+      if (!(moc[0].khe === 0 && moc[1].khe === 1)) {
+        // không phải cặp sáng chuẩn (vd chỉ chấm cặp chiều, hoặc vào1+ra2 mất chấm trưa)
+        // → thiếu lần chấm, ép OT = 0.
+        epOtVe0 = true
+        ghiChu.push('chỉ một cặp vào/ra do thiếu lần chấm, ép OT = 0')
+      }
     } else if (n === 1) {
       epOtVe0 = true
       const p = moc[0].phut
@@ -127,9 +135,18 @@ export function tinhKetQuaNhanVien(
         ]
         ghiChu.push('chỉ có giờ ra cuối ngày, điền các mốc còn lại theo ngày kề, ép OT = 0')
       }
+    } else if (n === 2) {
+      // Hai mốc cùng loại (2 "vào" / 2 "ra") hoặc thứ tự lạ → không dựng được cặp,
+      // điền cả hai cặp theo ngày kề, ép OT = 0 (BH-2).
+      epOtVe0 = true
+      cap = [
+        { vao: dienKhe(0), ra: dienKhe(1) },
+        { vao: dienKhe(2), ra: dienKhe(3) }
+      ]
+      ghiChu.push('mốc chấm không dựng được cặp vào/ra, điền theo ngày kề, ép OT = 0')
     } else {
-      // n === 3, hoặc n === 4 mà hai cặp chồng giờ → coi như 3 mốc thật
-      const m = n === 3 ? moc : [moc[0], moc[1], moc[3]]
+      // n === 3 → coi như thiếu một mốc trong hai cặp
+      const m = moc
       epOtVe0 = true
       let kheMax = 1
       let doMax = -1
@@ -181,7 +198,16 @@ export function tinhKetQuaNhanVien(
       ghiChu.push(`ca dài bất thường (${Q.toFixed(1)}h), không tính OT`)
     }
 
-    // 4. OT nghi ngờ trên dòng chỉ 1 cặp
+    // 4a. Một cặp liền phủ qua buổi trưa → gần như chắc chắn quên chấm nghỉ trưa
+    //. Ép OT = 0 + tô vàng, độc lập với ngưỡng Q>14 / S>4 (BH-1).
+    if (!epOtVe0 && cap.length === 1 && cap[0].ra - cap[0].vao > 6.5 * 60) {
+      epOtVe0 = true
+      ghiChu.push(
+        `một ca liền ${((cap[0].ra - cap[0].vao) / 60).toFixed(1)}h phủ buổi trưa — nghi quên chấm nghỉ trưa, ép OT = 0`
+      )
+    }
+
+    // 4b. OT nghi ngờ trên dòng chỉ 1 cặp (giữ lại làm lưới an toàn cho ca ngắn hơn)
     const sThu = tinhS(Q, nguongGioChuanNgay, false)
     if (!epOtVe0 && cap.length === 1 && sThu > OT_NGHI_NGO) {
       epOtVe0 = true
@@ -218,6 +244,7 @@ export function tinhKetQuaNhanVien(
       ngayCongR: R,
       gioOtS: S,
       daSua,
+      otBiEp: epOtVe0,
       ghiChuSua: daSua ? ghiChu.join('; ') || 'công cụ đã điều chỉnh' : '',
       mucDoCanhBao: daSua ? 'vang' : 'none'
     })

@@ -30,7 +30,14 @@ export function S2BangTongHop() {
         </span>
       </h1>
 
-      <div className="stats">
+      {ky.thieuSetup.length > 0 && (
+        <p className="note" role="status">
+          ⚠ Số dưới đây <strong>chưa đủ</strong> — còn {ky.thieuSetup.length} nhân viên chưa
+          khai Setup nên chưa được tính vào tổng kỳ.
+        </p>
+      )}
+
+      <div className={'stats' + (ky.thieuSetup.length > 0 ? ' muted' : '')}>
         <div className="stat">
           <div className="num">{ky.tongNgayCongCaKy}</div>
           <div className="label">Tổng ngày công</div>

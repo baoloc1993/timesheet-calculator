@@ -1,4 +1,6 @@
-// Log file cục bộ — không gửi đi đâu (TECHSTACK §2).
+// Log file cục bộ — không gửi đi đâu (TECHSTACK §2: app offline, error tracking = log file).
+// Định dạng: một dòng JSON / bản ghi (timestamp + mức độ + ngữ cảnh) — lần lại một
+// lỗi tính công mà không phải đoán.
 import { app } from 'electron'
 import { appendFileSync, mkdirSync } from 'fs'
 import { join } from 'path'
@@ -20,10 +22,16 @@ function duongDanLog(): string {
   return join(thuMucLog, `${ngay}.log`)
 }
 
-function ghi(muc: string, ...args: unknown[]) {
-  const dong = `${new Date().toISOString()} [${muc}] ${args
-    .map((a) => (typeof a === 'string' ? a : JSON.stringify(a)))
-    .join(' ')}\n`
+type Muc = 'INFO' | 'ERROR' | 'EVENT'
+
+function ghi(muc: Muc, msg: string, ctx?: unknown) {
+  const banGhi: Record<string, unknown> = {
+    ts: new Date().toISOString(),
+    level: muc.toLowerCase(),
+    msg
+  }
+  if (ctx !== undefined) banGhi.ctx = ctx
+  const dong = JSON.stringify(banGhi) + '\n'
   try {
     appendFileSync(duongDanLog(), dong)
   } catch {
@@ -33,8 +41,31 @@ function ghi(muc: string, ...args: unknown[]) {
   else if (process.env.TSC_LOG_LEVEL === 'debug') console.log(dong.trim())
 }
 
+/** Gộp các tham số tự do thành một chuỗi thông điệp (giữ chữ ký cũ của log.info/error). */
+function gop(args: unknown[]): { msg: string; ctx?: unknown } {
+  const phanChuoi = args.filter((a) => typeof a === 'string') as string[]
+  const phanKhac = args.filter((a) => typeof a !== 'string')
+  return {
+    msg: phanChuoi.join(' ') || '(không có thông điệp)',
+    ctx: phanKhac.length ? (phanKhac.length === 1 ? phanKhac[0] : phanKhac) : undefined
+  }
+}
+
 export const log = {
-  info: (...a: unknown[]) => ghi('INFO', ...a),
-  error: (...a: unknown[]) => ghi('ERROR', ...a),
+  info: (...a: unknown[]) => {
+    const { msg, ctx } = gop(a)
+    ghi('INFO', msg, ctx)
+  },
+  error: (...a: unknown[]) => {
+    const { msg, ctx } = gop(a)
+    ghi('ERROR', msg, ctx)
+  },
+  /**
+   * Event của luồng lõi — thay cho analytics từ xa (app offline, một người dùng,
+   * dữ liệu không rời máy —). Đủ để pha E đối chiếu số kỳ đã xử lý
+   * với sổ. Tên event: `nap-file-may`, `xuat-hoan-tat`,
+   * `xuat-that-bai`, `khai-nhan-vien-thieu`.
+   */
+  event: (ten: string, chiTiet?: Record<string, unknown>) => ghi('EVENT', ten, chiTiet),
   thuMuc: () => thuMucLog
 }

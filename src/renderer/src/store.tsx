@@ -42,7 +42,10 @@ export function AppStore({ children }: { children: ReactNode }) {
 
   const datKy = useCallback((k: KetQuaKyCong | null, fm?: string) => {
     setKy(k)
-    if (fm !== undefined) setFileMay(fm)
+    if (fm !== undefined) {
+      setFileMay(fm)
+      setMa(null) // nạp file khác → thôi bám nhân viên đang xem ở S3 (BH-13)
+    }
   }, [])
 
   const value: AppState = {

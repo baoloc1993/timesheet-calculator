@@ -4,6 +4,7 @@ import Store from 'electron-store'
 import { randomUUID } from 'crypto'
 import { readFileSync, existsSync } from 'fs'
 import type { NhanVien } from '../../core/types'
+import { chuanHoaMa } from '../../core/ma'
 import { chayMigration, SCHEMA_VERSION_HIEN_TAI } from './migrations'
 
 export interface AppConfig {
@@ -62,7 +63,7 @@ export function moStore(): Store<Schema> {
 export function chuanHoaNhanVien(x: Partial<NhanVien>): NhanVien {
   return {
     id: x.id || randomUUID(),
-    maNhanVien: String(x.maNhanVien ?? '').trim(),
+    maNhanVien: chuanHoaMa(x.maNhanVien),
     tenMay: String(x.tenMay ?? '').trim(),
     tenBangLuong: String(x.tenBangLuong ?? '').trim(),
     nguongGioChuanNgay: Number(x.nguongGioChuanNgay ?? 8.1),

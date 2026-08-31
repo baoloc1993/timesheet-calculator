@@ -71,6 +71,7 @@ export function S5Setup() {
     await lamMoiNhanVien()
     await lamMoiTrangThai()
     if (r.ky !== undefined) datKy(r.ky ?? null)
+    if (r.canhBaoLamMoi) setThongBao(r.canhBaoLamMoi)
 
     const conThieu = r.ky?.thieuSetup ?? []
     if (conThieu.length > 0) {
@@ -86,11 +87,19 @@ export function S5Setup() {
   }
 
   async function xoa(nv: NhanVien) {
-    const r = await window.api.xoaNhanVien(nv.id)
+    const r1 = await window.api.xoaNhanVien({ id: nv.id })
+    if (r1.canXacNhanXoa) {
+      if (!window.confirm(r1.canXacNhanXoa.loi + '\n\nXoá?')) return
+    } else if (!r1.ok) {
+      if (r1.loi) setThongBao(r1.loi)
+      return
+    }
+    const r = await window.api.xoaNhanVien({ id: nv.id, xacNhan: true })
     if (r.ok) {
       await lamMoiNhanVien()
       await lamMoiTrangThai()
       if (r.ky !== undefined) datKy(r.ky ?? null)
+      if (r.canhBaoLamMoi) setThongBao(r.canhBaoLamMoi)
       if (form?.id === nv.id) setForm(null)
     }
   }
@@ -106,7 +115,10 @@ export function S5Setup() {
       }
       await lamMoiNhanVien()
       await lamMoiTrangThai()
-      if (r.data) setThongBao(`Đã nạp — Setup hiện có ${r.data.length} nhân viên. Kiểm tra ngưỡng giờ chuẩn từng người.`)
+      if (r.ky !== undefined) datKy(r.ky ?? null)
+      if (r.canhBaoLamMoi) setThongBao(r.canhBaoLamMoi)
+      else if (r.data)
+        setThongBao(`Đã nạp — Setup hiện có ${r.data.length} nhân viên. Kiểm tra ngưỡng giờ chuẩn từng người.`)
     } finally {
       setDangNap(false)
     }

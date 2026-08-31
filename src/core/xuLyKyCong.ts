@@ -11,6 +11,7 @@ import type {
 import { tinhKetQuaNhanVien } from './phatHienBatThuong'
 import { tinhQ, tinhR, tinhS } from './tinhQRS'
 import { phutTrongNgay } from './time'
+import { chuanHoaMa } from './ma'
 
 const lam2 = (x: number) => Math.round(x * 100) / 100
 
@@ -37,21 +38,35 @@ function tongHopTuKetQua(nv: NhanVien, ketQuaNgay: KetQuaNgay[]): TongHopNhanVie
   }
 }
 
+/** Tổng toàn kỳ từ danh sách tổng hợp nhân viên — một chỗ duy nhất. */
+export function tongToanKy(tongHop: TongHopNhanVien[]): {
+  tongNgayCongCaKy: number
+  tongGioOTCaKy: number
+  tongDongCanXemLai: number
+} {
+  return {
+    tongNgayCongCaKy: lam2(tongHop.reduce((s, t) => s + t.tongNgayCong, 0)),
+    tongGioOTCaKy: lam2(tongHop.reduce((s, t) => s + t.tongGioOT, 0)),
+    tongDongCanXemLai: tongHop.reduce((s, t) => s + t.soDongCanXemLai, 0)
+  }
+}
+
 /**
  * Xử lý cả kỳ. Nhân viên trong file máy chưa khai Setup → đưa vào `thieuSetup`
  * và KHÔNG tính (AC-6). Ghép theo maNhanVien.
  */
 export function xuLyKyCong(file: FileMayDaDoc, nhanVienList: NhanVien[]): KetQuaKyCong {
-  const theoMa = new Map(nhanVienList.map((n) => [n.maNhanVien, n]))
+  const theoMa = new Map(nhanVienList.map((n) => [chuanHoaMa(n.maNhanVien), n]))
   const thieuSetup: KetQuaKyCong['thieuSetup'] = []
   const tongHop: TongHopNhanVien[] = []
 
   for (const khoi of file.khoi) {
-    const nv = theoMa.get(khoi.maNhanVien)
+    const nv = theoMa.get(chuanHoaMa(khoi.maNhanVien))
     if (!nv) {
       thieuSetup.push({ maNhanVien: khoi.maNhanVien, tenMay: khoi.tenMay })
       continue
     }
+    if (nv.an) continue // nhân viên đã ẩn → không tính, không báo thiếu
     const ketQuaNgay = tinhKetQuaNhanVien(khoi.dongNgay, nv.nguongGioChuanNgay)
     tongHop.push(tongHopTuKetQua(nv, ketQuaNgay))
   }
@@ -62,9 +77,7 @@ export function xuLyKyCong(file: FileMayDaDoc, nhanVienList: NhanVien[]): KetQua
     ngayKetThuc: file.ngayKetThuc,
     thieuSetup,
     tongHop,
-    tongNgayCongCaKy: lam2(tongHop.reduce((s, t) => s + t.tongNgayCong, 0)),
-    tongGioOTCaKy: lam2(tongHop.reduce((s, t) => s + t.tongGioOT, 0)),
-    tongDongCanXemLai: tongHop.reduce((s, t) => s + t.soDongCanXemLai, 0)
+    ...tongToanKy(tongHop)
   }
 }
 
@@ -78,28 +91,50 @@ export function tinhLaiMotDong(
   nguongGioChuanNgay: number
 ): KetQuaNgay {
   const cap = capMoi.slice(0, 2).map((c) => ({ vao: c.vao || null, ra: c.ra || null }))
-  const du4Moc =
-    cap.length === 2 &&
-    [cap[0]?.vao, cap[0]?.ra, cap[1]?.vao, cap[1]?.ra].every((m) => phutTrongNgay(m) != null)
+  const phang = [cap[0]?.vao ?? null, cap[0]?.ra ?? null, cap[1]?.vao ?? null, cap[1]?.ra ?? null]
+  const toolPhang = [
+    dong.capVaoRa[0]?.vao ?? null,
+    dong.capVaoRa[0]?.ra ?? null,
+    dong.capVaoRa[1]?.vao ?? null,
+    dong.capVaoRa[1]?.ra ?? null
+  ]
 
-  // dòng gốc từng bị ép OT=0 vì thiếu/lộn mốc?
-  const tungEpOt =
-    dong.daSua && /thiếu|lộn|dựng lại|quên chấm/.test(dong.ghiChuSua)
-  const epOtVe0 = tungEpOt && !du4Moc
+  // Một mốc là "thật" (người dùng làm chủ) khi: có giá trị, VÀ (máy gốc từng có mốc đó,
+  // HOẶC người dùng vừa gõ khác giá trị công cụ điền hộ). Để trống ô công cụ điền = vẫn
+  // là mốc công cụ, chưa thật.
+  const mocThat = (k: number): boolean => {
+    const moi = phutTrongNgay(phang[k])
+    if (moi == null) return false
+    if (phutTrongNgay(dong.nguonGoc[k]) != null) return true
+    return moi !== phutTrongNgay(toolPhang[k])
+  }
+  const du4MocThat = cap.length === 2 && [0, 1, 2, 3].every(mocThat)
+
+  // Sửa tay có tạo ra ca vô lý không → giữ ép OT = 0 + cảnh báo.
+  const capPhut = cap.map((c) => ({ v: phutTrongNgay(c.vao), r: phutTrongNgay(c.ra) }))
+  const caVoLy = capPhut.some((c) => c.v != null && c.r != null && c.r <= c.v)
+
+  const co3 = phutTrongNgay(dong.nguonGoc[4]) != null || phutTrongNgay(dong.nguonGoc[5]) != null
+  const otBiEp = (dong.otBiEp && !du4MocThat) || caVoLy
 
   const Q = tinhQ(cap)
   const R = tinhR(Q)
-  const S = tinhS(Q, nguongGioChuanNgay, epOtVe0)
+  const S = tinhS(Q, nguongGioChuanNgay, otBiEp || Q > 14)
 
-  // so với nguonGoc để biết còn "đã sửa" không
-  const phang = [cap[0]?.vao ?? null, cap[0]?.ra ?? null, cap[1]?.vao ?? null, cap[1]?.ra ?? null]
   let khacGoc = false
   for (let k = 0; k < 4; k++) {
     const g = phutTrongNgay(dong.nguonGoc[k])
     const d = phutTrongNgay(phang[k])
     if ((g == null) !== (d == null) || (g != null && d != null && g !== d)) khacGoc = true
   }
-  const daSua = khacGoc || epOtVe0
+  const daSua = khacGoc || otBiEp || Q > 14 || co3
+
+  const ghiChu: string[] = []
+  if (khacGoc) ghiChu.push('người dùng sửa tay')
+  if (caVoLy) ghiChu.push('ca vô lý (ra ≤ vào), ép OT = 0 — kiểm lại giờ')
+  else if (otBiEp) ghiChu.push('vẫn ép OT = 0 (chưa đủ 4 mốc thật)')
+  else if (Q > 14) ghiChu.push(`ca dài bất thường (${Q.toFixed(1)}h), không tính OT`)
+  if (co3) ghiChu.push('có dữ liệu cặp 3 — kiểm tra tay')
 
   return {
     ...dong,
@@ -108,11 +143,8 @@ export function tinhLaiMotDong(
     ngayCongR: R,
     gioOtS: S,
     daSua,
-    ghiChuSua: daSua
-      ? khacGoc
-        ? 'người dùng sửa tay' + (epOtVe0 ? '; vẫn ép OT = 0 (chưa đủ 4 mốc thật)' : '')
-        : dong.ghiChuSua
-      : '',
+    otBiEp,
+    ghiChuSua: daSua ? ghiChu.join('; ') || dong.ghiChuSua || 'người dùng sửa tay' : '',
     mucDoCanhBao: daSua ? 'vang' : 'none'
   }
 }

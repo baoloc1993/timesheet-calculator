@@ -58,4 +58,73 @@ describe('phát hiện + tự sửa dòng bất thường', () => {
     expect(r[1].capVaoRa[0].vao).toBe('07:10')
     expect(r[1].capVaoRa[0].ra).toBe('11:30') // theo ngày trước
   })
+
+  it('thiếu mốc ở dòng ĐẦU (không có ngày trước) → điền theo ngày liền SAU', () => {
+    const r = tinhKetQuaNhanVien(
+      [
+        dong('2026-08-01', ['07:00', null, null, null]),
+        dong('2026-08-02', ['06:50', '11:35', '13:30', '17:40'])
+      ],
+      8.1
+    )
+    expect(r[0].mucDoCanhBao).toBe('vang')
+    expect(r[0].gioOtS).toBe(0)
+    expect(r[0].capVaoRa[0].vao).toBe('07:00')
+    expect(r[0].capVaoRa[0].ra).toBe('11:35') // lấy Ra1 của ngày liền sau
+    expect(r[0].ghiChuSua).not.toBe('')
+  })
+
+  it('S thô > 4 trên MỘT cặp liền → ép OT = 0 (nghi quên chấm nghỉ trưa)', () => {
+    // 07:00→20:00 = 13h, dưới ngưỡng "ca dài" 14h nên chỉ luật S>4 kích hoạt
+    const r = tinhKetQuaNhanVien([dong('2026-08-10', ['07:00', '20:00'])], 8.1)
+    expect(r[0].gioLamQ).toBeCloseTo(13, 4)
+    expect(r[0].ngayCongR).toBe(1)
+    expect(r[0].gioOtS).toBe(0)
+    expect(r[0].mucDoCanhBao).toBe('vang')
+  })
+
+  it('OT lớn nhưng chia HAI cặp rõ ràng → GIỮ OT, không ép, không cảnh báo', () => {
+    // BacLan ngưỡng 6.1, 07:00-11:30 + 12:30-19:00 = 4.5 + 6.5 = 11h, S thô 4.9 > 4
+    // nhưng có 2 cặp → luật "S>4 & 1 cặp" KHÔNG áp → tránh xoá nhầm tiền OT thật
+    const r = tinhKetQuaNhanVien([dong('2026-08-12', ['07:00', '11:30', '12:30', '19:00'])], 6.1)
+    expect(r[0].gioLamQ).toBeCloseTo(11, 4)
+    expect(r[0].gioOtS).toBeCloseTo(4.9, 4)
+    expect(r[0].mucDoCanhBao).toBe('none')
+    expect(r[0].daSua).toBe(false)
+  })
+
+  it('nghỉ cả ngày ở GIỮA chuỗi ngày có công → vẫn không cảnh báo, không kéo giờ ngày kề', () => {
+    const r = tinhKetQuaNhanVien(
+      [
+        dong('2026-08-04', ['07:00', '11:30', '13:30', '17:30']),
+        dong('2026-08-05', []),
+        dong('2026-08-06', ['07:00', '11:30', '13:30', '17:30'])
+      ],
+      8.1
+    )
+    expect(r[1].mucDoCanhBao).toBe('none')
+    expect(r[1].gioLamQ).toBe(0)
+    expect(r[1].ngayCongR).toBe(0)
+    expect(r[1].gioOtS).toBe(0)
+    expect(r[1].daSua).toBe(false)
+    expect(r[1].capVaoRa).toEqual([])
+  })
+
+  it('bất biến: dòng daSua thì ghiChuSua không rỗng; dòng none thì rỗng', () => {
+    const r = tinhKetQuaNhanVien(
+      [
+        dong('2026-08-15', ['06:58', '11:38', '13:30', '17:32']),
+        dong('2026-08-16', ['07:07', '11:40', '17:30', '07:02']),
+        dong('2026-08-17', []),
+        dong('2026-08-18', ['07:06', '11:36', '13:30', '17:40'])
+      ],
+      10.6
+    )
+    for (const d of r) {
+      if (d.daSua) expect(d.ghiChuSua).not.toBe('')
+      else expect(d.ghiChuSua).toBe('')
+      expect([0, 0.5, 1]).toContain(d.ngayCongR)
+      expect(d.gioOtS).toBeGreaterThanOrEqual(0)
+    }
+  })
 })

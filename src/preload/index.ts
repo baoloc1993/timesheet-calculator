@@ -7,13 +7,14 @@ const api: Api = {
   layNhanVien: () => ipcRenderer.invoke('nhan-vien:danh-sach'),
   chonVaNapFileMay: () => ipcRenderer.invoke('file-may:chon-va-nap'),
   themSuaNhanVien: (nv) => ipcRenderer.invoke('nhan-vien:them-sua', nv),
-  xoaNhanVien: (id) => ipcRenderer.invoke('nhan-vien:xoa', id),
+  xoaNhanVien: (p) => ipcRenderer.invoke('nhan-vien:xoa', p),
   napNhanVienTuFileKyTruoc: () => ipcRenderer.invoke('nhan-vien:nap-tu-file-ky-truoc'),
   chonFileMauBangLuong: () => ipcRenderer.invoke('bang-luong:chon-file-mau'),
   layKyHienTai: () => ipcRenderer.invoke('ky-cong:hien-tai'),
   tinhLaiNgay: (payload) => ipcRenderer.invoke('ky-cong:tinh-lai-ngay', payload),
   chonThuMucVaXuat: (payload) => ipcRenderer.invoke('ky-cong:xuat', payload),
-  moThuMuc: (duongDan) => ipcRenderer.invoke('mo-thu-muc', duongDan)
+  moThuMuc: (duongDan) => ipcRenderer.invoke('mo-thu-muc', duongDan),
+  moGopY: () => ipcRenderer.invoke('mo-gop-y')
 }
 
 if (process.contextIsolated) {

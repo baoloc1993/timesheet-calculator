@@ -73,6 +73,9 @@ function TitleBar() {
           ? `— kỳ ${ky.thang} · ${dmy(ky.ngayBatDau)} – ${dmy(ky.ngayKetThuc)}`
           : '— chưa nạp kỳ công'}
       </span>
+      <button className="lien-ket" onClick={() => window.api.moGopY()}>
+        Góp ý / báo lỗi
+      </button>
     </div>
   )
 }

@@ -4,6 +4,9 @@
 
 import ExcelJS from 'exceljs'
 import type { NhanVien } from '../../core/types'
+import { chuanHoaMa } from '../../core/ma'
+
+export { chuanHoaMa }
 
 export interface TheNhanVienBangLuong {
   maNhanVien: string
@@ -19,12 +22,6 @@ export interface TheNhanVienBangLuong {
 
 export interface BangLuongDaDoc {
   the: TheNhanVienBangLuong[]
-}
-
-export function chuanHoaMa(raw: string): string {
-  const so = String(raw).replace(/\D/g, '')
-  if (!so) return ''
-  return so.padStart(5, '0')
 }
 
 function chuoi(v: ExcelJS.CellValue): string {

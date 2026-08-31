@@ -8,6 +8,7 @@
 
 import ExcelJS from 'exceljs'
 import type { FileMayDaDoc, KhoiFileMay, DongNgayMay } from '../../core/types'
+import { chuanHoaMa } from '../../core/ma'
 
 export class LoiDocFileMay extends Error {
   constructor(
@@ -152,7 +153,18 @@ export async function docFileMay(duongDan: string): Promise<FileMayDaDoc> {
       tatCaNgay.push(ngay)
     }
 
-    khoi.push({ maNhanVien: h.ma, tenMay: h.ten, dongNgay })
+    const ma = chuanHoaMa(h.ma)
+    const trung = khoi.find((k) => k.maNhanVien === ma)
+    if (trung) {
+      // Khối trùng mã trong cùng file (máy lỗi / sửa tay) → gộp ngày, không cộng đôi.
+      // Nguồn: soi bug pha P (BH-7).
+      for (const d of dongNgay) {
+        if (!trung.dongNgay.some((x) => x.ngay === d.ngay)) trung.dongNgay.push(d)
+      }
+      trung.dongNgay.sort((a, b) => a.ngay.localeCompare(b.ngay))
+    } else {
+      khoi.push({ maNhanVien: ma, tenMay: h.ten, dongNgay })
+    }
   }
 
   tatCaNgay.sort()

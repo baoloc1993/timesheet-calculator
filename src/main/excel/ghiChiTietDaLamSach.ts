@@ -5,6 +5,8 @@ import ExcelJS from 'exceljs'
 import type { TongHopNhanVien, KetQuaNgay } from '../../core/types'
 import { LoiDocFileMay } from './docFileMay'
 import { phutTrongNgay } from '../../core/time'
+import { chuanHoaMa } from '../../core/ma'
+import { ghiFileAtomic } from './ghiAtomic'
 
 // Fresh object mỗi lần — exceljs chia sẻ style theo tham chiếu, dùng chung 1 const
 // làm nền vàng lan sang cả hàng (cells cùng xf). Nguồn: dogfood 2026-09-01.
@@ -53,13 +55,13 @@ export async function ghiChiTietDaLamSach(
   for (const th of tongHop) {
     const m = new Map<string, KetQuaNgay>()
     for (const kq of th.ketQuaNgay) m.set(kq.ngay, kq)
-    theoMa.set(th.maNhanVien, m)
+    theoMa.set(chuanHoaMa(th.maNhanVien), m)
   }
 
   const headers: { row: number; ma: string }[] = []
   ws.eachRow({ includeEmpty: false }, (row, r) => {
     const m = chuoi(row.getCell(1).value).match(RE_HEADER)
-    if (m) headers.push({ row: r, ma: m[1] })
+    if (m) headers.push({ row: r, ma: chuanHoaMa(m[1]) })
   })
 
   let soDongToVang = 0
@@ -106,18 +108,7 @@ export async function ghiChiTietDaLamSach(
     }
   }
 
-  try {
-    await wb.xlsx.writeFile(duongDanRa)
-  } catch (e) {
-    const msg = (e as Error).message || ''
-    if (/EBUSY|EPERM|locked|being used/i.test(msg)) {
-      throw new LoiDocFileMay(
-        'DANG_MO_O_EXCEL',
-        `"${duongDanRa.split(/[\\/]/).pop()}" đang mở trong Excel. Đóng file đó rồi thử lại.`
-      )
-    }
-    throw e
-  }
+  await ghiFileAtomic(wb, duongDanRa)
 
   return { duongDanRa, soDongToVang }
 }

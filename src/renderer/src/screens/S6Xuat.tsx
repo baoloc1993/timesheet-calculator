@@ -127,9 +127,16 @@ export function S6Xuat() {
               Đã xuất 2 file vào {xong.thuMuc}.<br />
               Bảng lương: {xong.bangLuong.daGhi} thẻ điền
               {xong.bangLuong.khongKhop.length > 0 &&
-                ` · ${xong.bangLuong.khongKhop.length} thẻ không khớp tên: ${xong.bangLuong.khongKhop.join(', ')}`}
+                ` · ${xong.bangLuong.khongKhop.length} nhân viên trong kỳ không tìm thấy thẻ: ${xong.bangLuong.khongKhop.join(', ')}`}
               . Chi tiết: {xong.chiTiet.soDongToVang} dòng tô vàng.
             </p>
+            {xong.bangLuong.theGiuSoCu.length > 0 && (
+              <p className="note" role="status">
+                ⚠ {xong.bangLuong.theGiuSoCu.length} thẻ trong file mẫu <strong>không được cập nhật</strong> kỳ
+                này (nhân viên không có trong kỳ) — vẫn giữ số ngày/giờ kỳ trước, kiểm tay:{' '}
+                {xong.bangLuong.theGiuSoCu.join(', ')}.
+              </p>
+            )}
             <button className="btn primary" onClick={() => window.api.moThuMuc(xong.thuMuc)}>
               Mở thư mục
             </button>

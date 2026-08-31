@@ -3,12 +3,15 @@
 import { existsSync } from 'fs'
 import type { TongHopNhanVien } from '../../core/types'
 import { docBangLuong, chuanHoaMa } from './docBangLuong'
+import type { TheNhanVienBangLuong } from './docBangLuong'
 import { LoiDocFileMay } from './docFileMay'
+import { ghiFileAtomic } from './ghiAtomic'
 
 export interface KetQuaGhiBangLuong {
   duongDanRa: string
   daGhi: string[] // maNhanVien đã điền
   khongKhop: string[] // tenBangLuong trong tổng hợp không tìm thấy thẻ
+  theGiuSoCu: string[] // thẻ trong file mẫu KHÔNG được cập nhật kỳ này (giữ số kỳ trước — BH-8)
 }
 
 const bo = (s: string) => s.trim().toLowerCase().replace(/\s+/g, ' ')
@@ -51,6 +54,7 @@ export async function ghiBangLuong(
 
   const daGhi: string[] = []
   const khongKhop: string[] = []
+  const theDaDung = new Set<TheNhanVienBangLuong>()
 
   for (const th of tongHop) {
     const the =
@@ -61,6 +65,7 @@ export async function ghiBangLuong(
       khongKhop.push(th.tenBangLuong || th.tenMay || th.maNhanVien)
       continue
     }
+    theDaDung.add(the)
     if (the.oSoLuongNgay) ws.getCell(the.oSoLuongNgay).value = th.tongNgayCong
     if (the.oSoLuongGio) ws.getCell(the.oSoLuongGio).value = th.tongGioOT
     if (the.oDonGiaNgay && th.donGiaNgay) ws.getCell(the.oDonGiaNgay).value = th.donGiaNgay
@@ -68,18 +73,13 @@ export async function ghiBangLuong(
     daGhi.push(th.maNhanVien)
   }
 
-  try {
-    await wb.xlsx.writeFile(duongDanRa)
-  } catch (e) {
-    const msg = (e as Error).message || ''
-    if (/EBUSY|EPERM|locked|being used/i.test(msg)) {
-      throw new LoiDocFileMay(
-        'DANG_MO_O_EXCEL',
-        `"${duongDanRa.split(/[\\/]/).pop()}" đang mở trong Excel. Đóng file đó rồi thử lại.`
-      )
-    }
-    throw e
-  }
+  // Thẻ trong file mẫu không được cập nhật kỳ này → còn giữ số lượng ngày/giờ kỳ trước.
+  // Không tự xoá (có thể là nhân viên người dùng cố ý giữ) — chỉ liệt kê để người dùng xử (BH-8).
+  const theGiuSoCu = doc.the
+    .filter((t) => !theDaDung.has(t) && (t.oSoLuongNgay || t.oSoLuongGio))
+    .map((t) => t.tenBangLuong || t.maNhanVien)
 
-  return { duongDanRa, daGhi, khongKhop }
+  await ghiFileAtomic(wb, duongDanRa)
+
+  return { duongDanRa, daGhi, khongKhop, theGiuSoCu }
 }

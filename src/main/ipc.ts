@@ -1,10 +1,11 @@
 // Điều phối IPC + mở dialog chọn file/thư mục. Không nhúng logic tính — gọi xuống core/.
 
-import { ipcMain, dialog, shell, BrowserWindow } from 'electron'
+import { ipcMain, dialog, shell, BrowserWindow, app } from 'electron'
 import { basename, join, dirname } from 'path'
 import { existsSync } from 'fs'
 import type { KetQuaKyCong, NhanVien } from '../core/types'
-import { xuLyKyCong, tinhLaiMotDong, tinhLaiTongHop } from '../core/xuLyKyCong'
+import { xuLyKyCong, tinhLaiMotDong, tinhLaiTongHop, tongToanKy } from '../core/xuLyKyCong'
+import { phutTrongNgay } from '../core/time'
 import { docFileMay, LoiDocFileMay } from './excel/docFileMay'
 import { docBangLuong, nhanVienTuBangLuong } from './excel/docBangLuong'
 import { ghiBangLuong } from './excel/ghiBangLuong'
@@ -28,15 +29,28 @@ function win(): BrowserWindow | null {
 // TSC_TEST_* được đặt, handler dùng luôn đường dẫn đó thay vì mở dialog.
 // KHÔNG ảnh hưởng bản build phát hành (biến không bao giờ được đặt ở đó).
 function duongDanTest(bien: string): string | null {
+  // Guard: seam CHỈ sống trong bản chưa đóng gói (dev / harness). Bản .exe phát hành
+  // luôn bỏ qua, kể cả khi biến TSC_TEST_* tình cờ có trong môi trường máy người dùng.
+  if (app.isPackaged) return null
   const v = process.env[bien]
   return v && existsSync(v) ? v : null
 }
 
 function loi(e: unknown) {
   if (e instanceof LoiDocFileMay) return { ok: false, loi: e.message, maLoi: e.ma }
-  const msg = (e as Error)?.message || 'Lỗi không xác định'
-  log.error('IPC', msg)
-  return { ok: false, loi: msg }
+  const raw = (e as Error)?.message || ''
+  log.error('IPC', raw || 'lỗi không xác định', (e as Error)?.stack || '')
+  // Map lỗi Node thô sang câu tiếng Việt nói được phải làm gì (CONVENTIONS §5) —
+  // không đẩy đường dẫn nội bộ / message hệ thống ra UI.
+  let than = 'Có lỗi khi xử lý. Thử lại; nếu vẫn lỗi, gửi file log qua nút "Góp ý / báo lỗi".'
+  if (/EBUSY|EPERM|resource busy|being used by another process/i.test(raw))
+    than = 'File đang được mở ở chương trình khác (thường là Excel). Đóng file đó rồi thử lại.'
+  else if (/EACCES|permission denied/i.test(raw))
+    than = 'Không có quyền ghi vào thư mục đã chọn. Chọn thư mục khác.'
+  else if (/ENOENT|no such file/i.test(raw))
+    than = 'Không tìm thấy file — có thể đã bị di chuyển hoặc đổi tên. Chọn lại file.'
+  else if (/ENOSPC|no space/i.test(raw)) than = 'Ổ đĩa đầy — dọn bớt dung lượng rồi thử lại.'
+  return { ok: false, loi: than }
 }
 
 function tenFileXuat(thang: string) {
@@ -78,6 +92,12 @@ export function dangKyIpc(): void {
       kyHienTai = { fileMay: duongDan, ky }
       ghiConfig({ kyXuLyGanNhat: file.thang })
       log.info('nạp file máy', duongDan, `${file.khoi.length} khối`)
+      log.event('nap-file-may', {
+        thang: file.thang,
+        soKhoi: file.khoi.length,
+        thieuSetup: ky.thieuSetup.length,
+        dongCanXemLai: ky.tongDongCanXemLai
+      })
       return { ok: true, data: { ky, fileMay: duongDan } }
     } catch (e) {
       return loi(e)
@@ -87,14 +107,32 @@ export function dangKyIpc(): void {
   ipcMain.handle('nhan-vien:them-sua', async (_e, nv: Partial<NhanVien>) => {
     const r = themHoacSua(nv)
     if (!r.ok) return { ok: false, loi: 'Dữ liệu chưa hợp lệ.', loiTruong: r.loi }
-    await lamMoiKyHienTai()
-    return { ok: true, data: r.nhanVien, ky: layKyHienTai() }
+    const lm = await lamMoiKyHienTai()
+    return { ok: true, data: r.nhanVien, ky: layKyHienTai(), canhBaoLamMoi: lm.loi }
   })
 
-  ipcMain.handle('nhan-vien:xoa', async (_e, id: string) => {
-    const ds = xoaNhanVien(id)
-    await lamMoiKyHienTai()
-    return { ok: true, data: ds, ky: layKyHienTai() }
+  ipcMain.handle('nhan-vien:xoa', async (_e, p: { id: string; xacNhan?: boolean }) => {
+    const nv = layNhanVien().find((n) => n.id === p.id)
+    if (!nv) return { ok: false, loi: 'Không tìm thấy nhân viên.' }
+    // Cảnh báo nếu người này đang có trong kỳ vừa nạp —
+    // và luôn đòi xác nhận (xoá cứng, mất ngưỡng + đơn giá đã khai — BH-3).
+    const trongKy = kyHienTai?.ky.tongHop.some((t) => t.maNhanVien === nv.maNhanVien)
+    if (!p.xacNhan) {
+      return {
+        ok: false,
+        canXacNhanXoa: {
+          ten: nv.tenMay,
+          trongKy: !!trongKy,
+          loi: trongKy
+            ? `"${nv.tenMay}" đang có trong kỳ vừa nạp. Xoá sẽ mất ngưỡng giờ + đơn giá đã khai và chặn xuất tới khi khai lại.`
+            : `Xoá "${nv.tenMay}" khỏi Setup? Ngưỡng giờ + đơn giá đã khai sẽ mất.`
+        }
+      }
+    }
+    const ds = xoaNhanVien(p.id)
+    const lm = await lamMoiKyHienTai()
+    log.info('xoá nhân viên', nv.maNhanVien, nv.tenMay)
+    return { ok: true, data: ds, ky: layKyHienTai(), canhBaoLamMoi: lm.loi }
   })
 
   ipcMain.handle('ky-cong:hien-tai', () => layKyHienTai())
@@ -117,9 +155,9 @@ export function dangKyIpc(): void {
       if (rut.length === 0)
         return { ok: false, loi: 'Không rút được nhân viên nào từ file — kiểm tra đúng là file bảng lương.' }
       const ds = tronTuFileKyTruoc(rut)
-      await lamMoiKyHienTai()
+      const lm = await lamMoiKyHienTai()
       log.info('nạp nhân viên từ file kỳ trước', `${rut.length} thẻ`)
-      return { ok: true, data: ds, ky: layKyHienTai() }
+      return { ok: true, data: ds, ky: layKyHienTai(), canhBaoLamMoi: lm.loi }
     } catch (e) {
       return loi(e)
     }
@@ -151,6 +189,14 @@ export function dangKyIpc(): void {
     if (!th) return { ok: false, loi: 'Không tìm thấy nhân viên trong kỳ.' }
     const idx = th.ketQuaNgay.findIndex((d) => d.ngay === p.ngay)
     if (idx < 0) return { ok: false, loi: 'Không tìm thấy ngày.' }
+    // Validate định dạng giờ ở tầng main — ô rỗng thì cho qua, gõ sai thì chặn
+    //.
+    for (const c of p.cap) {
+      for (const g of [c.vao, c.ra]) {
+        if (g != null && g !== '' && phutTrongNgay(g) == null)
+          return { ok: false, loi: `Giờ "${g}" không đúng dạng. Nhập dạng HH:MM, ví dụ 08:30. Để trống nếu không có.` }
+      }
+    }
     const dongMoi = tinhLaiMotDong(th.ketQuaNgay[idx], p.cap, th.nguongGioChuanNgay)
     th.ketQuaNgay[idx] = dongMoi
     const thMoi = tinhLaiTongHop(th, th.ketQuaNgay)
@@ -162,8 +208,10 @@ export function dangKyIpc(): void {
   ipcMain.handle('ky-cong:xuat', async (_e, p: { ghiDe: boolean }) => {
     try {
       if (!kyHienTai) return { ok: false, loi: 'Chưa nạp kỳ công.' }
-      if (kyHienTai.ky.thieuSetup.length > 0)
+      if (kyHienTai.ky.thieuSetup.length > 0) {
+        log.event('xuat-that-bai', { ly_do: 'thieu-setup', so: kyHienTai.ky.thieuSetup.length })
         return { ok: false, loi: 'Còn nhân viên chưa khai Setup — khai đủ trước khi xuất.' }
+      }
 
       const c = layConfig()
       if (!c.fileMauBangLuongGanNhat || !existsSync(c.fileMauBangLuongGanNhat))
@@ -194,14 +242,33 @@ export function dangKyIpc(): void {
         ngayBatDau: kyHienTai.ky.ngayBatDau,
         ngayKetThuc: kyHienTai.ky.ngayKetThuc
       })
-      const ct = await ghiChiTietDaLamSach(kyHienTai.fileMay, pCT, kyHienTai.ky.tongHop)
+      let ct: { duongDanRa: string; soDongToVang: number }
+      try {
+        ct = await ghiChiTietDaLamSach(kyHienTai.fileMay, pCT, kyHienTai.ky.tongHop)
+      } catch (e) {
+        // Bảng lương đã ghi xong, file chi tiết lỗi → nói rõ trạng thái từng file (BH-12).
+        const r = loi(e)
+        return { ...r, loi: `Đã ghi xong "${ten.bangLuong}". Nhưng "${ten.chiTiet}": ${r.loi} Bấm Xuất lại để ghi nốt file chi tiết.` }
+      }
       ghiConfig({ thuMucXuatGanNhat: thuMuc })
       log.info('xuất', thuMuc, `${bl.daGhi.length} thẻ lương, ${ct.soDongToVang} dòng vàng`)
+      log.event('xuat-hoan-tat', {
+        thang: kyHienTai.ky.thang,
+        theLuong: bl.daGhi.length,
+        theKhongKhop: bl.khongKhop.length,
+        theGiuSoCu: bl.theGiuSoCu.length,
+        dongToVang: ct.soDongToVang
+      })
 
       return {
         ok: true,
         data: {
-          bangLuong: { duongDan: pBL, daGhi: bl.daGhi.length, khongKhop: bl.khongKhop },
+          bangLuong: {
+            duongDan: pBL,
+            daGhi: bl.daGhi.length,
+            khongKhop: bl.khongKhop,
+            theGiuSoCu: bl.theGiuSoCu
+          },
           chiTiet: { duongDan: pCT, soDongToVang: ct.soDongToVang },
           thuMuc
         }
@@ -212,27 +279,42 @@ export function dangKyIpc(): void {
   })
 
   ipcMain.handle('mo-thu-muc', (_e, duongDan: string) => {
+    // Chỉ mở thư mục công cụ vừa ghi vào (renderer không mở đường dẫn tuỳ ý — REV).
+    const choPhep = layConfig().thuMucXuatGanNhat
+    if (!duongDan || duongDan !== choPhep || !existsSync(duongDan)) return
     shell.openPath(duongDan)
+  })
+
+  // Kênh phản hồi trong sản phẩm. Địa chỉ cố định ở main —
+  // renderer không truyền URL vào (tránh mở link tuỳ ý).
+  ipcMain.handle('mo-gop-y', () => {
+    const tieuDe = encodeURIComponent('Góp ý / báo lỗi — Timesheet Calculator')
+    shell.openExternal(`mailto:feedback@example.com?subject=${tieuDe}`)
   })
 }
 
-/** Sau khi Setup đổi → tính lại kỳ đang mở (nếu có) để AC-6 phản ánh ngay. */
-async function lamMoiKyHienTai() {
-  if (!kyHienTai) return
+/**
+ * Sau khi Setup đổi → tính lại kỳ đang mở (nếu có) để AC-6 phản ánh ngay.
+ * Đọc lại file máy thất bại (file bị di chuyển/khoá) → KHÔNG nuốt lỗi: trả cảnh báo
+ * để renderer báo người dùng nạp lại, thay vì hành động trên kỳ cũ.
+ */
+async function lamMoiKyHienTai(): Promise<{ loi?: string }> {
+  if (!kyHienTai) return {}
   try {
     const file = await docFileMay(kyHienTai.fileMay)
     kyHienTai = { fileMay: kyHienTai.fileMay, ky: xuLyKyCong(file, layNhanVien()) }
+    return {}
   } catch (e) {
     log.error('làm mới kỳ', (e as Error).message)
+    return {
+      loi: 'Đã lưu Setup, nhưng không đọc lại được file máy chấm công (có thể đã bị di chuyển hoặc đang mở ở Excel). Nạp lại file máy để cập nhật bảng tổng hợp.'
+    }
   }
 }
 
 function capNhatTongKy() {
   if (!kyHienTai) return
-  const k = kyHienTai.ky
-  k.tongNgayCongCaKy = Math.round(k.tongHop.reduce((s, t) => s + t.tongNgayCong, 0) * 100) / 100
-  k.tongGioOTCaKy = Math.round(k.tongHop.reduce((s, t) => s + t.tongGioOT, 0) * 100) / 100
-  k.tongDongCanXemLai = k.tongHop.reduce((s, t) => s + t.soDongCanXemLai, 0)
+  Object.assign(kyHienTai.ky, tongToanKy(kyHienTai.ky.tongHop))
 }
 
 /** Cho renderer lấy lại kỳ hiện tại sau khi Setup thay đổi. */

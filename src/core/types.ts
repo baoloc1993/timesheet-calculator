@@ -51,6 +51,12 @@ export interface KetQuaNgay {
   ngayCongR: number
   gioOtS: number
   daSua: boolean
+  /**
+   * Dòng bị ép OT = 0 vì thiếu/lộn mốc. Cờ này BÁM theo dòng —
+   * chỉ gỡ khi người dùng sửa tay để đủ 4 mốc thật. Thay cho
+   * việc suy từ chuỗi ghiChuSua.
+   */
+  otBiEp: boolean
   ghiChuSua: string
   mucDoCanhBao: MucDoCanhBao
 }
