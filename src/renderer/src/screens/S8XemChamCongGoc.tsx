@@ -5,10 +5,9 @@ import type { KetQuaNgay } from '../../../preload/api-types'
 
 const so2 = (n: number) => Math.round(n * 100) / 100
 
-/** Gộp mảng mốc "HH:MM"/null thành "07:07 | 11:40 | 13:30 | 17:30". Rỗng → "—". */
-function mocChuoi(moc: (string | null)[]): string {
-  const co = moc.filter((m): m is string => !!m)
-  return co.length ? co.join('  |  ') : '—'
+/** 4 khe cố định "HH:MM"/"–" (vào1 · ra1 · vào2 · ra2) — căn theo khe để thấy khe nào lệch. */
+function khe4(moc: (string | null)[]): string {
+  return [0, 1, 2, 3].map((k) => moc[k] || '–').join('  ·  ')
 }
 
 /** 4 khe hiện tại từ capVaoRa (vào1, ra1, vào2, ra2). */
@@ -19,17 +18,6 @@ function phang4(kq: KetQuaNgay): (string | null)[] {
     kq.capVaoRa[1]?.vao ?? null,
     kq.capVaoRa[1]?.ra ?? null
   ]
-}
-
-/** Mốc hiện tại có khác mốc máy gốc ở khe nào không (cùng luật ghiChiTietDaLamSach). */
-function khacGoc(kq: KetQuaNgay): boolean {
-  const cur = phang4(kq)
-  for (let k = 0; k < 4; k++) {
-    const g = kq.nguonGoc[k] ?? null
-    const c = cur[k]
-    if ((g == null) !== (c == null) || (g != null && c != null && g !== c)) return true
-  }
-  return false
 }
 
 function ghiChu(kq: KetQuaNgay): string {
@@ -118,13 +106,16 @@ export function S8XemChamCongGoc() {
               </thead>
               <tbody>
                 {sap.map((d) => {
-                  const nghi = d.capVaoRa.length === 0 && mocChuoi(d.nguonGoc) === '—'
-                  const lech = d.daSua || khacGoc(d)
+                  const nghiCaNgay = d.capVaoRa.length === 0 && d.nguonGoc.every((m) => !m)
+                  // Tô vàng CÙNG LUẬT ghiChiTietDaLamSach: chỉ khi công cụ/người dùng đã đụng vào
+                  // (daSua). Dòng 1 cặp phủ trưa / nửa buổi có daSua=false → không tô, không chip.
                   return (
-                    <tr key={d.ngay} className={nghi ? 'rest' : ''}>
+                    <tr key={d.ngay} className={nghiCaNgay ? 'rest' : ''}>
                       <td>{dmy(d.ngay).slice(0, 5)}</td>
-                      <td className="orig">{mocChuoi(d.nguonGoc)}</td>
-                      <td className={lech ? 'cell-fixed' : ''}>{mocChuoi(phang4(d))}</td>
+                      <td className="orig">{nghiCaNgay ? '— (không chấm)' : khe4(d.nguonGoc)}</td>
+                      <td className={d.daSua ? 'cell-fixed' : nghiCaNgay ? 'rest-day' : ''}>
+                        {nghiCaNgay ? '— (không chấm)' : khe4(phang4(d))}
+                      </td>
                       <td className="num">{so2(d.gioLamQ)}</td>
                       <td className="num">{d.ngayCongR}</td>
                       <td className="num">{so2(d.gioOtS)}</td>

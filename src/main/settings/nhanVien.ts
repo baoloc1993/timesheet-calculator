@@ -60,7 +60,7 @@ export function xoaNhanVien(id: string): NhanVien[] {
   return danhSach
 }
 
-const chuanTen = (s: string | undefined): string =>
+export const chuanTen = (s: string | undefined): string =>
   String(s ?? '')
     .trim()
     .toLowerCase()

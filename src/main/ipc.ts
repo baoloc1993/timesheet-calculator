@@ -11,12 +11,21 @@ import { docBangLuong, nhanVienTuBangLuong } from './excel/docBangLuong'
 import { ghiBangLuong } from './excel/ghiBangLuong'
 import { ghiChiTietDaLamSach } from './excel/ghiChiTietDaLamSach'
 import { layNhanVien, layConfig, ghiConfig } from './settings/store'
-import { themHoacSua, xoaNhanVien, tronTuFileKyTruoc } from './settings/nhanVien'
+import { themHoacSua, xoaNhanVien, tronTuFileKyTruoc, chuanTen } from './settings/nhanVien'
+import { chuanHoaMa } from '../core/ma'
 import { log } from './logger'
+
+interface SuaTay {
+  maNhanVien: string
+  ngay: string
+  cap: { vao: string | null; ra: string | null }[]
+}
 
 interface KyHienTai {
   fileMay: string
   ky: KetQuaKyCong
+  /** Các dòng người dùng đã sửa tay ở S3 — phát lại sau khi dựng lại kỳ (BH vòng 2). */
+  suaTay: SuaTay[]
 }
 
 let kyHienTai: KyHienTai | null = null
@@ -89,7 +98,7 @@ export function dangKyIpc(): void {
       }
       const file = await docFileMay(duongDan)
       const ky = xuLyKyCong(file, layNhanVien())
-      kyHienTai = { fileMay: duongDan, ky }
+      kyHienTai = { fileMay: duongDan, ky, suaTay: [] }
       ghiConfig({ kyXuLyGanNhat: file.thang })
       log.info('nạp file máy', duongDan, `${file.khoi.length} khối`)
       log.event('nap-file-may', {
@@ -154,10 +163,21 @@ export function dangKyIpc(): void {
       const rut = nhanVienTuBangLuong(doc)
       if (rut.length === 0)
         return { ok: false, loi: 'Không rút được nhân viên nào từ file — kiểm tra đúng là file bảng lương.' }
+      // Thẻ không có cột mã VÀ tên không khớp ai đã khai → không tạo được người mới (thiếu mã).
+      const tenDaKhai = new Set(layNhanVien().map((n) => chuanTen(n.tenBangLuong)))
+      const thieuMa = rut.filter(
+        (x) => !chuanHoaMa(x.maNhanVien) && !tenDaKhai.has(chuanTen(x.tenBangLuong))
+      )
       const ds = tronTuFileKyTruoc(rut)
       const lm = await lamMoiKyHienTai()
-      log.info('nạp nhân viên từ file kỳ trước', `${rut.length} thẻ`)
-      return { ok: true, data: ds, ky: layKyHienTai(), canhBaoLamMoi: lm.loi }
+      log.info('nạp nhân viên từ file kỳ trước', `${rut.length} thẻ, ${thieuMa.length} thiếu mã`)
+      let canhBao = lm.loi
+      if (thieuMa.length > 0 && !canhBao)
+        canhBao = `File bảng lương này không có cột mã nhân viên — ${thieuMa.length} thẻ (${thieuMa
+          .map((x) => x.tenBangLuong)
+          .filter(Boolean)
+          .join(', ')}) chưa khớp ai trong Setup, cần thêm tay kèm mã. ${ds.length} nhân viên hiện có.`
+      return { ok: true, data: ds, ky: layKyHienTai(), canhBaoLamMoi: canhBao }
     } catch (e) {
       return loi(e)
     }
@@ -202,6 +222,11 @@ export function dangKyIpc(): void {
     const thMoi = tinhLaiTongHop(th, th.ketQuaNgay)
     Object.assign(th, thMoi)
     capNhatTongKy()
+    // Ghi lại để phát lại sau khi dựng lại kỳ (Setup đổi) — không mất chỉnh tay (BH vòng 2).
+    kyHienTai.suaTay = kyHienTai.suaTay.filter(
+      (s) => !(s.maNhanVien === p.maNhanVien && s.ngay === p.ngay)
+    )
+    kyHienTai.suaTay.push({ maNhanVien: p.maNhanVien, ngay: p.ngay, cap: p.cap })
     return { ok: true, data: { dong: dongMoi, tongHop: th } }
   })
 
@@ -285,8 +310,11 @@ export function dangKyIpc(): void {
     shell.openPath(duongDan)
   })
 
-  // Mốc "đã xem kết quả kỳ trong app" — success metric vòng 2 (đọc trong app thay vì
-  // mở Excel). Pha E đếm kỳ có `xem-cong-s7` mà KHÔNG có `xuat-hoan-tat` = đọc trong app.
+  // Mốc "đã mở màn Xem công" — tín hiệu hỗ trợ cho success metric vòng 2.
+  // KHÔNG suy trực tiếp "không mở Excel" từ đây: người dùng vẫn xuất file mỗi kỳ để gửi đi
+  // (S6 là đường phụ, không bỏ), nên `xuat-hoan-tat` bắn mỗi kỳ. Metric thật đo bằng
+  // người dùng tự báo; event này chỉ cho
+  // thấy S7 CÓ được dùng và tần suất.
   ipcMain.handle('ky-cong:danh-dau-xem-cong', () => {
     if (!kyHienTai) return
     log.event('xem-cong-s7', {
@@ -313,7 +341,22 @@ async function lamMoiKyHienTai(): Promise<{ loi?: string }> {
   if (!kyHienTai) return {}
   try {
     const file = await docFileMay(kyHienTai.fileMay)
-    kyHienTai = { fileMay: kyHienTai.fileMay, ky: xuLyKyCong(file, layNhanVien()) }
+    const ky = xuLyKyCong(file, layNhanVien())
+    const suaTay = kyHienTai.suaTay
+    // Phát lại các chỉnh tay ở S3 lên kỳ vừa dựng lại (khớp maNhanVien + ngay).
+    // Bỏ entry nào không còn khớp (nhân viên bị xoá / ngày không còn) — không ném.
+    const conHieuLuc: SuaTay[] = []
+    for (const s of suaTay) {
+      const th = ky.tongHop.find((t) => t.maNhanVien === s.maNhanVien)
+      if (!th) continue
+      const idx = th.ketQuaNgay.findIndex((d) => d.ngay === s.ngay)
+      if (idx < 0) continue
+      th.ketQuaNgay[idx] = tinhLaiMotDong(th.ketQuaNgay[idx], s.cap, th.nguongGioChuanNgay)
+      Object.assign(th, tinhLaiTongHop(th, th.ketQuaNgay))
+      conHieuLuc.push(s)
+    }
+    Object.assign(ky, tongToanKy(ky.tongHop))
+    kyHienTai = { fileMay: kyHienTai.fileMay, ky, suaTay: conHieuLuc }
     return {}
   } catch (e) {
     log.error('làm mới kỳ', (e as Error).message)
