@@ -62,10 +62,18 @@ export function S6Xuat() {
   return (
     <>
       <h1>
-        Xuất kết quả <span className="sub">kỳ {ky.thang}</span>
+        Xuất kết quả <span className="sub">kỳ {ky.thang} · đường phụ — chỉ cần xem thì mở Xem công</span>
       </h1>
 
       <div className="card">
+        <p className="note" style={{ marginTop: 0 }}>
+          Chỉ cần xem số để đối chiếu / duyệt lương thì mở{' '}
+          <button className="lien-ket" style={{ padding: 0 }} onClick={() => di('s7')}>
+            Xem công / bảng lương
+          </button>
+          , không phải xuất file. Xuất Excel khi cần file gửi đi.
+        </p>
+
         <div className="kv">
           <span className="k">File 1</span>
           <span>{tenBL}</span>

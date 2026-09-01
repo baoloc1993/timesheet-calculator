@@ -1,26 +1,28 @@
-/* Token — chép nguyên từ context/DESIGN-SYSTEM.md §2 (không sửa giá trị ở đây). */
+/* Token — chép nguyên từ context/DESIGN-SYSTEM.md §2 (không sửa giá trị ở đây).
+   Vòng 2: chữ +1 bậc, 4 màu chữ đậm ~AAA, thêm --control-min + --leading
+. --color-warning-bg khoá #FFF4CE (trùng fill Excel). */
 :root {
   --color-bg: #f5f5f7;
   --color-surface: #ffffff;
   --color-surface-sunken: #f2f2f5;
   --color-text: #1a1a1a;
-  --color-text-muted: #616166;
-  --color-primary: #005fb8;
+  --color-text-muted: #4b4b50;
+  --color-primary: #004e92;
   --color-primary-soft: #e9f1fb;
   --color-on-primary: #ffffff;
-  --color-border: #767676;
+  --color-border: #5d5d5d;
   --color-divider: #e6e6ea;
   --color-hover: #f0f0f3;
-  --color-danger: #c42b1c;
+  --color-danger: #a4262c;
   --color-danger-soft: #fdf3f2;
   --color-warning-bg: #fff4ce;
 
   --font-sans: "Segoe UI Variable", "Segoe UI", system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif;
-  --text-sm: 12px;
-  --text-base: 14px;
-  --text-lg: 18px;
-  --text-xl: 28px;
-  --text-stat: 34px;
+  --text-sm: 14px;
+  --text-base: 16px;
+  --text-lg: 20px;
+  --text-xl: 32px;
+  --text-stat: 40px;
 
   --space-xs: 4px;
   --space-sm: 8px;
@@ -30,6 +32,8 @@
   --radius: 6px;
   --radius-lg: 12px;
   --shadow: 0 1px 2px rgba(0, 0, 0, 0.04), 0 4px 16px rgba(0, 0, 0, 0.06);
+  --control-min: 40px;
+  --leading: 1.6;
 }
 
 * {
@@ -47,7 +51,7 @@ body {
   color: var(--color-text);
   font-family: var(--font-sans);
   font-size: var(--text-base);
-  line-height: 1.55;
+  line-height: var(--leading);
 }
 
 .shell {
@@ -70,9 +74,7 @@ body {
   color: var(--color-text);
   font-weight: 600;
 }
-.titlebar .lien-ket {
-  margin-left: auto;
-  -webkit-app-region: no-drag;
+.lien-ket {
   background: none;
   border: none;
   padding: 0;
@@ -81,8 +83,12 @@ body {
   cursor: pointer;
   text-decoration: underline;
 }
-.titlebar .lien-ket:hover {
+.lien-ket:hover {
   color: var(--color-text);
+}
+.titlebar .lien-ket {
+  margin-left: auto;
+  -webkit-app-region: no-drag;
 }
 .body {
   flex: 1;
@@ -99,8 +105,10 @@ nav.rail {
 }
 nav.rail button {
   position: relative;
-  display: block;
+  display: flex;
+  align-items: center;
   width: 100%;
+  min-height: var(--control-min);
   text-align: left;
   font: inherit;
   font-size: var(--text-base);
@@ -187,6 +195,7 @@ nav.rail .badge {
   font-size: var(--text-sm);
   color: var(--color-text-muted);
   margin-top: var(--space-sm);
+  line-height: var(--leading);
 }
 
 .stats {
@@ -223,7 +232,10 @@ nav.rail .badge {
 
 .btn {
   font: inherit;
-  min-height: 34px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: var(--control-min);
   padding: var(--space-xs) var(--space-lg);
   background: var(--color-surface);
   color: var(--color-text);
@@ -249,6 +261,10 @@ nav.rail .badge {
 .btn[aria-busy="true"] {
   opacity: 0.7;
   cursor: progress;
+}
+.btn.small {
+  min-height: var(--control-min);
+  padding: var(--space-xs) var(--space-md);
 }
 
 .toolbar {
@@ -293,6 +309,7 @@ td {
   text-align: left;
   padding: var(--space-md);
   border-bottom: 1px solid var(--color-divider);
+  line-height: var(--leading);
 }
 th {
   color: var(--color-text-muted);
@@ -319,6 +336,28 @@ tr.row.selected td:first-child {
 tr.fixed td {
   background: var(--color-warning-bg);
 }
+tr.total td {
+  background: var(--color-surface-sunken);
+  font-weight: 600;
+}
+tr.total td.big {
+  font-size: var(--text-lg);
+}
+td.orig {
+  color: var(--color-text-muted);
+  font-variant-numeric: tabular-nums;
+}
+td.cell-fixed {
+  background: var(--color-warning-bg);
+  font-variant-numeric: tabular-nums;
+}
+tr.rest td,
+td.rest-day {
+  color: var(--color-text-muted);
+}
+tr.rest td {
+  opacity: 0.65;
+}
 
 .chip {
   display: inline-block;
@@ -342,7 +381,7 @@ tr.fixed td {
 }
 .field input {
   font: inherit;
-  min-height: 34px;
+  min-height: var(--control-min);
   padding: var(--space-xs) var(--space-sm);
   border: 1px solid var(--color-border);
   border-radius: var(--radius);
@@ -366,6 +405,7 @@ tr.fixed td {
   padding: var(--space-xl);
   text-align: center;
   color: var(--color-text-muted);
+  line-height: var(--leading);
 }
 .empty .btn {
   margin: var(--space-xs);
@@ -444,8 +484,8 @@ tr.fixed td {
 
 .inline-input {
   font: inherit;
-  width: 62px;
-  min-height: 28px;
+  width: 76px;
+  min-height: var(--control-min);
   padding: 2px var(--space-xs);
   border: 1px solid var(--color-border);
   border-radius: var(--radius);
@@ -453,6 +493,20 @@ tr.fixed td {
   color: var(--color-text);
 }
 .inline-input:focus {
+  outline: none;
+  border-color: var(--color-primary);
+}
+
+.picker {
+  font: inherit;
+  min-height: var(--control-min);
+  padding: var(--space-xs) var(--space-sm);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  background: var(--color-surface);
+  color: var(--color-text);
+}
+.picker:focus {
   outline: none;
   border-color: var(--color-primary);
 }

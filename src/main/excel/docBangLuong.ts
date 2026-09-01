@@ -35,6 +35,18 @@ function chuoi(v: ExcelJS.CellValue): string {
   return ''
 }
 
+/**
+ * Bảng lương công ty đôi khi ghi mã DÍNH tên trong một ô ("00003 My83", "Tên: 00011 Lan89").
+ * Bóc CỤM CHỮ SỐ ĐẦU (mã) khỏi phần còn lại (tên) — chỉ khi ô mã riêng để trống.
+ * Chữ số Ở CUỐI tên ("Bác Lan 68", "Lan89") KHÔNG phải mã, giữ nguyên trong tên.
+ */
+export function bocMaVaTen(raw: string): { ma: string; ten: string } {
+  const s = raw.trim()
+  const m = s.match(/^(\d{1,6})\s+(\S.*)$/)
+  if (m) return { ma: chuanHoaMa(m[1]), ten: m[2].trim() }
+  return { ma: '', ten: s }
+}
+
 function so(v: ExcelJS.CellValue): number {
   if (typeof v === 'number') return v
   if (typeof v === 'string' && v.trim() && !isNaN(Number(v))) return Number(v)
@@ -67,7 +79,16 @@ export async function docBangLuong(duongDan: string): Promise<{ wb: ExcelJS.Work
       // tên: sau "Tên:" trong cùng ô, hoặc ô kế bên
       let ten = oTen.replace(/.*t[êe]n\s*:?\s*/i, '').trim()
       if (!ten) ten = chuoi(row.getCell(cum.tenPhu).value)
-      const ma = chuanHoaMa(chuoi(row.getCell(cum.ma).value))
+
+      // mã: ô riêng (cột D/J) trước; nếu trống thì bóc cụm chữ số đầu dính trong tên
+      let ma = chuanHoaMa(chuoi(row.getCell(cum.ma).value))
+      if (!ma) {
+        const boc = bocMaVaTen(ten)
+        if (boc.ma) {
+          ma = boc.ma
+          ten = boc.ten
+        }
+      }
       if (!ten && !ma) continue
 
       // quét xuống tối đa 6 dòng tìm "Lương tháng:" và "Làm thêm"
@@ -107,10 +128,13 @@ export async function docBangLuong(duongDan: string): Promise<{ wb: ExcelJS.Work
   return { wb, doc: { the } }
 }
 
-/** Rút NhanVien (một phần) từ bảng lương để trộn vào Setup. */
+/**
+ * Rút NhanVien (một phần) từ bảng lương để trộn vào Setup.
+ * Giữ cả thẻ chỉ có tên (layout cũ không có cột mã) — `tronTuFileKyTruoc` khớp theo tên.
+ */
 export function nhanVienTuBangLuong(doc: BangLuongDaDoc): Partial<NhanVien>[] {
   return doc.the
-    .filter((t) => t.maNhanVien)
+    .filter((t) => t.maNhanVien || t.tenBangLuong)
     .map((t) => ({
       maNhanVien: t.maNhanVien,
       tenBangLuong: t.tenBangLuong,

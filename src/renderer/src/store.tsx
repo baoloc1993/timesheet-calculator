@@ -2,7 +2,7 @@ import { createContext, useCallback, useContext, useEffect, useState } from 'rea
 import type { ReactNode } from 'react'
 import type { NhanVien, KetQuaKyCong, TrangThaiApp } from '../../preload/api-types'
 
-export type ManHinh = 's1' | 's2' | 's3' | 's4' | 's5' | 's6'
+export type ManHinh = 's1' | 's2' | 's3' | 's4' | 's5' | 's6' | 's7' | 's8'
 
 interface AppState {
   manHinh: ManHinh
@@ -13,6 +13,7 @@ interface AppState {
   fileMay: string
   maNhanVienDangXem: string | null
   chonNhanVien(ma: string): void
+  xemChamCongGoc(ma: string): void
   datKy(k: KetQuaKyCong | null, fileMay?: string): void
   lamMoiTrangThai(): Promise<void>
   lamMoiNhanVien(): Promise<void>
@@ -44,7 +45,7 @@ export function AppStore({ children }: { children: ReactNode }) {
     setKy(k)
     if (fm !== undefined) {
       setFileMay(fm)
-      setMa(null) // nạp file khác → thôi bám nhân viên đang xem ở S3 (BH-13)
+      setMa(null) // nạp file khác → thôi bám nhân viên đang xem ở S3/S8 (BH-13)
     }
   }, [])
 
@@ -59,6 +60,10 @@ export function AppStore({ children }: { children: ReactNode }) {
     chonNhanVien: (ma) => {
       setMa(ma)
       setManHinh('s3')
+    },
+    xemChamCongGoc: (ma) => {
+      setMa(ma)
+      setManHinh('s8')
     },
     datKy,
     lamMoiTrangThai,

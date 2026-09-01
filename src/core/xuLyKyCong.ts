@@ -12,6 +12,7 @@ import { tinhKetQuaNhanVien } from './phatHienBatThuong'
 import { tinhQ, tinhR, tinhS } from './tinhQRS'
 import { phutTrongNgay } from './time'
 import { chuanHoaMa } from './ma'
+import { tinhThanhTien } from './tinhThanhTien'
 
 const lam2 = (x: number) => Math.round(x * 100) / 100
 
@@ -24,6 +25,8 @@ function tongHopTuKetQua(nv: NhanVien, ketQuaNgay: KetQuaNgay[]): TongHopNhanVie
     tongGioOT += kq.gioOtS
     if (kq.mucDoCanhBao === 'vang') soDongCanXemLai++
   }
+  const nc = lam2(tongNgayCong)
+  const ot = lam2(tongGioOT)
   return {
     maNhanVien: nv.maNhanVien,
     tenMay: nv.tenMay,
@@ -31,9 +34,10 @@ function tongHopTuKetQua(nv: NhanVien, ketQuaNgay: KetQuaNgay[]): TongHopNhanVie
     nguongGioChuanNgay: nv.nguongGioChuanNgay,
     donGiaNgay: nv.donGiaNgay,
     donGiaGioOT: nv.donGiaGioOT,
-    tongNgayCong: lam2(tongNgayCong),
-    tongGioOT: lam2(tongGioOT),
+    tongNgayCong: nc,
+    tongGioOT: ot,
     soDongCanXemLai,
+    thanhTien: tinhThanhTien(nc, ot, nv.donGiaNgay, nv.donGiaGioOT),
     ketQuaNgay
   }
 }
@@ -43,11 +47,13 @@ export function tongToanKy(tongHop: TongHopNhanVien[]): {
   tongNgayCongCaKy: number
   tongGioOTCaKy: number
   tongDongCanXemLai: number
+  tongThanhTienCaKy: number
 } {
   return {
     tongNgayCongCaKy: lam2(tongHop.reduce((s, t) => s + t.tongNgayCong, 0)),
     tongGioOTCaKy: lam2(tongHop.reduce((s, t) => s + t.tongGioOT, 0)),
-    tongDongCanXemLai: tongHop.reduce((s, t) => s + t.soDongCanXemLai, 0)
+    tongDongCanXemLai: tongHop.reduce((s, t) => s + t.soDongCanXemLai, 0),
+    tongThanhTienCaKy: tongHop.reduce((s, t) => s + t.thanhTien, 0)
   }
 }
 

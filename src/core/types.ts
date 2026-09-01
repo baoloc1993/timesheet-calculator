@@ -72,6 +72,8 @@ export interface TongHopNhanVien {
   tongNgayCong: number
   tongGioOT: number
   soDongCanXemLai: number
+  /** Dẫn xuất (vòng 2): Σ ngày công × đơn giá ngày + Σ giờ OT × đơn giá giờ OT. Chỉ hiển thị S7. */
+  thanhTien: number
   ketQuaNgay: KetQuaNgay[]
 }
 
@@ -90,4 +92,6 @@ export interface KetQuaKyCong {
   tongNgayCongCaKy: number
   tongGioOTCaKy: number
   tongDongCanXemLai: number
+  /** Dẫn xuất (vòng 2): Σ thành tiền mọi nhân viên trong kỳ. */
+  tongThanhTienCaKy: number
 }

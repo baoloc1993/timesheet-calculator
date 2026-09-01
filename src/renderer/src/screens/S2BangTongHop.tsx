@@ -71,9 +71,16 @@ export function S2BangTongHop() {
           <button
             className="btn primary"
             disabled={ky.thieuSetup.length > 0}
+            onClick={() => di('s7')}
+          >
+            Xem công / bảng lương
+          </button>
+          <button
+            className="btn"
+            disabled={ky.thieuSetup.length > 0}
             onClick={() => di('s6')}
           >
-            Xuất 2 file
+            Xuất 2 file Excel
           </button>
         </div>
 

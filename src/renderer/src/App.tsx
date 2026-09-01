@@ -7,18 +7,24 @@ import { S3RaDongVang } from './screens/S3RaDongVang'
 import { S4ChanThieuSetup } from './screens/S4ChanThieuSetup'
 import { S5Setup } from './screens/S5Setup'
 import { S6Xuat } from './screens/S6Xuat'
+import { S7XemCong } from './screens/S7XemCong'
+import { S8XemChamCongGoc } from './screens/S8XemChamCongGoc'
 
 const MUC: { id: ManHinh; nhan: string }[] = [
   { id: 's1', nhan: 'Nạp file' },
   { id: 's2', nhan: 'Bảng tổng hợp' },
   { id: 's3', nhan: 'Rà dòng vàng' },
+  { id: 's7', nhan: 'Xem công / bảng lương' },
+  { id: 's8', nhan: 'Xem chấm công gốc' },
   { id: 's4', nhan: 'Chặn: thiếu Setup' },
   { id: 's5', nhan: 'Setup nhân viên' },
-  { id: 's6', nhan: 'Xuất kết quả' }
+  { id: 's6', nhan: 'Xuất Excel' }
 ]
 
+const CAN_KY: ManHinh[] = ['s2', 's3', 's4', 's6', 's7', 's8']
+
 function Rail() {
-  const { manHinh, di, ky } = useApp()
+  const { manHinh, di, ky, maNhanVienDangXem } = useApp()
   const coKy = !!ky
   const thieu = ky?.thieuSetup.length ?? 0
   const canXem = ky?.tongDongCanXemLai ?? 0
@@ -26,8 +32,9 @@ function Rail() {
     <nav className="rail" aria-label="Điều hướng">
       {MUC.map((m) => {
         const khoa =
-          (!coKy && (m.id === 's2' || m.id === 's3' || m.id === 's4' || m.id === 's6')) ||
-          (m.id === 's4' && thieu === 0)
+          (!coKy && CAN_KY.includes(m.id)) ||
+          (m.id === 's4' && thieu === 0) ||
+          (m.id === 's8' && !maNhanVienDangXem)
         return (
           <button
             key={m.id}
@@ -60,6 +67,10 @@ function ManHinhHienTai() {
       return <S5Setup />
     case 's6':
       return <S6Xuat />
+    case 's7':
+      return <S7XemCong />
+    case 's8':
+      return <S8XemChamCongGoc />
   }
 }
 

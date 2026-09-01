@@ -60,26 +60,47 @@ export function xoaNhanVien(id: string): NhanVien[] {
   return danhSach
 }
 
-/** Trộn danh sách rút từ file kỳ trước vào Setup (thêm mã mới, không đè mã đã có). */
+const chuanTen = (s: string | undefined): string =>
+  String(s ?? '')
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, ' ')
+
+/**
+ * Trộn danh sách rút từ file kỳ trước vào Setup.
+ * - Có mã: khớp theo mã; chưa có → thêm mới, đã có → bổ sung ô trống (không đè người dùng đã khai).
+ * - Không mã (layout bảng lương cũ): khớp theo `tenBangLuong` với người đã khai để bổ sung
+ *   đơn giá; không tạo người mới.
+ */
 export function tronTuFileKyTruoc(rut: Partial<NhanVien>[]): NhanVien[] {
   const store = moStore()
   const danhSach = store.get('nhanVien', [])
   const theoMa = new Map(danhSach.map((n) => [chuanHoaMa(n.maNhanVien), n]))
+  const theoTen = new Map(danhSach.map((n) => [chuanTen(n.tenBangLuong), n]))
+
+  const boSungOTrong = (cu: NhanVien, r: Partial<NhanVien>): void => {
+    if (!cu.tenBangLuong && r.tenBangLuong) cu.tenBangLuong = String(r.tenBangLuong)
+    if (!cu.donGiaNgay && r.donGiaNgay) cu.donGiaNgay = Number(r.donGiaNgay)
+    if (!cu.donGiaGioOT && r.donGiaGioOT) cu.donGiaGioOT = Number(r.donGiaGioOT)
+  }
+
   for (const r of rut) {
     const ma = chuanHoaMa(r.maNhanVien)
-    if (!ma) continue
-    const cu = theoMa.get(ma)
-    if (cu) {
-      // bổ sung ô còn trống, không đè giá trị người dùng đã khai
-      if (!cu.tenBangLuong && r.tenBangLuong) cu.tenBangLuong = String(r.tenBangLuong)
-      if (!cu.donGiaNgay && r.donGiaNgay) cu.donGiaNgay = Number(r.donGiaNgay)
-      if (!cu.donGiaGioOT && r.donGiaGioOT) cu.donGiaGioOT = Number(r.donGiaGioOT)
-    } else {
-      const moi = chuanHoaNhanVien(r)
-      danhSach.push({ ...moi, id: randomUUID() })
-      theoMa.set(ma, moi)
+    if (ma) {
+      const cu = theoMa.get(ma)
+      if (cu) boSungOTrong(cu, r)
+      else {
+        const moi = chuanHoaNhanVien(r)
+        danhSach.push({ ...moi, id: randomUUID() })
+        theoMa.set(ma, moi)
+        if (moi.tenBangLuong) theoTen.set(chuanTen(moi.tenBangLuong), moi)
+      }
+      continue
     }
+    const cuTheoTen = theoTen.get(chuanTen(r.tenBangLuong))
+    if (cuTheoTen) boSungOTrong(cuTheoTen, r)
   }
+
   store.set('nhanVien', danhSach)
   return danhSach
 }

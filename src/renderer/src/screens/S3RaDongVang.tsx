@@ -6,7 +6,7 @@ import type { KetQuaNgay } from '../../../preload/api-types'
 const so2 = (n: number) => Math.round(n * 100) / 100
 
 export function S3RaDongVang() {
-  const { ky, maNhanVienDangXem, di, datKy } = useApp()
+  const { ky, maNhanVienDangXem, di, datKy, xemChamCongGoc } = useApp()
   const th = ky?.tongHop.find((t) => t.maNhanVien === maNhanVienDangXem)
 
   const sap = useMemo(
@@ -48,6 +48,9 @@ export function S3RaDongVang() {
         <div className="toolbar">
           <button className="btn" onClick={() => di('s2')}>
             Xong, quay lại tổng hợp
+          </button>
+          <button className="btn" onClick={() => xemChamCongGoc(th.maNhanVien)}>
+            Xem chấm công gốc để đối chiếu
           </button>
         </div>
 
