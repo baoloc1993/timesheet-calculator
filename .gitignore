@@ -55,6 +55,9 @@ test-results/
 deployment/local/mau/
 deployment/local/out/
 deployment/local/dogfood-shots/
+# Import Setup thật cho máy người dùng (tên + đơn giá 15 nhân viên) — không commit
+deployment/local/config-import-15.json
+deployment/local/nhan-vien-full-15.json
 
 # Local database
 *.sqlite
