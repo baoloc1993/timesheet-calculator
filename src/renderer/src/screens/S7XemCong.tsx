@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import { useApp } from '../store'
 import { dmy } from '../App'
 
@@ -6,6 +7,12 @@ const vnd = (n: number) => n.toLocaleString('vi-VN')
 
 export function S7XemCong() {
   const { ky, di, xemChamCongGoc } = useApp()
+
+  // Mốc "đọc kết quả kỳ trong app" — success metric vòng 2.
+  const sanSang = !!ky && ky.thieuSetup.length === 0
+  useEffect(() => {
+    if (sanSang) window.api.danhDauXemCong()
+  }, [sanSang, ky?.thang])
 
   if (!ky) {
     return (
@@ -42,6 +49,8 @@ export function S7XemCong() {
     )
   }
 
+  const chuaKhaiDonGia = ky.tongHop.filter((t) => t.donGiaNgay === 0 || t.donGiaGioOT === 0)
+
   return (
     <>
       <h1>
@@ -51,6 +60,15 @@ export function S7XemCong() {
           viên · không cần xuất Excel
         </span>
       </h1>
+
+      {chuaKhaiDonGia.length > 0 && (
+        <p className="note" role="status">
+          ⚠ {chuaKhaiDonGia.length} nhân viên chưa khai đủ đơn giá (ngày hoặc giờ OT ={' '}
+          <strong>0</strong>) — thành tiền của họ <strong>chưa đủ</strong> và tổng kỳ đang
+          thiếu phần đó: {chuaKhaiDonGia.map((t) => t.tenBangLuong || t.tenMay).join(', ')}. Khai
+          đơn giá ở màn Setup nhân viên.
+        </p>
+      )}
 
       <div className="stats">
         <div className="stat">
@@ -101,7 +119,12 @@ export function S7XemCong() {
                   <td className="num">{so2(t.tongGioOT)}</td>
                   <td className="num">{vnd(t.donGiaNgay)}</td>
                   <td className="num">{vnd(t.donGiaGioOT)}</td>
-                  <td className="num">{vnd(t.thanhTien)}</td>
+                  <td className="num">
+                    {vnd(t.thanhTien)}
+                    {(t.donGiaNgay === 0 || t.donGiaGioOT === 0) && (
+                      <span className="muted small"> ⚠ thiếu đơn giá</span>
+                    )}
+                  </td>
                 </tr>
               ))}
             </tbody>

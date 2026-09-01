@@ -69,12 +69,15 @@ export async function docBangLuong(duongDan: string): Promise<{ wb: ExcelJS.Work
   const ws = wb.worksheets[0]
   const the: TheNhanVienBangLuong[] = []
 
-  const tongDong = ws.rowCount
+  // Bảng lương công ty ~135 dòng. Cap để file .xlsx khai rowCount cực lớn không treo main.
+  const tongDong = Math.min(ws.rowCount, 5000)
+  // Chỉ khớp ô BẮT ĐẦU bằng "Tên:" (thẻ nhân viên) — không bắt "Tên đơn vị:", "Tên công ty:"…
+  const RE_THE = /^\s*(họ và\s+)?t[êe]n\s*:/i
   for (const cum of CUM) {
     for (let r = 1; r <= tongDong; r++) {
       const row = ws.getRow(r)
       const oTen = chuoi(row.getCell(cum.ten).value)
-      if (!/tên/i.test(oTen)) continue
+      if (!RE_THE.test(oTen)) continue
 
       // tên: sau "Tên:" trong cùng ô, hoặc ô kế bên
       let ten = oTen.replace(/.*t[êe]n\s*:?\s*/i, '').trim()

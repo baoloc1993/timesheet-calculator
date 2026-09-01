@@ -285,6 +285,17 @@ export function dangKyIpc(): void {
     shell.openPath(duongDan)
   })
 
+  // Mốc "đã xem kết quả kỳ trong app" — success metric vòng 2 (đọc trong app thay vì
+  // mở Excel). Pha E đếm kỳ có `xem-cong-s7` mà KHÔNG có `xuat-hoan-tat` = đọc trong app.
+  ipcMain.handle('ky-cong:danh-dau-xem-cong', () => {
+    if (!kyHienTai) return
+    log.event('xem-cong-s7', {
+      thang: kyHienTai.ky.thang,
+      soNhanVien: kyHienTai.ky.tongHop.length,
+      tongThanhTien: kyHienTai.ky.tongThanhTienCaKy
+    })
+  })
+
   // Kênh phản hồi trong sản phẩm. Địa chỉ cố định ở main —
   // renderer không truyền URL vào (tránh mở link tuỳ ý).
   ipcMain.handle('mo-gop-y', () => {

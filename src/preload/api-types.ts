@@ -74,4 +74,9 @@ export interface Api {
   moThuMuc(duongDan: string): Promise<void>
   /** Mở trình gửi mail tới địa chỉ góp ý. */
   moGopY(): Promise<void>
+  /**
+   * Ghi mốc "đã xem kết quả trong app" vào log cục bộ ( 4,
+   * success metric vòng 2 — đọc công trong app thay vì mở Excel). Fire-and-forget.
+   */
+  danhDauXemCong(): Promise<void>
 }

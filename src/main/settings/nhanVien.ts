@@ -90,7 +90,9 @@ export function tronTuFileKyTruoc(rut: Partial<NhanVien>[]): NhanVien[] {
       const cu = theoMa.get(ma)
       if (cu) boSungOTrong(cu, r)
       else {
-        const moi = chuanHoaNhanVien(r)
+        // Nhân viên mới từ bảng lương: chưa có tên trên file máy — tạm dùng tên bảng lương
+        // để bản ghi không rỗng `tenMay` (người dùng rà lại ở Setup). Ghép kỳ vẫn theo mã.
+        const moi = chuanHoaNhanVien({ ...r, tenMay: r.tenMay || r.tenBangLuong || '' })
         danhSach.push({ ...moi, id: randomUUID() })
         theoMa.set(ma, moi)
         if (moi.tenBangLuong) theoTen.set(chuanTen(moi.tenBangLuong), moi)

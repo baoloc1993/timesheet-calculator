@@ -14,7 +14,8 @@ const api: Api = {
   tinhLaiNgay: (payload) => ipcRenderer.invoke('ky-cong:tinh-lai-ngay', payload),
   chonThuMucVaXuat: (payload) => ipcRenderer.invoke('ky-cong:xuat', payload),
   moThuMuc: (duongDan) => ipcRenderer.invoke('mo-thu-muc', duongDan),
-  moGopY: () => ipcRenderer.invoke('mo-gop-y')
+  moGopY: () => ipcRenderer.invoke('mo-gop-y'),
+  danhDauXemCong: () => ipcRenderer.invoke('ky-cong:danh-dau-xem-cong')
 }
 
 if (process.contextIsolated) {
