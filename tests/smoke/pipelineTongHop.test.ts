@@ -22,7 +22,7 @@ const NGAY_AN: [string, string | null, string | null, string | null, string | nu
   ['2026-08-03', '07:00', '11:30', '13:30', '17:06'], // 8.1h đúng ngưỡng An → không OT
   ['2026-08-04', '07:00', '11:30', '13:30', '19:00'], // OT thật 1.5h
   ['2026-08-05', '07:05', null, '13:30', '17:30'], // thiếu ra1 → điền theo ngày kề, ép OT=0
-  ['2026-08-06', '07:00', '17:30', null, null], // một ca liền phủ trưa → ép OT=0 + vàng
+  ['2026-08-06', '07:00', '17:30', null, null], // một cặp phủ trưa → cả ngày công, 0 OT, không cảnh báo
   ['2026-08-07', null, null, null, null] // nghỉ cả ngày → none
 ]
 
@@ -71,8 +71,9 @@ describe('luồng lõi trên fixture tổng hợp (CI)', () => {
     expect(d('2026-08-05').mucDoCanhBao).toBe('vang')
     expect(d('2026-08-05').gioOtS).toBe(0) // thiếu chấm → ép OT=0
     expect(d('2026-08-05').otBiEp).toBe(true)
-    expect(d('2026-08-06').mucDoCanhBao).toBe('vang')
-    expect(d('2026-08-06').gioOtS).toBe(0) // ca liền phủ trưa → ép OT=0 (BH-1)
+    expect(d('2026-08-06').mucDoCanhBao).toBe('none') // một cặp phủ trưa (07:00–17:30) → cả ngày công, không cảnh báo
+    expect(d('2026-08-06').ngayCongR).toBe(1)
+    expect(d('2026-08-06').gioOtS).toBe(0)
     expect(d('2026-08-07').mucDoCanhBao).toBe('none') // nghỉ thật
     expect(d('2026-08-07').ngayCongR).toBe(0)
 

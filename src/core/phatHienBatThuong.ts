@@ -4,8 +4,12 @@
 //  1. Thiếu một mốc trong một cặp (ngày có chấm nhưng lệch) → điền mốc thiếu =
 //     giờ tương ứng của ngày liền kề (trước, hoặc sau). Ép S = 0.
 //  2. ra < vào trong một cặp / cặp cuối có ra thuộc hôm sau → bỏ mốc lạc, rồi xử như (1).
-//  3. Q > 14 (ca dài — quên chấm nghỉ trưa) → giữ Q cho R, ép S = 0.
-//  4. S tính ra > 4 và dòng chỉ có 1 cặp → ép S = 0.
+//  3. Q > 14 (ca dài — quên chấm nghỉ trưa) trên dòng ≥ 2 cặp → giữ Q cho R, ép S = 0.
+//  4. Chấm đúng MỘT cặp vào/ra → S = 0, KHÔNG cảnh báo. R tuỳ cặp:
+//       phủ trưa (vào < 12:00 và ra > 13:30) → R = 1 (làm cả ngày, quên chấm trưa);
+//       chỉ một buổi → R = 0.5 (nửa công).
+//     người dùng chốt 2026-09-01 (back-test pha E). Thay luật cũ "1 cặp > 6.5h phủ trưa →
+//     vàng + ép OT=0" (BH-1) và "S>4 trên 1 cặp → ép OT=0".
 //  5. Không chấm gì cả ngày → KHÔNG cảnh báo (nghỉ thật): Q=R=S=0, mức = none.
 
 import type { DongNgayMay, KetQuaNgay } from './types'
@@ -15,7 +19,6 @@ import { tinhQ, tinhR, tinhS } from './tinhQRS'
 const MAC_DINH = [7 * 60, 11 * 60 + 30, 13 * 60 + 30, 17 * 60 + 30] // vào1 ra1 vào2 ra2
 const KHE_TRUA_TOI_THIEU = 40 // phút
 const CA_QUA_DAI = 14 // giờ
-const OT_NGHI_NGO = 4 // giờ
 
 interface Moc {
   phut: number
@@ -108,14 +111,28 @@ export function tinhKetQuaNhanVien(
         { vao: moc[2].phut, ra: moc[3].phut }
       ]
     } else if (n === 2 && moc[0].khe % 2 === 0 && moc[1].khe % 2 === 1) {
-      // Hai mốc: một "vào", một "ra", đúng thứ tự → một cặp làm việc.
-      cap = [{ vao: moc[0].phut, ra: moc[1].phut }]
-      if (!(moc[0].khe === 0 && moc[1].khe === 1)) {
-        // không phải cặp sáng chuẩn (vd chỉ chấm cặp chiều, hoặc vào1+ra2 mất chấm trưa)
-        // → thiếu lần chấm, ép OT = 0.
-        epOtVe0 = true
-        ghiChu.push('chỉ một cặp vào/ra do thiếu lần chấm, ép OT = 0')
-      }
+      // MỘT CẶP VÀO/RA (chấm đúng một lần vào + một lần ra). người dùng chốt 2026-09-01
+      // (back-test pha E, khớp 256/263 ngày lịch sử):
+      //  · cặp PHỦ TRƯA (vào trước 12:00 và ra sau 13:30) → làm cả ngày, quên chấm trưa
+      //    → R = 1, S = 0, KHÔNG cảnh báo.
+      //  · cặp CHỈ MỘT BUỔI (chỉ sáng, hoặc chỉ chiều) → NỬA CÔNG: R = 0.5, S = 0, KHÔNG cảnh báo.
+      // Thay luật cũ BH-1 ("1 cặp > 6.5h phủ trưa → vàng + ép OT=0") và "S>4 trên 1 cặp".
+      const c = { vao: gioChuoi(moc[0].phut), ra: gioChuoi(moc[1].phut) }
+      const phuTrua = moc[0].phut < 12 * 60 && moc[1].phut > 13 * 60 + 30
+      ketQua.push({
+        ngay: dong.ngay,
+        thu: dong.thu,
+        capVaoRa: [c],
+        nguonGoc,
+        gioLamQ: Math.round(tinhQ([c]) * 10000) / 10000,
+        ngayCongR: phuTrua ? 1 : 0.5,
+        gioOtS: 0,
+        daSua: false,
+        otBiEp: false,
+        ghiChuSua: '',
+        mucDoCanhBao: 'none'
+      })
+      continue
     } else if (n === 1) {
       epOtVe0 = true
       const p = moc[0].phut
@@ -198,21 +215,8 @@ export function tinhKetQuaNhanVien(
       ghiChu.push(`ca dài bất thường (${Q.toFixed(1)}h), không tính OT`)
     }
 
-    // 4a. Một cặp liền phủ qua buổi trưa → gần như chắc chắn quên chấm nghỉ trưa
-    //. Ép OT = 0 + tô vàng, độc lập với ngưỡng Q>14 / S>4 (BH-1).
-    if (!epOtVe0 && cap.length === 1 && cap[0].ra - cap[0].vao > 6.5 * 60) {
-      epOtVe0 = true
-      ghiChu.push(
-        `một ca liền ${((cap[0].ra - cap[0].vao) / 60).toFixed(1)}h phủ buổi trưa — nghi quên chấm nghỉ trưa, ép OT = 0`
-      )
-    }
-
-    // 4b. OT nghi ngờ trên dòng chỉ 1 cặp (giữ lại làm lưới an toàn cho ca ngắn hơn)
-    const sThu = tinhS(Q, nguongGioChuanNgay, false)
-    if (!epOtVe0 && cap.length === 1 && sThu > OT_NGHI_NGO) {
-      epOtVe0 = true
-      ghiChu.push(`OT ${sThu.toFixed(1)}h trên một ca liền — nghi quên chấm nghỉ trưa, ép OT = 0`)
-    }
+    // (Luật cũ 4a "một cặp liền > 6.5h phủ trưa → vàng" và 4b "S>4 trên một cặp → ép OT=0"
+    //  đã bỏ — dòng chỉ một cặp vào/ra nay xử ở nhánh n===2 phía trên: nửa công, không cảnh báo.)
 
     if (co3) ghiChu.push('có dữ liệu cặp 3 — kiểm tra tay')
 

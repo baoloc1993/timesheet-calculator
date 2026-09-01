@@ -19,6 +19,7 @@ export interface KetQuaQRS {
 }
 
 const lam4 = (x: number) => Math.round(x * 10000) / 10000
+const lam2 = (x: number) => Math.round(x * 100) / 100
 
 export function tinhQ(capVaoRa: CapVaoRa[]): number {
   const c1 = capVaoRa[0]
@@ -36,10 +37,18 @@ export function tinhR(Q: number): number {
   return 1
 }
 
-/** @param epOtVe0 dòng bị sửa vì thiếu/lộn mốc → ép S=0 bất kể Q. */
+/**
+ * @param epOtVe0 dòng bị sửa vì thiếu/lộn mốc → ép S=0 bất kể Q.
+ *
+ * Cận Q so ở 2 chữ số thập phân (làm tròn phút): Q đúng bằng ngưỡng+0.1 (vd 8.20 với
+ * ngưỡng 8.1) → KHÔNG tính OT, khớp luật "Q > ngưỡng+0.1". Không làm tròn thì bụi số
+ * `8.1 + 0.1 = 8.200000000000001` và Q phù du làm kết quả nhảy ±0.1h ở đúng cận đó —
+ * back-test pha E 2026-09-01 thấy 5 dòng lệch kiểu này (bảng tay Excel ra 0.10, luật ra 0).
+ */
 export function tinhS(Q: number, nguongGioChuanNgay: number, epOtVe0 = false): number {
   if (epOtVe0) return 0
-  if (Q > nguongGioChuanNgay + 0.1) return lam4(Q - nguongGioChuanNgay)
+  const nguongCan = lam2(nguongGioChuanNgay + 0.1)
+  if (lam2(Q) > nguongCan) return lam4(Q - nguongGioChuanNgay)
   return 0
 }
 

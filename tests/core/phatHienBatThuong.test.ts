@@ -32,11 +32,21 @@ describe('phát hiện + tự sửa dòng bất thường', () => {
     expect(d16.capVaoRa[1].vao).toBe('13:30')
   })
 
-  it('một ca liền quá dài (>14h) → giữ ngày công, ép OT=0', () => {
+  it('một cặp PHỦ TRƯA (vào sáng, ra chiều) → cả ngày công, 0 OT, không cảnh báo', () => {
+    // người dùng 2026-09-01 (back-test pha E): quên chấm trưa nhưng có mặt cả ngày → R=1, S=0.
     const r = tinhKetQuaNhanVien([dong('2026-08-10', ['06:00', '22:30'])], 8.1)
     expect(r[0].ngayCongR).toBe(1)
     expect(r[0].gioOtS).toBe(0)
-    expect(r[0].mucDoCanhBao).toBe('vang')
+    expect(r[0].mucDoCanhBao).toBe('none')
+    expect(r[0].daSua).toBe(false)
+    expect(r[0].capVaoRa).toEqual([{ vao: '06:00', ra: '22:30' }])
+  })
+
+  it('một cặp CHỈ MỘT BUỔI (chỉ chiều) → nửa công, 0 OT, không cảnh báo', () => {
+    const r = tinhKetQuaNhanVien([dong('2026-08-10', ['13:12', '19:07'])], 8.1)
+    expect(r[0].ngayCongR).toBe(0.5)
+    expect(r[0].gioOtS).toBe(0)
+    expect(r[0].mucDoCanhBao).toBe('none')
   })
 
   it('ngày thường đủ 4 mốc → không cảnh báo, OT theo công thức', () => {
@@ -74,18 +84,17 @@ describe('phát hiện + tự sửa dòng bất thường', () => {
     expect(r[0].ghiChuSua).not.toBe('')
   })
 
-  it('S thô > 4 trên MỘT cặp liền → ép OT = 0 (nghi quên chấm nghỉ trưa)', () => {
-    // 07:00→20:00 = 13h, dưới ngưỡng "ca dài" 14h nên chỉ luật S>4 kích hoạt
+  it('một cặp liền 13h phủ trưa (07:00–20:00) → cả ngày công, 0 OT, không cảnh báo', () => {
     const r = tinhKetQuaNhanVien([dong('2026-08-10', ['07:00', '20:00'])], 8.1)
     expect(r[0].gioLamQ).toBeCloseTo(13, 4)
     expect(r[0].ngayCongR).toBe(1)
     expect(r[0].gioOtS).toBe(0)
-    expect(r[0].mucDoCanhBao).toBe('vang')
+    expect(r[0].mucDoCanhBao).toBe('none')
   })
 
   it('OT lớn nhưng chia HAI cặp rõ ràng → GIỮ OT, không ép, không cảnh báo', () => {
-    // BacLan ngưỡng 6.1, 07:00-11:30 + 12:30-19:00 = 4.5 + 6.5 = 11h, S thô 4.9 > 4
-    // nhưng có 2 cặp → luật "S>4 & 1 cặp" KHÔNG áp → tránh xoá nhầm tiền OT thật
+    // BacLan ngưỡng 6.1, 07:00-11:30 + 12:30-19:00 = 4.5 + 6.5 = 11h, OT thật 4.9h.
+    // Có đủ 2 cặp → tính bình thường, không đụng luật "một cặp = nửa công".
     const r = tinhKetQuaNhanVien([dong('2026-08-12', ['07:00', '11:30', '12:30', '19:00'])], 6.1)
     expect(r[0].gioLamQ).toBeCloseTo(11, 4)
     expect(r[0].gioOtS).toBeCloseTo(4.9, 4)
