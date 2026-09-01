@@ -9,6 +9,10 @@ files:
 win:
   target:
     - nsis
+  # Tên file .exe ASCII: NSIS tạo shortcut với target rỗng khi exe có dấu tiếng Việt
+  # trong đường dẫn (perMachine:false) → shortcut hỏng, bấm không mở (phát hiện pha P vòng 2).
+  # productName (tiêu đề cửa sổ, mục "Add or remove programs") vẫn giữ tiếng Việt.
+  executableName: TimesheetCalculator
   artifactName: TimesheetCalculator-${version}-setup.${ext}
 nsis:
   oneClick: false
