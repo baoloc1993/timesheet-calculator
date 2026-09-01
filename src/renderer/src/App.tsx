@@ -21,7 +21,10 @@ const MUC: { id: ManHinh; nhan: string }[] = [
   { id: 's6', nhan: 'Xuất Excel' }
 ]
 
-const CAN_KY: ManHinh[] = ['s2', 's3', 's4', 's6', 's7', 's8']
+// s7 KHÔNG khoá khi chưa nạp kỳ — nó là đường chính để xem công + lương, cần dẫn người
+// dùng vào (khuôn rỗng của S7 tự chỉ sang màn Nạp file). Pha E vòng 2: người dùng mở app
+// lần đầu không biết xem lương ở đâu vì mục này bị mờ.
+const CAN_KY: ManHinh[] = ['s2', 's3', 's4', 's6', 's8']
 
 function Rail() {
   const { manHinh, di, ky, maNhanVienDangXem } = useApp()

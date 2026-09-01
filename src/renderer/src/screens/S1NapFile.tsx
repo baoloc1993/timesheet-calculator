@@ -56,6 +56,14 @@ export function S1NapFile() {
         </div>
       )}
 
+      {soNV > 0 && (
+        <p className="note" style={{ marginTop: 0, marginBottom: 'var(--space-lg)' }}>
+          Nạp file máy chấm công của tháng → app tính công + lương cho cả {soNV} nhân viên, rồi
+          mở màn <strong>Xem công / bảng lương</strong> để xem ai bao nhiêu công, thành tiền
+          bao nhiêu.
+        </p>
+      )}
+
       <div className="card">
         <div className="dropzone">
           Chọn file <strong>.xlsx</strong> do máy chấm công xuất ra (sheet &quot;Chi Tiet&quot;)
