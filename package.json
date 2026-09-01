@@ -17,7 +17,8 @@
     "test": "vitest run",
     "migrate": "tsx src/main/settings/migrate-cli.ts",
     "doctor": "tsx scripts/doctor.ts",
-    "dist": "electron-vite build && electron-builder --win nsis"
+    "prep-build-cache": "node scripts/prep-build-cache.mjs",
+    "dist": "node scripts/prep-build-cache.mjs && electron-vite build && electron-builder --win nsis"
   },
   "dependencies": {
     "electron-store": "^8.2.0",

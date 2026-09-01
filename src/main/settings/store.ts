@@ -6,6 +6,7 @@ import { readFileSync, existsSync } from 'fs'
 import type { NhanVien } from '../../core/types'
 import { chuanHoaMa } from '../../core/ma'
 import { chayMigration, SCHEMA_VERSION_HIEN_TAI } from './migrations'
+import { saoLuuTruocMigrate } from './saoLuu'
 
 export interface AppConfig {
   schemaVersion: number
@@ -40,6 +41,7 @@ export function moStore(): Store<Schema> {
   // migrate nếu schemaVersion cũ
   const truoc = store.get('appConfig.schemaVersion', 0)
   if (truoc < SCHEMA_VERSION_HIEN_TAI) {
+    saoLuuTruocMigrate(store.path) // config.json.bak trước khi đổi schema — rollback
     const duLieu = { nhanVien: store.get('nhanVien', []), appConfig: store.get('appConfig') }
     const sau = chayMigration(duLieu, truoc)
     store.set('nhanVien', sau.nhanVien)

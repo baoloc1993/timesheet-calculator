@@ -1,6 +1,7 @@
 // `make migrate` — di trú config.json ngoài Electron (dùng cùng module electron-store).
 import Store from 'electron-store'
 import { chayMigration, SCHEMA_VERSION_HIEN_TAI } from './migrations'
+import { saoLuuTruocMigrate } from './saoLuu'
 import type { NhanVien } from '../../core/types'
 
 interface Schema {
@@ -19,6 +20,8 @@ if (truoc >= SCHEMA_VERSION_HIEN_TAI) {
 }
 
 console.log(`Migrate config.json: v${truoc} → v${SCHEMA_VERSION_HIEN_TAI}`)
+const bak = saoLuuTruocMigrate(store.path)
+if (bak) console.log(`Đã sao lưu: ${bak}`)
 const sau = chayMigration(
   { nhanVien: store.get('nhanVien', []), appConfig: store.get('appConfig', {}) },
   truoc
