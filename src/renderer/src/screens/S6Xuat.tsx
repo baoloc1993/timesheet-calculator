@@ -3,8 +3,7 @@ import { useApp } from '../store'
 import type { XuatKetQua } from '../../../preload/api-types'
 
 export function S6Xuat() {
-  const { ky, trangThai, di, lamMoiTrangThai } = useApp()
-  const [fileMau, setFileMau] = useState(trangThai?.fileMauBangLuongGanNhat ?? '')
+  const { ky, di, lamMoiTrangThai } = useApp()
   const [dangGhi, setDangGhi] = useState(false)
   const [loi, setLoi] = useState<string | null>(null)
   const [trung, setTrung] = useState<string[] | null>(null)
@@ -29,14 +28,6 @@ export function S6Xuat() {
   const t = ky.thang.slice(-2)
   const tenBL = `bang luong thang ${t}.xlsx`
   const tenCT = `chi tiet cong thang ${t} (da lam sach).xlsx`
-
-  async function chonMau() {
-    const r = await window.api.chonFileMauBangLuong()
-    if (r.ok && r.data) {
-      setFileMau(r.data.duongDan)
-      setLoi(null)
-    }
-  }
 
   async function xuat(ghiDe: boolean) {
     setLoi(null)
@@ -70,6 +61,10 @@ export function S6Xuat() {
           Chỉ cần xem số để đối chiếu / duyệt lương thì mở{' '}
           <button className="lien-ket" style={{ padding: 0 }} onClick={() => di('s7')}>
             Xem công / bảng lương
+          </button>{' '}
+          hoặc{' '}
+          <button className="lien-ket" style={{ padding: 0 }} onClick={() => di('s9')}>
+            Dashboard
           </button>
           , không phải xuất file. Xuất Excel khi cần file gửi đi.
         </p>
@@ -82,18 +77,10 @@ export function S6Xuat() {
           <span className="k">File 2</span>
           <span>{tenCT}</span>
         </div>
-
-        <div className="field" style={{ marginTop: 'var(--space-lg)' }}>
-          <label>File mẫu bảng lương (thường là kỳ trước)</label>
-          <div className="toolbar" style={{ marginBottom: 0 }}>
-            <button className="btn" onClick={chonMau}>
-              {fileMau ? 'Đổi file mẫu' : 'Chọn file mẫu'}
-            </button>
-            <span className="muted small" style={{ alignSelf: 'center' }}>
-              {fileMau || 'chưa chọn — bắt buộc để xuất bảng lương'}
-            </span>
-          </div>
-        </div>
+        <p className="note" style={{ marginTop: 'var(--space-md)' }}>
+          Bảng lương dùng mẫu nhúng sẵn trong app — không cần chọn file mẫu. Nhân viên trong
+          kỳ mà mẫu chưa có thẻ, app tự thêm thẻ theo khuôn chuẩn.
+        </p>
 
         {trung && (
           <div className="errorbox" style={{ margin: 'var(--space-lg) 0' }}>
@@ -135,14 +122,19 @@ export function S6Xuat() {
               Đã xuất 2 file vào {xong.thuMuc}.<br />
               Bảng lương: {xong.bangLuong.daGhi} thẻ điền
               {xong.bangLuong.khongKhop.length > 0 &&
-                ` · ${xong.bangLuong.khongKhop.length} nhân viên trong kỳ không tìm thấy thẻ: ${xong.bangLuong.khongKhop.join(', ')}`}
+                ` · ${xong.bangLuong.khongKhop.length} nhân viên không điền được: ${xong.bangLuong.khongKhop.join(', ')}`}
               . Chi tiết: {xong.chiTiet.soDongToVang} dòng tô vàng.
             </p>
+            {xong.bangLuong.theThemMoi.length > 0 && (
+              <p className="note" role="status">
+                ➕ {xong.bangLuong.theThemMoi.length} thẻ mới được thêm vào bảng lương (mẫu chưa
+                có): {xong.bangLuong.theThemMoi.join(', ')}.
+              </p>
+            )}
             {xong.bangLuong.theGiuSoCu.length > 0 && (
               <p className="note" role="status">
-                ⚠ {xong.bangLuong.theGiuSoCu.length} thẻ trong file mẫu <strong>không được cập nhật</strong> kỳ
-                này (nhân viên không có trong kỳ) — vẫn giữ số ngày/giờ kỳ trước, kiểm tay:{' '}
-                {xong.bangLuong.theGiuSoCu.join(', ')}.
+                ⚠ {xong.bangLuong.theGiuSoCu.length} thẻ trong mẫu <strong>không được cập nhật</strong> kỳ
+                này (nhân viên không có trong kỳ) — kiểm tay: {xong.bangLuong.theGiuSoCu.join(', ')}.
               </p>
             )}
             <button className="btn primary" onClick={() => window.api.moThuMuc(xong.thuMuc)}>
@@ -157,7 +149,7 @@ export function S6Xuat() {
             <div className="toolbar" style={{ marginTop: 'var(--space-lg)', marginBottom: 0 }}>
               <button
                 className="btn primary"
-                disabled={!fileMau || dangGhi}
+                disabled={dangGhi}
                 aria-busy={dangGhi}
                 onClick={() => xuat(false)}
               >

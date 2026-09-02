@@ -1,6 +1,6 @@
 {
   "name": "timesheet-calculator",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Timesheet calculator for ZKTeco attendance machines",
   "main": "./out/main/index.js",
   "author": "Bao Loc <baoloc1993@gmail.com>",
@@ -18,7 +18,8 @@
     "migrate": "tsx src/main/settings/migrate-cli.ts",
     "doctor": "tsx scripts/doctor.ts",
     "prep-build-cache": "node scripts/prep-build-cache.mjs",
-    "dist": "node scripts/prep-build-cache.mjs && electron-vite build && electron-builder --win nsis"
+    "mau-bang-luong": "node scripts/build-mau-bang-luong.mjs",
+    "dist": "node scripts/build-mau-bang-luong.mjs && node scripts/prep-build-cache.mjs && electron-vite build && electron-builder --win nsis"
   },
   "dependencies": {
     "electron-store": "^8.2.0",

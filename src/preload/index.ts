@@ -9,13 +9,18 @@ const api: Api = {
   themSuaNhanVien: (nv) => ipcRenderer.invoke('nhan-vien:them-sua', nv),
   xoaNhanVien: (p) => ipcRenderer.invoke('nhan-vien:xoa', p),
   napNhanVienTuFileKyTruoc: () => ipcRenderer.invoke('nhan-vien:nap-tu-file-ky-truoc'),
-  chonFileMauBangLuong: () => ipcRenderer.invoke('bang-luong:chon-file-mau'),
   layKyHienTai: () => ipcRenderer.invoke('ky-cong:hien-tai'),
   tinhLaiNgay: (payload) => ipcRenderer.invoke('ky-cong:tinh-lai-ngay', payload),
   chonThuMucVaXuat: (payload) => ipcRenderer.invoke('ky-cong:xuat', payload),
   moThuMuc: (duongDan) => ipcRenderer.invoke('mo-thu-muc', duongDan),
   moGopY: () => ipcRenderer.invoke('mo-gop-y'),
-  danhDauXemCong: () => ipcRenderer.invoke('ky-cong:danh-dau-xem-cong')
+  danhDauXemCong: () => ipcRenderer.invoke('ky-cong:danh-dau-xem-cong'),
+
+  // Vòng 3
+  luuKy: (payload) => ipcRenderer.invoke('ky-cong:luu-ky', payload),
+  danhSachKy: () => ipcRenderer.invoke('ky-luu:danh-sach'),
+  docKy: (thang) => ipcRenderer.invoke('ky-luu:doc', thang),
+  capNhatPhatLuong: (payload) => ipcRenderer.invoke('ky-luu:cap-nhat-phat-luong', payload)
 }
 
 if (process.contextIsolated) {

@@ -5,12 +5,22 @@ import { basename, join, dirname } from 'path'
 import { existsSync } from 'fs'
 import type { KetQuaKyCong, NhanVien } from '../core/types'
 import { xuLyKyCong, tinhLaiMotDong, tinhLaiTongHop, tongToanKy } from '../core/xuLyKyCong'
+import { dongBangKetQuaKy } from '../core/ketQuaKy'
+import type { KetQuaKy } from '../core/ketQuaKy'
 import { phutTrongNgay } from '../core/time'
 import { docFileMay, LoiDocFileMay } from './excel/docFileMay'
 import { docBangLuong, nhanVienTuBangLuong } from './excel/docBangLuong'
 import { ghiBangLuong } from './excel/ghiBangLuong'
+import { duongDanMauBangLuong } from './excel/mauBangLuong'
 import { ghiChiTietDaLamSach } from './excel/ghiChiTietDaLamSach'
-import { layNhanVien, layConfig, ghiConfig } from './settings/store'
+import {
+  layNhanVien,
+  layConfig,
+  ghiConfig,
+  layDanhSachKy,
+  layMotKy,
+  ghiMotKy
+} from './settings/store'
 import { themHoacSua, xoaNhanVien, tronTuFileKyTruoc, chuanTen } from './settings/nhanVien'
 import { chuanHoaMa } from '../core/ma'
 import { log } from './logger'
@@ -183,26 +193,6 @@ export function dangKyIpc(): void {
     }
   })
 
-  ipcMain.handle('bang-luong:chon-file-mau', async () => {
-    try {
-      let duongDan = duongDanTest('TSC_TEST_FILE_MAU')
-      if (!duongDan) {
-        const w = win()
-        const r = await dialog.showOpenDialog(w!, {
-          title: 'Chọn file mẫu bảng lương (thường là kỳ trước)',
-          filters: [{ name: 'Excel', extensions: ['xlsx'] }],
-          properties: ['openFile']
-        })
-        if (r.canceled || !r.filePaths[0]) return { ok: false, loi: 'Đã huỷ chọn file.' }
-        duongDan = r.filePaths[0]
-      }
-      ghiConfig({ fileMauBangLuongGanNhat: duongDan })
-      return { ok: true, data: { duongDan } }
-    } catch (e) {
-      return loi(e)
-    }
-  })
-
   ipcMain.handle('ky-cong:tinh-lai-ngay', (_e, p: { maNhanVien: string; ngay: string; cap: { vao: string | null; ra: string | null }[] }) => {
     if (!kyHienTai) return { ok: false, loi: 'Chưa nạp kỳ công.' }
     const th = kyHienTai.ky.tongHop.find((t) => t.maNhanVien === p.maNhanVien)
@@ -239,8 +229,12 @@ export function dangKyIpc(): void {
       }
 
       const c = layConfig()
-      if (!c.fileMauBangLuongGanNhat || !existsSync(c.fileMauBangLuongGanNhat))
-        return { ok: false, loi: 'Chưa chọn file mẫu bảng lương. Bấm "Chọn file mẫu" trước.' }
+      const fileMau = duongDanMauBangLuong()
+      if (!existsSync(fileMau))
+        return {
+          ok: false,
+          loi: 'Không tìm thấy mẫu bảng lương nhúng sẵn trong app. Cài lại bản mới nếu lỗi vẫn còn.'
+        }
 
       let thuMuc = duongDanTest('TSC_TEST_THU_MUC_XUAT')
       if (!thuMuc) {
@@ -263,7 +257,7 @@ export function dangKyIpc(): void {
         if (trung.length) return { ok: false, canXacNhanGhiDe: trung }
       }
 
-      const bl = await ghiBangLuong(c.fileMauBangLuongGanNhat, pBL, kyHienTai.ky.tongHop, {
+      const bl = await ghiBangLuong(fileMau, pBL, kyHienTai.ky.tongHop, {
         ngayBatDau: kyHienTai.ky.ngayBatDau,
         ngayKetThuc: kyHienTai.ky.ngayKetThuc
       })
@@ -282,6 +276,7 @@ export function dangKyIpc(): void {
         theLuong: bl.daGhi.length,
         theKhongKhop: bl.khongKhop.length,
         theGiuSoCu: bl.theGiuSoCu.length,
+        theThemMoi: bl.theThemMoi.length,
         dongToVang: ct.soDongToVang
       })
 
@@ -292,7 +287,8 @@ export function dangKyIpc(): void {
             duongDan: pBL,
             daGhi: bl.daGhi.length,
             khongKhop: bl.khongKhop,
-            theGiuSoCu: bl.theGiuSoCu
+            theGiuSoCu: bl.theGiuSoCu,
+            theThemMoi: bl.theThemMoi
           },
           chiTiet: { duongDan: pCT, soDongToVang: ct.soDongToVang },
           thuMuc
@@ -330,6 +326,67 @@ export function dangKyIpc(): void {
     const tieuDe = encodeURIComponent('Góp ý / báo lỗi — Timesheet Calculator')
     shell.openExternal(`mailto:feedback@example.com?subject=${tieuDe}`)
   })
+
+  // ---- Vòng 3 — lưu kỳ + dashboard + phát lương ----
+
+  // Lưu kỳ đang tính vào lịch sử (AC-1). Chặn khi còn nhân viên thiếu Setup —
+  // dongBang đóng băng mà thiếu người = kỳ sai vĩnh viễn.
+  ipcMain.handle('ky-cong:luu-ky', (_e, p: { ghiDe: boolean }) => {
+    if (!kyHienTai) return { ok: false, loi: 'Chưa nạp kỳ công nào để lưu.' }
+    if (kyHienTai.ky.thieuSetup.length > 0)
+      return {
+        ok: false,
+        loi: `Còn ${kyHienTai.ky.thieuSetup.length} nhân viên chưa khai Setup — khai đủ trước khi lưu kỳ (nếu không kỳ lưu sẽ thiếu người).`
+      }
+
+    const thang = kyHienTai.ky.thang
+    const cu = layMotKy(thang)
+    if (cu && !p.ghiDe) {
+      return {
+        ok: false,
+        canXacNhanGhiDe: `Kỳ ${thang} đã lưu ngày ${cu.ngayLuu.slice(0, 10)}. Lưu đè sẽ thay số công/OT/thành tiền bằng số vừa tính; khấu trừ + trạng thái "đã trả" đã nhập được giữ lại.`
+      }
+    }
+
+    const kq = dongBangKetQuaKy(kyHienTai.ky, kyHienTai.ky.tongHop, new Date().toISOString())
+    // Ghi đè: giữ khấu trừ / đã-trả cũ cho mã còn khớp.
+    if (cu) {
+      const maMoi = new Set(kq.dongBang.map((d) => d.maNhanVien))
+      for (const [ma, v] of Object.entries(cu.khauTru)) if (maMoi.has(ma)) kq.khauTru[ma] = v
+      for (const [ma, v] of Object.entries(cu.daTra)) if (maMoi.has(ma)) kq.daTra[ma] = v
+    }
+    ghiMotKy(kq)
+    log.info('lưu kỳ', thang, `${kq.dongBang.length} dòng`)
+    log.event('luu-ky', { thang, soDong: kq.dongBang.length, ghiDe: !!cu })
+    return { ok: true, data: kq }
+  })
+
+  ipcMain.handle('ky-luu:danh-sach', () => layDanhSachKy())
+
+  ipcMain.handle('ky-luu:doc', (_e, thang: string) => layMotKy(thang))
+
+  // Cập nhật khấu trừ / đã-trả một nhân viên trong một kỳ đã lưu (AC-3).
+  ipcMain.handle(
+    'ky-luu:cap-nhat-phat-luong',
+    (_e, p: { thang: string; maNhanVien: string; khauTru?: number; daTra?: boolean }) => {
+      const kq: KetQuaKy | null = layMotKy(p.thang)
+      if (!kq) return { ok: false, loi: 'Không tìm thấy kỳ đã lưu.' }
+      if (!kq.dongBang.some((d) => d.maNhanVien === p.maNhanVien))
+        return { ok: false, loi: 'Nhân viên không có trong kỳ này.' }
+
+      if (p.khauTru !== undefined) {
+        const k = Number(p.khauTru)
+        if (!Number.isFinite(k) || k < 0)
+          return { ok: false, loi: 'Khấu trừ phải là số không âm.' }
+        kq.khauTru = { ...kq.khauTru, [p.maNhanVien]: Math.round(k) }
+      }
+      if (p.daTra !== undefined) {
+        kq.daTra = { ...kq.daTra, [p.maNhanVien]: !!p.daTra }
+      }
+      ghiMotKy(kq)
+      return { ok: true, data: kq }
+    }
+  )
 }
 
 /**

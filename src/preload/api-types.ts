@@ -5,8 +5,11 @@ import type {
   TongHopNhanVien,
   KetQuaNgay
 } from '../core/types'
+import type { KetQuaKy, DongBang } from '../core/ketQuaKy'
 
-export type { NhanVien, KetQuaKyCong, TongHopNhanVien, KetQuaNgay }
+export type { NhanVien, KetQuaKyCong, TongHopNhanVien, KetQuaNgay, KetQuaKy, DongBang }
+// Hàm thuần vòng 3 — renderer dùng để tính "thực nhận" / Σ mà không cần round-trip IPC.
+export { tinhThucNhan, lamTronNghin, tongKetQuaKy } from '../core/ketQuaKy'
 
 export interface KetQua<T> {
   ok: boolean
@@ -33,7 +36,13 @@ export interface LoiTruongForm {
 }
 
 export interface XuatKetQua {
-  bangLuong: { duongDan: string; daGhi: number; khongKhop: string[]; theGiuSoCu: string[] }
+  bangLuong: {
+    duongDan: string
+    daGhi: number
+    khongKhop: string[]
+    theGiuSoCu: string[]
+    theThemMoi: string[]
+  }
   chiTiet: { duongDan: string; soDongToVang: number }
   thuMuc: string
 }
@@ -61,7 +70,6 @@ export interface Api {
   napNhanVienTuFileKyTruoc(): Promise<
     KetQua<NhanVien[]> & { ky?: KetQuaKyCong | null; canhBaoLamMoi?: string }
   >
-  chonFileMauBangLuong(): Promise<KetQua<{ duongDan: string }>>
   layKyHienTai(): Promise<KetQuaKyCong | null>
   tinhLaiNgay(payload: {
     maNhanVien: string
@@ -79,4 +87,21 @@ export interface Api {
    * success metric vòng 2 — đọc công trong app thay vì mở Excel). Fire-and-forget.
    */
   danhDauXemCong(): Promise<void>
+
+  // ---- Vòng 3 — lưu kỳ + dashboard + phát lương ----
+  /** Lưu kỳ đang tính vào lịch sử. `ghiDe` = xác nhận ghi đè kỳ đã tồn tại. */
+  luuKy(payload: { ghiDe: boolean }): Promise<
+    KetQua<KetQuaKy> & { canXacNhanGhiDe?: string }
+  >
+  /** Danh sách kỳ đã lưu, mới nhất trên đầu. */
+  danhSachKy(): Promise<KetQuaKy[]>
+  /** Một kỳ đã lưu theo `thang`. */
+  docKy(thang: string): Promise<KetQuaKy | null>
+  /** Cập nhật khấu trừ / trạng thái đã-trả của MỘT nhân viên trong MỘT kỳ đã lưu. */
+  capNhatPhatLuong(payload: {
+    thang: string
+    maNhanVien: string
+    khauTru?: number
+    daTra?: boolean
+  }): Promise<KetQua<KetQuaKy>>
 }

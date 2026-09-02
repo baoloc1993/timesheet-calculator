@@ -80,12 +80,30 @@ describe('ghiBangLuong — khớp theo mã, không nhầm vì chữ số trong t
     expect(num('I6')).toBe(0)
   })
 
-  it('nhân viên có trong tổng hợp nhưng không có thẻ → vào khongKhop, không ghi bừa', async () => {
-    const tongHop = [th({ maNhanVien: '00099', tenBangLuong: 'Không Có Thẻ', tongNgayCong: 22, tongGioOT: 3 })]
+  it('vòng 3 (AC-5): nhân viên chưa có thẻ trong mẫu → tự thêm thẻ theo khuôn, điền đúng số', async () => {
+    const tongHop = [
+      th({ maNhanVien: '00099', tenBangLuong: 'Không Có Thẻ', tongNgayCong: 22, tongGioOT: 3, donGiaNgay: 300000, donGiaGioOT: 60000 })
+    ]
     const ra2 = join(dir, 'bang luong 08b.xlsx')
     const kq = await ghiBangLuong(mau, ra2, tongHop, { ngayBatDau: '2026-08-01', ngayKetThuc: '2026-08-31' })
 
-    expect(kq.daGhi).toEqual([])
-    expect(kq.khongKhop).toEqual(['Không Có Thẻ'])
+    expect(kq.daGhi).toEqual(['00099'])
+    expect(kq.khongKhop).toEqual([])
+    expect(kq.theThemMoi).toEqual(['Không Có Thẻ'])
+
+    // Đọc lại: thẻ mới parse được + số đúng.
+    const { docBangLuong } = await import('../../src/main/excel/docBangLuong')
+    const { doc } = await docBangLuong(ra2)
+    const the = doc.the.find((t) => t.tenBangLuong.trim() === 'Không Có Thẻ')
+    expect(the).toBeTruthy()
+    const wb = new ExcelJS.Workbook()
+    await wb.xlsx.readFile(ra2)
+    const ws = wb.worksheets[0]
+    const num = (c: string): number => {
+      const v = ws.getCell(c).value
+      return typeof v === 'number' ? v : Number(v)
+    }
+    expect(num(the!.oSoLuongNgay)).toBe(22)
+    expect(num(the!.oSoLuongGio)).toBe(3)
   })
 })

@@ -9,48 +9,70 @@ import { S5Setup } from './screens/S5Setup'
 import { S6Xuat } from './screens/S6Xuat'
 import { S7XemCong } from './screens/S7XemCong'
 import { S8XemChamCongGoc } from './screens/S8XemChamCongGoc'
+import { S9Dashboard } from './screens/S9Dashboard'
+import { S10PhatLuong } from './screens/S10PhatLuong'
 
-const MUC: { id: ManHinh; nhan: string }[] = [
-  { id: 's1', nhan: 'Nạp file' },
+// Nav-rail gộp theo việc: 6 mục, nhãn theo việc người dùng.
+const KY_HIEN_TAI_SUB: { id: ManHinh; nhan: string }[] = [
   { id: 's2', nhan: 'Bảng tổng hợp' },
   { id: 's3', nhan: 'Rà dòng vàng' },
   { id: 's7', nhan: 'Xem công / bảng lương' },
-  { id: 's8', nhan: 'Xem chấm công gốc' },
-  { id: 's4', nhan: 'Chặn: thiếu Setup' },
-  { id: 's5', nhan: 'Setup nhân viên' },
-  { id: 's6', nhan: 'Xuất Excel' }
+  { id: 's8', nhan: 'Xem chấm công gốc' }
 ]
-
-// s7 KHÔNG khoá khi chưa nạp kỳ — nó là đường chính để xem công + lương, cần dẫn người
-// dùng vào (khuôn rỗng của S7 tự chỉ sang màn Nạp file). Pha E vòng 2: người dùng mở app
-// lần đầu không biết xem lương ở đâu vì mục này bị mờ.
-const CAN_KY: ManHinh[] = ['s2', 's3', 's4', 's6', 's8']
 
 function Rail() {
   const { manHinh, di, ky, maNhanVienDangXem } = useApp()
   const coKy = !!ky
   const thieu = ky?.thieuSetup.length ?? 0
   const canXem = ky?.tongDongCanXemLai ?? 0
+
   return (
     <nav className="rail" aria-label="Điều hướng">
-      {MUC.map((m) => {
-        const khoa =
-          (!coKy && CAN_KY.includes(m.id)) ||
-          (m.id === 's4' && thieu === 0) ||
-          (m.id === 's8' && !maNhanVienDangXem)
-        return (
+      <button aria-current={manHinh === 's9'} onClick={() => di('s9')}>
+        Dashboard
+      </button>
+      <button aria-current={manHinh === 's1'} onClick={() => di('s1')}>
+        Nạp kỳ mới
+      </button>
+
+      <div className="rail-group">
+        <span className="rail-group-label">Kỳ hiện tại</span>
+        {KY_HIEN_TAI_SUB.map((m) => {
+          const khoa = !coKy || (m.id === 's8' && !maNhanVienDangXem)
+          return (
+            <button
+              key={m.id}
+              className="rail-sub"
+              aria-current={manHinh === m.id}
+              disabled={khoa}
+              onClick={() => di(m.id)}
+            >
+              {m.nhan}
+              {m.id === 's3' && canXem > 0 && <span className="badge">{canXem}</span>}
+            </button>
+          )
+        })}
+        {coKy && thieu > 0 && (
           <button
-            key={m.id}
-            aria-current={manHinh === m.id}
-            disabled={khoa}
-            onClick={() => di(m.id)}
+            className="rail-sub"
+            aria-current={manHinh === 's4'}
+            onClick={() => di('s4')}
           >
-            {m.nhan}
-            {m.id === 's4' && thieu > 0 && <span className="badge">{thieu}</span>}
-            {m.id === 's3' && canXem > 0 && <span className="badge">{canXem}</span>}
+            Nhân viên chưa khai
+            <span className="badge">{thieu}</span>
           </button>
-        )
-      })}
+        )}
+      </div>
+
+      <button aria-current={manHinh === 's10'} onClick={() => di('s10')}>
+        Phát lương
+      </button>
+      <button aria-current={manHinh === 's5'} onClick={() => di('s5')}>
+        Setup nhân viên
+      </button>
+      <button aria-current={manHinh === 's6'} disabled={!coKy} onClick={() => di('s6')}>
+        Xuất Excel
+      </button>
     </nav>
   )
 }
@@ -74,6 +96,10 @@ function ManHinhHienTai() {
       return <S7XemCong />
     case 's8':
       return <S8XemChamCongGoc />
+    case 's9':
+      return <S9Dashboard />
+    case 's10':
+      return <S10PhatLuong />
   }
 }
 

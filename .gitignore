@@ -58,6 +58,10 @@ deployment/local/dogfood-shots/
 # Import Setup thật cho máy người dùng (tên + đơn giá 15 nhân viên) — không commit
 deployment/local/config-import-15.json
 deployment/local/nhan-vien-full-15.json
+deployment/local/ketquaky-seed.json
+
+# Mẫu bảng lương nhúng — sinh từ mẫu công ty (gitignored) lúc build, chứa tên + đơn giá thật.
+resources/mau-bang-luong.xlsx
 
 # Local database
 *.sqlite

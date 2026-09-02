@@ -16,6 +16,8 @@
   --color-danger: #a4262c;
   --color-danger-soft: #fdf3f2;
   --color-warning-bg: #fff4ce;
+  --color-success: #0b6a0b;
+  --color-success-soft: #e8f5e8;
 
   --font-sans: "Segoe UI Variable", "Segoe UI", system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif;
   --text-sm: 14px;
@@ -208,8 +210,8 @@ nav.rail .badge {
   opacity: 0.5;
 }
 .stat {
-  flex: 1;
-  min-width: 150px;
+  flex: 1 1 220px;
+  min-width: 200px;
   background: var(--color-surface);
   border: 1px solid var(--color-divider);
   border-radius: var(--radius-lg);
@@ -220,6 +222,8 @@ nav.rail .badge {
   font-size: var(--text-stat);
   font-weight: 600;
   line-height: 1.1;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
 }
 .stat .num.alert {
   color: var(--color-danger);
@@ -511,6 +515,178 @@ tr.rest td {
   border-color: var(--color-primary);
 }
 
+/* ---- Nav-rail: nhóm + submục (vòng 3) ---- */
+.rail-group {
+  margin: var(--space-md) 0 var(--space-xs);
+}
+.rail-group-label {
+  display: block;
+  padding: var(--space-xs) var(--space-md);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+nav.rail button.rail-sub {
+  padding-left: var(--space-xl);
+  font-size: var(--text-sm);
+}
+.rail-sub.muted {
+  display: block;
+  padding: var(--space-sm) var(--space-xl);
+}
+
+/* ---- S9 Dashboard ---- */
+.dash {
+  display: grid;
+  grid-template-columns: 320px 1fr;
+  gap: var(--space-xl);
+  align-items: start;
+}
+.dash-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+.btn.block {
+  width: 100%;
+}
+.period-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+.period-card {
+  font: inherit;
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+  min-height: var(--control-min);
+  padding: var(--space-lg);
+  background: var(--color-surface);
+  border: 1px solid var(--color-divider);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow);
+  cursor: pointer;
+}
+.period-card:hover {
+  background: var(--color-hover);
+}
+.period-card.selected {
+  background: var(--color-primary-soft);
+  border-color: var(--color-primary);
+  box-shadow: inset 3px 0 0 var(--color-primary);
+}
+.period-card.chua-luu {
+  border-style: dashed;
+  border-color: var(--color-primary);
+}
+.pc-thang {
+  font-size: var(--text-lg);
+  font-weight: 600;
+}
+.pc-nums {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-sm);
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+  font-variant-numeric: tabular-nums;
+}
+.dash-detail {
+  min-width: 0;
+}
+
+/* ---- S10 Phát lương ---- */
+tr.da-tra td {
+  background: var(--color-success-soft);
+}
+td.tiennhan {
+  font-weight: 600;
+}
+td.tiennhan.am {
+  color: var(--color-danger);
+}
+.ok-tick {
+  color: var(--color-success);
+  font-weight: 600;
+  font-size: var(--text-sm);
+}
+.checkwrap {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-sm);
+  min-height: var(--control-min);
+  cursor: pointer;
+}
+.checkwrap input[type="checkbox"] {
+  width: 24px;
+  height: 24px;
+  accent-color: var(--color-success);
+  cursor: pointer;
+}
+.inline-input.loi {
+  border-color: var(--color-danger);
+  border-width: 2px;
+}
+.err.small {
+  margin-top: var(--space-xs);
+}
+
+/* ---- Bản in (C14 / khuôn "Bản in" DESIGN-SYSTEM §5) ---- */
+.printsheet {
+  display: none;
+}
+@media print {
+  @page {
+    size: A4 portrait;
+    margin: 15mm;
+  }
+  body * {
+    visibility: hidden;
+  }
+  .printsheet,
+  .printsheet * {
+    visibility: visible;
+  }
+  .printsheet {
+    display: block;
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    color: #000;
+    background: #fff;
+  }
+  .printsheet h2 {
+    font-size: 16pt;
+    margin: 0 0 8pt;
+  }
+  .printsheet p {
+    font-size: 12pt;
+    margin: 0 0 12pt;
+  }
+  .printsheet table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12pt;
+  }
+  .printsheet th,
+  .printsheet td {
+    border: 1px solid #000;
+    padding: 6pt 8pt;
+    text-align: left;
+  }
+  .printsheet td.num {
+    text-align: right;
+  }
+  .printsheet tr {
+    break-inside: avoid;
+  }
+}
+
 @media (max-width: 1024px) {
   nav.rail {
     width: 200px;
@@ -519,6 +695,9 @@ tr.rest td {
     padding: var(--space-lg);
   }
   .grid2 {
+    grid-template-columns: 1fr;
+  }
+  .dash {
     grid-template-columns: 1fr;
   }
 }

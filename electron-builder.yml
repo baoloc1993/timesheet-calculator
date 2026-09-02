@@ -6,6 +6,10 @@ directories:
 files:
   - out/**/*
   - package.json
+extraResources:
+  # Mẫu bảng lương nhúng sẵn (vòng 3) — main đọc qua process.resourcesPath.
+  - from: resources/mau-bang-luong.xlsx
+    to: mau-bang-luong.xlsx
 win:
   target:
     - nsis

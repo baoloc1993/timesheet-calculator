@@ -28,6 +28,9 @@ export function S1NapFile() {
 
   return (
     <>
+      <button className="lien-ket" onClick={() => di('s9')} style={{ marginBottom: 'var(--space-md)' }}>
+        ← Về dashboard
+      </button>
       <h1>Nạp file máy chấm công</h1>
 
       <div className="stats">
