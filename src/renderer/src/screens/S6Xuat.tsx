@@ -78,8 +78,9 @@ export function S6Xuat() {
           <span>{tenCT}</span>
         </div>
         <p className="note" style={{ marginTop: 'var(--space-md)' }}>
-          Bảng lương dùng mẫu nhúng sẵn trong app — không cần chọn file mẫu. Nhân viên trong
-          kỳ mà mẫu chưa có thẻ, app tự thêm thẻ theo khuôn chuẩn.
+          Bảng lương dựng từ khuôn nhúng sẵn trong app — không cần chọn file mẫu. Mỗi nhân
+          viên một thẻ theo khuôn chuẩn (Số ngày · giờ OT · Đơn giá; chừa trống Chuyên cần /
+          bù lương / Lễ / bảo hiểm / vay để người dùng tự điền).
         </p>
 
         {trung && (
@@ -120,21 +121,15 @@ export function S6Xuat() {
           <div className="empty">
             <p>
               Đã xuất 2 file vào {xong.thuMuc}.<br />
-              Bảng lương: {xong.bangLuong.daGhi} thẻ điền
+              Bảng lương: {xong.bangLuong.daGhi} thẻ
               {xong.bangLuong.khongKhop.length > 0 &&
-                ` · ${xong.bangLuong.khongKhop.length} nhân viên không điền được: ${xong.bangLuong.khongKhop.join(', ')}`}
+                ` · ${xong.bangLuong.khongKhop.length} nhân viên không dựng được thẻ: ${xong.bangLuong.khongKhop.join(', ')}`}
               . Chi tiết: {xong.chiTiet.soDongToVang} dòng tô vàng.
             </p>
-            {xong.bangLuong.theThemMoi.length > 0 && (
-              <p className="note" role="status">
-                ➕ {xong.bangLuong.theThemMoi.length} thẻ mới được thêm vào bảng lương (mẫu chưa
-                có): {xong.bangLuong.theThemMoi.join(', ')}.
-              </p>
-            )}
             {xong.bangLuong.theGiuSoCu.length > 0 && (
               <p className="note" role="status">
-                ⚠ {xong.bangLuong.theGiuSoCu.length} thẻ trong mẫu <strong>không được cập nhật</strong> kỳ
-                này (nhân viên không có trong kỳ) — kiểm tay: {xong.bangLuong.theGiuSoCu.join(', ')}.
+                ⚠ {xong.bangLuong.theGiuSoCu.length} thẻ trong khuôn <strong>không thuộc kỳ này</strong> —
+                kiểm tay: {xong.bangLuong.theGiuSoCu.join(', ')}.
               </p>
             )}
             <button className="btn primary" onClick={() => window.api.moThuMuc(xong.thuMuc)}>

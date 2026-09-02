@@ -1,8 +1,11 @@
-// Sinh resources/mau-bang-luong.xlsx từ mẫu thật tháng 07 — thiết kế lại đẹp hơn
-// (canh lề, tiêu đề, khoảng cách, font) nhưng GIỮ NGUYÊN bộ ô hợp đồng mà docBangLuong
-// parse (thẻ 2 cột: "Tên:" / "Lương tháng:" / "Làm thêm"; cột Số lượng C/I, Đơn giá D/J).
+// Sinh resources/mau-bang-luong.xlsx — KHUÔN TRỐNG (chỉ tiêu đề + bề rộng cột + khổ in).
+// Vòng 3 (pha E): mẫu công ty viết tay có cấu trúc thẻ không đều → xuất ra lệch cột, dòng
+// trống rải rác, khó nhìn. Bỏ hẳn các thẻ mẫu — `ghiBangLuong.themThe` dựng MỌI thẻ theo
+// một khuôn cố định (lưới đều, 2 cột thẳng hàng, có viền). Khuôn trống → không mang tên /
+// số lương của ai vào .exe và không còn thẻ "giữ số cũ" thừa.
 //
-// Chạy lại khi cần sửa hình thức mẫu:  node scripts/build-mau-bang-luong.mjs
+// Bộ ô hợp đồng (Số lượng ngày/giờ, Đơn giá) + các nhãn docBangLuong parse ("Tên:",
+// "Lương tháng", "Làm thêm") do `ghiBangLuong.ts` ghi ra khi xuất — không nằm ở file này.
 
 import ExcelJS from 'exceljs'
 import { resolve, dirname } from 'path'
@@ -10,108 +13,41 @@ import { mkdirSync } from 'fs'
 import { fileURLToPath } from 'url'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
-const NGUON = resolve(__dirname, '../deployment/local/mau/bang luong thang 07 (mau).xlsx')
 const RA = resolve(__dirname, '../resources/mau-bang-luong.xlsx')
 
 const FONT = 'Segoe UI'
 const MAU_TIEUDE = 'FF004E92' // --color-primary
-const MAU_TIEUDE_NHAT = 'FFE9F1FB' // --color-primary-soft
-const MAU_NHAN = 'FFF2F2F5' // --color-surface-sunken
-
-const RE_TEN = /^\s*(họ và\s+)?t[êe]n\s*:/i
-const RE_KY = /^\s*\d{1,2}\/\d{1,2}\s*-\s*\d{1,2}\/\d{1,2}\/\d{4}\s*$/
-const NHAN_HEADER = new Set(['đvt', 'số lượng', 'đơn giá', 'thành tiền'])
-const NHAN_DAM = new Set(['tổng', 'lương tháng:', 'làm thêm', 'chuyên cần', 'bu lương', 'lễ', 'bảo hiểm', 'vay'])
-
-function chuoi(v) {
-  if (v == null) return ''
-  if (typeof v === 'string') return v.trim()
-  if (typeof v === 'number') return String(v)
-  if (typeof v === 'object' && Array.isArray(v.richText)) return v.richText.map((t) => t.text).join('').trim()
-  return ''
-}
-
-const vien = () => ({ style: 'thin', color: { argb: 'FFD9D9D9' } })
 
 async function main() {
   const wb = new ExcelJS.Workbook()
-  await wb.xlsx.readFile(NGUON)
-  const ws = wb.worksheets[0]
+  const ws = wb.addWorksheet('Bảng lương')
 
-  // Cột: A/G tên rộng, B/H ĐVT hẹp, C/I số lượng, D/J đơn giá, E/K thành tiền, F đệm.
-  const rong = { A: 24, B: 9, C: 12, D: 14, E: 16, F: 3, G: 24, H: 9, I: 12, J: 14, K: 16 }
+  // Cột: A/G tên rộng, B/H ĐVT hẹp, C/I số lượng, D/J đơn giá, E/K thành tiền, F đệm giữa 2 cụm.
+  const rong = { A: 26, B: 8, C: 11, D: 13, E: 15, F: 3, G: 26, H: 8, I: 11, J: 13, K: 15 }
   for (const [c, w] of Object.entries(rong)) ws.getColumn(c).width = w
 
-  const tong = Math.min(ws.rowCount, 5000)
-  for (let r = 1; r <= tong; r++) {
-    const row = ws.getRow(r)
-    row.height = 20
-    row.eachCell({ includeEmpty: false }, (cell) => {
-      const t = chuoi(cell.value)
-      const tl = t.toLowerCase()
-      const base = { name: FONT, size: 11, color: { argb: 'FF1A1A1A' } }
+  // Dòng tiêu đề (ghiBangLuong sẽ điền kỳ vào ô A2 khi xuất).
+  const t = ws.getCell('A1')
+  t.value = 'BẢNG LƯƠNG'
+  t.font = { name: FONT, size: 15, bold: true, color: { argb: MAU_TIEUDE } }
+  ws.getRow(1).height = 26
+  const k = ws.getCell('A2')
+  k.value = 'Kỳ: __________'
+  k.font = { name: FONT, size: 10, italic: true, color: { argb: 'FF4B4B50' } }
+  ws.getRow(2).height = 18
 
-      if (RE_TEN.test(t)) {
-        cell.font = { ...base, size: 12.5, bold: true, color: { argb: 'FFFFFFFF' } }
-        cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: MAU_TIEUDE } }
-        cell.alignment = { vertical: 'middle', horizontal: 'left', indent: 1 }
-      } else if (NHAN_HEADER.has(tl)) {
-        cell.font = { ...base, size: 10, bold: true, italic: true, color: { argb: 'FF4B4B50' } }
-        cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: MAU_NHAN } }
-        cell.alignment = { vertical: 'middle', horizontal: 'center' }
-      } else if (RE_KY.test(t)) {
-        cell.font = { ...base, size: 10, italic: true, color: { argb: 'FF4B4B50' } }
-      } else if (tl === 'tổng') {
-        cell.font = { ...base, bold: true }
-        cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: MAU_TIEUDE_NHAT } }
-      } else if (NHAN_DAM.has(tl)) {
-        cell.font = { ...base, bold: tl === 'lương tháng:' || tl === 'làm thêm' }
-      } else {
-        cell.font = base
-      }
-
-      // Định dạng số + canh phải cho cột tiền / số lượng. ĐỒNG THỜI xoá mọi số liệu
-      // lương của kỳ mẫu: mẫu này đóng gói vào .exe — không mang
-      // đơn giá ngày / đơn giá OT / thành tiền thật của ai ra khỏi máy. `ghiBangLuong`
-      // điền lại đơn giá + số lượng từ Setup mỗi kỳ; Excel tự tính lại ô công thức khi mở.
-      const col = cell.address.replace(/\d+/, '')
-      if (['C', 'I', 'D', 'J'].includes(col)) {
-        if (typeof cell.value === 'number') cell.value = 0
-        cell.numFmt = col === 'C' || col === 'I' ? '0.##' : '#,##0'
-        cell.alignment = { horizontal: 'right' }
-      } else if (['E', 'K'].includes(col)) {
-        if (cell.value && typeof cell.value === 'object' && 'formula' in cell.value) {
-          cell.value = { formula: cell.value.formula, result: 0 }
-        } else if (typeof cell.value === 'number') {
-          cell.value = 0
-        }
-        cell.numFmt = '#,##0'
-        cell.alignment = { horizontal: 'right' }
-        cell.font = { ...cell.font, bold: true }
-      }
-    })
+  ws.pageSetup = {
+    paperSize: 9, // A4
+    orientation: 'portrait',
+    fitToPage: true,
+    fitToWidth: 1,
+    fitToHeight: 0,
+    margins: { left: 0.5, right: 0.5, top: 0.6, bottom: 0.6, header: 0.3, footer: 0.3 }
   }
-
-  // Viền mảnh quanh vùng dữ liệu từng thẻ (nhẹ, gọn) — quét ô "Tên:" rồi kẻ 13 dòng dưới.
-  for (let r = 1; r <= tong; r++) {
-    const row = ws.getRow(r)
-    for (const col of ['A', 'G']) {
-      if (!RE_TEN.test(chuoi(row.getCell(col).value))) continue
-      const cols = col === 'A' ? ['A', 'B', 'C', 'D', 'E'] : ['G', 'H', 'I', 'J', 'K']
-      for (let k = 0; k <= 12 && r + k <= tong; k++) {
-        for (const c of cols) {
-          const cell = ws.getRow(r + k).getCell(c)
-          cell.border = { top: vien(), left: vien(), bottom: vien(), right: vien() }
-        }
-      }
-    }
-  }
-
-  ws.pageSetup = { paperSize: 9, orientation: 'portrait', margins: { left: 0.5, right: 0.5, top: 0.6, bottom: 0.6, header: 0.3, footer: 0.3 } }
 
   mkdirSync(dirname(RA), { recursive: true })
   await wb.xlsx.writeFile(RA)
-  console.log('Đã sinh', RA)
+  console.log('Đã sinh', RA, '(khuôn trống — thẻ do ghiBangLuong dựng)')
 }
 
 main().catch((e) => {

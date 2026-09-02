@@ -154,11 +154,14 @@ describe('ghiBangLuong — mẫu thiếu thẻ: thêm thẻ, không bỏ sót ng
 
     // Cột "Thành tiền" của cụm (E cho cụm trái, K cho cụm phải).
     const colTT = colTen === 'A' ? 'E' : 'K'
-    // Các khoản nhập tay: Chuyên cần / bù lương / Lễ / bảo hiểm / vay — ô số phải trống.
-    for (const off of [0, 1, 2, 4, 5]) {
-      const v = ws.getCell(`${colTT}${rCC + off}`).value
+    // 5 khoản nhập tay liên tiếp từ "Chuyên cần": Chuyên cần / bù lương / Lễ / bảo hiểm / vay
+    // — ô Thành tiền phải trống (người dùng tự điền). "Tổng" ngay dưới thì có công thức.
+    for (const [r, nhan] of ['Chuyên cần', 'bu lương', 'Lễ', 'bảo hiểm', 'vay'].entries()) {
+      expect(ws.getCell(`${colTen}${rCC + r}`).value).toBe(nhan)
+      const v = ws.getCell(`${colTT}${rCC + r}`).value
       expect(v == null || v === '').toBe(true)
     }
+    expect(ws.getCell(`${colTen}${rCC + 5}`).value).toBe('Tổng')
     // Đơn giá ngày thì PHẢI có (bộ ô bắt buộc).
     const the = (await docBangLuong(ra)).doc.the.find((t) => t.tenBangLuong.trim() === 'Người Mới A')!
     expect(Number(ws.getCell(the.oDonGiaNgay).value)).toBe(275000)

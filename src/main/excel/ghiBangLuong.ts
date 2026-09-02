@@ -42,13 +42,25 @@ interface Cum {
 const CUM_TRAI: Cum = { ten: 'A', dvt: 'B', sl: 'C', dg: 'D', tt: 'E' }
 const CUM_PHAI: Cum = { ten: 'G', dvt: 'H', sl: 'I', dg: 'J', tt: 'K' }
 
-function styleTen(cell: import('exceljs').Cell): void {
-  cell.font = { name: 'Segoe UI', size: 12.5, bold: true, color: { argb: 'FFFFFFFF' } }
-  cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF004E92' } }
-  cell.alignment = { vertical: 'middle', horizontal: 'left', indent: 1 }
+const FONT = 'Segoe UI'
+const XANH = 'FF004E92' // --color-primary
+const NHAT = 'FFEEF3FA' // nền phụ nhạt
+const VIEN = 'FFBFBFBF'
+/** Thẻ chiếm 11 dòng (base..base+10); band = 12 dòng (thêm 1 dòng đệm giữa các hàng thẻ). */
+export const CAO_THE = 11
+export const CAO_BAND = 12
+
+function vienO(): import('exceljs').Borders {
+  const s = { style: 'thin' as const, color: { argb: VIEN } }
+  return { top: s, left: s, bottom: s, right: s } as import('exceljs').Borders
 }
 
-/** Ghi một thẻ nhân viên mới vào cụm cột `cum` bắt đầu ở dòng `base`. Trả vị trí ô để điền. */
+/**
+ * Dựng MỘT thẻ nhân viên theo khuôn cố định vào cụm cột `cum`, bắt đầu ở dòng `base`.
+ * Lưới đều — mọi thẻ giống hệt nhau: header tên → 2 dòng số (Lương tháng / Làm thêm) →
+ * dòng cộng kỳ → 5 khoản nhập tay (để trống) → Tổng. Có viền quanh cả thẻ.
+ * Trả vị trí ô để `dienThe` ghi số.
+ */
 function themThe(
   ws: import('exceljs').Worksheet,
   base: number,
@@ -56,53 +68,83 @@ function themThe(
   the: { tenBangLuong: string; donGiaNgay: number; donGiaGioOT: number },
   kyLabel: string
 ): TheNhanVienBangLuong {
+  const cols = [cum.ten, cum.dvt, cum.sl, cum.dg, cum.tt]
   const set = (col: string, r: number, v: import('exceljs').CellValue): import('exceljs').Cell => {
     const c = ws.getCell(`${col}${r}`)
     c.value = v
-    c.font = { name: 'Segoe UI', size: 11, color: { argb: 'FF1A1A1A' } }
+    c.font = { name: FONT, size: 11, color: { argb: 'FF1A1A1A' } }
+    c.border = vienO()
     return c
   }
-  styleTen(set(cum.ten, base, 'Tên:'))
-  const oTenPhu = set(cum.dvt, base, the.tenBangLuong)
-  oTenPhu.font = { name: 'Segoe UI', size: 11, bold: true, color: { argb: 'FF1A1A1A' } }
+  // Ô trống trong khối vẫn cần viền để thẻ liền mạch.
+  for (let r = base; r < base + CAO_THE; r++) for (const col of cols) set(col, r, null)
 
-  for (const [i, nhan] of ['ĐVT', 'Số lượng', 'Đơn giá', 'Thành tiền'].entries()) {
-    const c = set([cum.dvt, cum.sl, cum.dg, cum.tt][i], base + 2, nhan)
-    c.font = { name: 'Segoe UI', size: 10, bold: true, italic: true, color: { argb: 'FF4B4B50' } }
-    c.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF2F2F5' } }
-    c.alignment = { horizontal: 'center' }
+  // base+0: header tên — nền xanh, chữ trắng, trải cả cụm.
+  ws.mergeCells(`${cum.ten}${base}:${cum.tt}${base}`)
+  const h = ws.getCell(`${cum.ten}${base}`)
+  h.value = `Tên: ${the.tenBangLuong}`
+  h.font = { name: FONT, size: 11.5, bold: true, color: { argb: 'FFFFFFFF' } }
+  h.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: XANH } }
+  h.alignment = { vertical: 'middle', horizontal: 'left', indent: 1 }
+
+  // base+1: nhãn cột.
+  for (const [i, nhan] of ['', 'ĐVT', 'Số lượng', 'Đơn giá', 'Thành tiền'].entries()) {
+    const c = set(cols[i], base + 1, nhan)
+    c.font = { name: FONT, size: 9.5, bold: true, italic: true, color: { argb: 'FF4B4B50' } }
+    c.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: NHAT } }
+    c.alignment = { horizontal: i === 0 ? 'left' : 'center' }
   }
 
-  const rNgay = base + 3
-  const rGio = base + 4
-  set(cum.ten, rNgay, 'Lương tháng:').font = { name: 'Segoe UI', size: 11, bold: true }
-  set(cum.dvt, rNgay, 'ngày')
-  set(cum.sl, rNgay, 0).numFmt = '0.##'
-  set(cum.dg, rNgay, the.donGiaNgay || 0).numFmt = '#,##0'
-  set(cum.tt, rNgay, { formula: `${cum.dg}${rNgay}*${cum.sl}${rNgay}` }).numFmt = '#,##0'
+  const rNgay = base + 2
+  const rGio = base + 3
+  const rKy = base + 4
+  const so = (c: import('exceljs').Cell) => {
+    c.numFmt = '#,##0.##'
+    c.alignment = { horizontal: 'right' }
+    return c
+  }
+  const tien = (c: import('exceljs').Cell) => {
+    c.numFmt = '#,##0'
+    c.alignment = { horizontal: 'right' }
+    return c
+  }
 
-  set(cum.ten, rGio, 'Làm thêm').font = { name: 'Segoe UI', size: 11, bold: true }
-  set(cum.dvt, rGio, 'giờ')
-  set(cum.sl, rGio, 0).numFmt = '0.##'
-  set(cum.dg, rGio, the.donGiaGioOT || 0).numFmt = '#,##0'
-  set(cum.tt, rGio, { formula: `${cum.dg}${rGio}*${cum.sl}${rGio}` }).numFmt = '#,##0'
+  set(cum.ten, rNgay, 'Lương tháng:').font = { name: FONT, size: 11, bold: true }
+  set(cum.dvt, rNgay, 'ngày').alignment = { horizontal: 'center' }
+  so(set(cum.sl, rNgay, 0))
+  tien(set(cum.dg, rNgay, the.donGiaNgay || 0))
+  tien(set(cum.tt, rNgay, { formula: `${cum.dg}${rNgay}*${cum.sl}${rNgay}` }))
 
-  const rKy = base + 5
-  set(cum.ten, rKy, kyLabel).font = { name: 'Segoe UI', size: 10, italic: true, color: { argb: 'FF4B4B50' } }
-  set(cum.tt, rKy, { formula: `SUM(${cum.tt}${rNgay}:${cum.tt}${rGio})` }).numFmt = '#,##0'
+  set(cum.ten, rGio, 'Làm thêm').font = { name: FONT, size: 11, bold: true }
+  set(cum.dvt, rGio, 'giờ').alignment = { horizontal: 'center' }
+  so(set(cum.sl, rGio, 0))
+  tien(set(cum.dg, rGio, the.donGiaGioOT || 0))
+  tien(set(cum.tt, rGio, { formula: `${cum.dg}${rGio}*${cum.sl}${rGio}` }))
 
-  set(cum.ten, base + 6, 'Chuyên cần')
-  set(cum.ten, base + 7, 'bu lương')
-  set(cum.ten, base + 8, 'Lễ')
-  set(cum.ten, base + 10, 'bảo hiểm')
-  set(cum.ten, base + 11, 'vay')
-  const rTong = base + 12
-  const oTong = set(cum.ten, rTong, 'Tổng')
-  oTong.font = { name: 'Segoe UI', size: 11, bold: true }
-  oTong.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFE9F1FB' } }
-  set(cum.tt, rTong, {
-    formula: `${cum.tt}${rKy}+${cum.tt}${base + 6}+${cum.tt}${base + 7}+${cum.tt}${base + 8}-${cum.tt}${base + 10}-${cum.tt}${base + 11}`
-  }).numFmt = '#,##0'
+  const oKy = set(cum.ten, rKy, kyLabel || 'kỳ')
+  oKy.font = { name: FONT, size: 9.5, italic: true, color: { argb: 'FF4B4B50' } }
+  tien(set(cum.tt, rKy, { formula: `SUM(${cum.tt}${rNgay}:${cum.tt}${rGio})` }))
+
+  const khoan = ['Chuyên cần', 'bu lương', 'Lễ', 'bảo hiểm', 'vay']
+  khoan.forEach((nhan, i) => {
+    set(cum.ten, base + 5 + i, nhan)
+    tien(set(cum.tt, base + 5 + i, null))
+  })
+
+  const rTong = base + 10
+  for (const col of cols) {
+    const c = set(col, rTong, null)
+    c.font = { name: FONT, size: 11, bold: true }
+    c.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: NHAT } }
+  }
+  ws.getCell(`${cum.ten}${rTong}`).value = 'Tổng'
+  tien(
+    set(cum.tt, rTong, {
+      formula:
+        `${cum.tt}${rKy}+${cum.tt}${base + 5}+${cum.tt}${base + 6}+${cum.tt}${base + 7}` +
+        `-${cum.tt}${base + 8}-${cum.tt}${base + 9}`
+    })
+  ).font = { name: FONT, size: 11, bold: true }
 
   return {
     maNhanVien: '',
@@ -143,8 +185,9 @@ export async function ghiBangLuong(
 
   const kyLabel = ky ? chuoiKy(ky.ngayBatDau, ky.ngayKetThuc) : ''
 
-  // Cập nhật ô nhãn kỳ ("01/07-31/07/2026" → kỳ hiện tại) ở mọi thẻ.
+  // Ô "Kỳ:" ở đầu bảng (khuôn trống có sẵn A2) + mọi ô nhãn kỳ cũ trong file.
   if (kyLabel) {
+    ws.getCell('A2').value = `Kỳ: ${kyLabel}`
     ws.eachRow({ includeEmpty: false }, (row) => {
       row.eachCell({ includeEmpty: false }, (cell) => {
         if (typeof cell.value === 'string' && /^\s*\d{1,2}\/\d{1,2}\s*-\s*\d{1,2}\/\d{1,2}\/\d{4}\s*$/.test(cell.value)) {
@@ -184,17 +227,20 @@ export async function ghiBangLuong(
     daGhi.push(th.maNhanVien)
   }
 
-  // Thêm thẻ cho nhân viên trong kỳ mà mẫu chưa có (AC-5). Xếp 2 thẻ / khối dòng.
+  // Dựng thẻ cho nhân viên chưa có sẵn trong mẫu (khuôn trống → mọi người; mẫu có thẻ →
+  // chỉ người mới). Lưới đều: 2 thẻ / hàng, band cố định, cột trái/phải thẳng nhau.
   if (chuaCoThe.length) {
-    const start = dongCuoiCoNoiDung(ws) + 3
+    const coTheSan = dongCuoiCoNoiDung(ws)
+    const start = coTheSan <= 2 ? 4 : coTheSan + 2 // khuôn trống: ngay dưới tiêu đề
     chuaCoThe.forEach((th, i) => {
-      const base = start + Math.floor(i / 2) * 15
+      const base = start + Math.floor(i / 2) * CAO_BAND
       const cum = i % 2 === 0 ? CUM_TRAI : CUM_PHAI
       try {
-        const the = themThe(ws, base, cum, th, kyLabel || '01/01-31/01/2026')
+        const the = themThe(ws, base, cum, th, kyLabel)
         dienThe(the, th)
         daGhi.push(th.maNhanVien)
         theThemMoi.push(th.tenBangLuong || th.tenMay || th.maNhanVien)
+        for (let r = base; r < base + CAO_THE; r++) ws.getRow(r).height = r === base ? 19 : 16
       } catch (e) {
         log.error('thêm thẻ bảng lương', th.maNhanVien, (e as Error).message)
         khongKhop.push(th.tenBangLuong || th.tenMay || th.maNhanVien)
