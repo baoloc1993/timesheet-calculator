@@ -5,7 +5,7 @@ import { basename, join, dirname } from 'path'
 import { existsSync } from 'fs'
 import type { KetQuaKyCong, NhanVien } from '../core/types'
 import { xuLyKyCong, tinhLaiMotDong, tinhLaiTongHop, tongToanKy } from '../core/xuLyKyCong'
-import { dongBangKetQuaKy } from '../core/ketQuaKy'
+import { dongBangKetQuaKy, mergePhatLuongCu } from '../core/ketQuaKy'
 import type { KetQuaKy } from '../core/ketQuaKy'
 import { phutTrongNgay } from '../core/time'
 import { docFileMay, LoiDocFileMay } from './excel/docFileMay'
@@ -19,7 +19,8 @@ import {
   ghiConfig,
   layDanhSachKy,
   layMotKy,
-  ghiMotKy
+  ghiMotKy,
+  layLoiMigration
 } from './settings/store'
 import { themHoacSua, xoaNhanVien, tronTuFileKyTruoc, chuanTen } from './settings/nhanVien'
 import { chuanHoaMa } from '../core/ma'
@@ -87,7 +88,8 @@ export function dangKyIpc(): void {
       soNhanVien: layNhanVien().length,
       kyXuLyGanNhat: c.kyXuLyGanNhat,
       thuMucXuatGanNhat: c.thuMucXuatGanNhat,
-      fileMauBangLuongGanNhat: c.fileMauBangLuongGanNhat
+      fileMauBangLuongGanNhat: c.fileMauBangLuongGanNhat,
+      loiMigration: layLoiMigration()
     }
   })
 
@@ -348,13 +350,10 @@ export function dangKyIpc(): void {
       }
     }
 
-    const kq = dongBangKetQuaKy(kyHienTai.ky, kyHienTai.ky.tongHop, new Date().toISOString())
-    // Ghi đè: giữ khấu trừ / đã-trả cũ cho mã còn khớp.
-    if (cu) {
-      const maMoi = new Set(kq.dongBang.map((d) => d.maNhanVien))
-      for (const [ma, v] of Object.entries(cu.khauTru)) if (maMoi.has(ma)) kq.khauTru[ma] = v
-      for (const [ma, v] of Object.entries(cu.daTra)) if (maMoi.has(ma)) kq.daTra[ma] = v
-    }
+    const kq = mergePhatLuongCu(
+      dongBangKetQuaKy(kyHienTai.ky, kyHienTai.ky.tongHop, new Date().toISOString()),
+      cu
+    )
     ghiMotKy(kq)
     log.info('lưu kỳ', thang, `${kq.dongBang.length} dòng`)
     log.event('luu-ky', { thang, soDong: kq.dongBang.length, ghiDe: !!cu })
@@ -363,7 +362,19 @@ export function dangKyIpc(): void {
 
   ipcMain.handle('ky-luu:danh-sach', () => layDanhSachKy())
 
-  ipcMain.handle('ky-luu:doc', (_e, thang: string) => layMotKy(thang))
+  ipcMain.handle('ky-luu:doc', (_e, thang: string) => {
+    const kq = layMotKy(thang)
+    // Mốc "tra cứu kỳ đã lưu trong app" — tín hiệu hỗ trợ cho success metric vòng 3
+    //. Metric thật đo
+    // bằng người dùng tự báo; event này chỉ cho thấy màn Phát lương CÓ được dùng.
+    if (kq) log.event('doc-ky-da-luu', { thang })
+    return kq
+  })
+
+  // Fire-and-forget: người dùng bấm "In danh sách" ở S10 (window.print ở renderer).
+  ipcMain.handle('ky-luu:danh-dau-in', (_e, p: { thang: string; soNguoi: number }) => {
+    log.event('in-danh-sach-phat-luong', { thang: p?.thang, soNguoi: p?.soNguoi })
+  })
 
   // Cập nhật khấu trừ / đã-trả một nhân viên trong một kỳ đã lưu (AC-3).
   ipcMain.handle(

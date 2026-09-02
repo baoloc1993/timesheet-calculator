@@ -20,7 +20,8 @@ const api: Api = {
   luuKy: (payload) => ipcRenderer.invoke('ky-cong:luu-ky', payload),
   danhSachKy: () => ipcRenderer.invoke('ky-luu:danh-sach'),
   docKy: (thang) => ipcRenderer.invoke('ky-luu:doc', thang),
-  capNhatPhatLuong: (payload) => ipcRenderer.invoke('ky-luu:cap-nhat-phat-luong', payload)
+  capNhatPhatLuong: (payload) => ipcRenderer.invoke('ky-luu:cap-nhat-phat-luong', payload),
+  danhDauInDanhSach: (payload) => ipcRenderer.invoke('ky-luu:danh-dau-in', payload)
 }
 
 if (process.contextIsolated) {

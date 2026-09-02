@@ -2,7 +2,8 @@
 
 import Store from 'electron-store'
 import { randomUUID } from 'crypto'
-import { readFileSync, existsSync } from 'fs'
+import { readFileSync, existsSync, copyFileSync } from 'fs'
+import { log } from '../logger'
 import type { NhanVien } from '../../core/types'
 import type { KetQuaKy } from '../../core/ketQuaKy'
 import { chuanHoaMa } from '../../core/ma'
@@ -36,6 +37,12 @@ const MAC_DINH: Schema = {
 
 let store: Store<Schema>
 
+/** Đặt khi migration lỗi và đã khôi phục `.bak` — renderer hiện khuôn Lỗi. */
+let loiMigration: string | null = null
+export function layLoiMigration(): string | null {
+  return loiMigration
+}
+
 export function moStore(): Store<Schema> {
   if (store) return store
   const opts: Store.Options<Schema> = { name: 'config', defaults: MAC_DINH }
@@ -45,16 +52,34 @@ export function moStore(): Store<Schema> {
   // migrate nếu schemaVersion cũ
   const truoc = store.get('appConfig.schemaVersion', 0)
   if (truoc < SCHEMA_VERSION_HIEN_TAI) {
-    saoLuuTruocMigrate(store.path) // config.json.bak trước khi đổi schema — rollback
-    const duLieu = {
-      nhanVien: store.get('nhanVien', []),
-      appConfig: store.get('appConfig'),
-      ketQuaKy: store.get('ketQuaKy', {})
+    const bak = saoLuuTruocMigrate(store.path) // .bak trước khi đổi schema — rollback
+    try {
+      const duLieu = {
+        nhanVien: store.get('nhanVien', []),
+        appConfig: store.get('appConfig'),
+        ketQuaKy: store.get('ketQuaKy', {})
+      }
+      const sau = chayMigration(duLieu, truoc)
+      // schemaVersion ghi SAU CÙNG: sập giữa chừng → lần mở sau vẫn thấy version cũ, migrate lại.
+      store.set('nhanVien', sau.nhanVien)
+      store.set('ketQuaKy', sau.ketQuaKy)
+      store.set('appConfig', { ...sau.appConfig, schemaVersion: SCHEMA_VERSION_HIEN_TAI })
+      log.info('migrate config', `v${truoc} → v${SCHEMA_VERSION_HIEN_TAI}`)
+    } catch (e) {
+      // Khôi phục bản cũ từ .bak, chạy tiếp ở chế độ giảm (schemaVersion cũ) + báo người dùng.
+      log.error('migrate config lỗi', (e as Error).message, (e as Error).stack || '')
+      if (bak && existsSync(bak)) {
+        try {
+          copyFileSync(bak, store.path)
+          store.store = JSON.parse(readFileSync(store.path, 'utf-8'))
+        } catch (e2) {
+          log.error('khôi phục .bak lỗi', (e2 as Error).message)
+        }
+      }
+      loiMigration =
+        'Không nâng cấp được dữ liệu sang phiên bản mới — đã giữ nguyên bản cũ. ' +
+        'Lịch sử kỳ có thể chưa dùng được. Thử mở lại app; nếu vẫn lỗi, gửi file log qua nút "Góp ý / báo lỗi".'
     }
-    const sau = chayMigration(duLieu, truoc)
-    store.set('nhanVien', sau.nhanVien)
-    store.set('appConfig', { ...sau.appConfig, schemaVersion: SCHEMA_VERSION_HIEN_TAI })
-    store.set('ketQuaKy', sau.ketQuaKy)
   }
 
   // seed cho dev/dogfood: nạp danh sách nhân viên nếu store rỗng và có TSC_SEED_FILE

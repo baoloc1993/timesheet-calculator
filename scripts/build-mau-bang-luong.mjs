@@ -70,16 +70,24 @@ async function main() {
         cell.font = base
       }
 
-      // Định dạng số + canh phải cho cột tiền / số lượng.
+      // Định dạng số + canh phải cho cột tiền / số lượng. ĐỒNG THỜI xoá mọi số liệu
+      // lương của kỳ mẫu: mẫu này đóng gói vào .exe — không mang
+      // đơn giá ngày / đơn giá OT / thành tiền thật của ai ra khỏi máy. `ghiBangLuong`
+      // điền lại đơn giá + số lượng từ Setup mỗi kỳ; Excel tự tính lại ô công thức khi mở.
       const col = cell.address.replace(/\d+/, '')
-      if (['C', 'I'].includes(col) && typeof cell.value === 'number') {
-        cell.value = 0 // xoá số liệu kỳ cũ — mỗi kỳ điền lại
-        cell.numFmt = '0.##'
+      if (['C', 'I', 'D', 'J'].includes(col)) {
+        if (typeof cell.value === 'number') cell.value = 0
+        cell.numFmt = col === 'C' || col === 'I' ? '0.##' : '#,##0'
         cell.alignment = { horizontal: 'right' }
-      } else if (['D', 'E', 'J', 'K'].includes(col)) {
+      } else if (['E', 'K'].includes(col)) {
+        if (cell.value && typeof cell.value === 'object' && 'formula' in cell.value) {
+          cell.value = { formula: cell.value.formula, result: 0 }
+        } else if (typeof cell.value === 'number') {
+          cell.value = 0
+        }
         cell.numFmt = '#,##0'
         cell.alignment = { horizontal: 'right' }
-        if (['E', 'K'].includes(col)) cell.font = { ...cell.font, bold: true }
+        cell.font = { ...cell.font, bold: true }
       }
     })
   }

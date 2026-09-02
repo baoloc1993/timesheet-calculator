@@ -57,7 +57,8 @@ const BUOC: BuocMigration[] = [
       ketQuaKy: d.ketQuaKy ?? {},
       appConfig: { ...d.appConfig, schemaVersion: 2 }
     }),
-    // Về v1: xoá khoá ketQuaKy (bản 0.2.0 không đọc). `.bak` là lưới an toàn thứ 2.
+    // Về v1: bỏ ketQuaKy (bản 0.2.0 không đọc khoá này). Trả `{}` ở kiểu dữ liệu;
+    // `migrate-cli.ts` xoá hẳn khoá khỏi config.json khi hạ version. `.bak` là lưới an toàn.
     down: (d) => ({
       nhanVien: d.nhanVien,
       appConfig: { ...d.appConfig, schemaVersion: 1 },

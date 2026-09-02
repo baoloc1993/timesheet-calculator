@@ -9,6 +9,7 @@ import { docBangLuong, chuanHoaMa } from './docBangLuong'
 import type { TheNhanVienBangLuong } from './docBangLuong'
 import { LoiDocFileMay } from './docFileMay'
 import { ghiFileAtomic } from './ghiAtomic'
+import { log } from '../logger'
 
 export interface KetQuaGhiBangLuong {
   duongDanRa: string
@@ -194,7 +195,8 @@ export async function ghiBangLuong(
         dienThe(the, th)
         daGhi.push(th.maNhanVien)
         theThemMoi.push(th.tenBangLuong || th.tenMay || th.maNhanVien)
-      } catch {
+      } catch (e) {
+        log.error('thêm thẻ bảng lương', th.maNhanVien, (e as Error).message)
         khongKhop.push(th.tenBangLuong || th.tenMay || th.maNhanVien)
       }
     })

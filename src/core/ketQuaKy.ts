@@ -61,6 +61,22 @@ export function dongBangKetQuaKy(
   }
 }
 
+/**
+ * Ghi đè một kỳ đã lưu: giữ `khauTru` / `daTra` cũ cho mã CÒN trong kỳ mới, bỏ mã đã biến mất,
+ * mã mới nhận mặc định (0 / chưa trả). Trả về `kqMoi` đã merge (mutate tại chỗ + trả luôn).
+ */
+export function mergePhatLuongCu(kqMoi: KetQuaKy, kqCu: KetQuaKy | null | undefined): KetQuaKy {
+  if (!kqCu) return kqMoi
+  const maTrongKyMoi = new Set(kqMoi.dongBang.map((d) => d.maNhanVien))
+  for (const [ma, v] of Object.entries(kqCu.khauTru)) {
+    if (maTrongKyMoi.has(ma)) kqMoi.khauTru[ma] = v
+  }
+  for (const [ma, v] of Object.entries(kqCu.daTra)) {
+    if (maTrongKyMoi.has(ma)) kqMoi.daTra[ma] = v
+  }
+  return kqMoi
+}
+
 /** Σ của một kỳ đã lưu — từ dongBang (đóng băng), KHÔNG chạm NhanVien. */
 export function tongKetQuaKy(kq: KetQuaKy): {
   tongNgayCong: number

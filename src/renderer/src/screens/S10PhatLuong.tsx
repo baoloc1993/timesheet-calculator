@@ -59,18 +59,34 @@ export function S10PhatLuong() {
     }
   }
 
+  // Khấu trừ "đang hiển thị" = số trong ô nhập nếu hợp lệ, else số đã lưu. Bảng + bản in +
+  // tổng đều đọc qua đây → "In danh sách" ngay sau khi gõ (chưa kịp onBlur lưu) vẫn in
+  // đúng số (bug-hunter / reviewer: race window.print vs luuKhauTru bất đồng bộ).
+  const khauTruHt = useCallback(
+    (ma: string): number => {
+      const raw = nhap[ma]
+      if (raw !== undefined) {
+        const s = raw.trim().replace(/[.\s]/g, '')
+        const n = s === '' ? 0 : Number(s)
+        if (Number.isFinite(n) && n >= 0) return Math.round(n)
+      }
+      return kq?.khauTru[ma] ?? 0
+    },
+    [nhap, kq]
+  )
+
   const tong = useMemo(() => {
     if (!kq) return { tienMat: 0, chuaNhan: 0, daPhat: 0 }
     let tienMat = 0
     let chuaNhan = 0
     let daPhat = 0
     for (const d of kq.dongBang) {
-      tienMat += tinhThucNhan(d.thanhTien, kq.khauTru[d.maNhanVien] ?? 0)
+      tienMat += tinhThucNhan(d.thanhTien, khauTruHt(d.maNhanVien))
       if (kq.daTra[d.maNhanVien] === true) daPhat++
       else chuaNhan++
     }
     return { tienMat, chuaNhan, daPhat }
-  }, [kq])
+  }, [kq, khauTruHt])
 
   if (!thangDangXem) {
     return (
@@ -134,7 +150,16 @@ export function S10PhatLuong() {
 
       <div className="card">
         <div className="toolbar">
-          <button className="btn primary" onClick={() => window.print()}>
+          <button
+            className="btn primary"
+            onClick={() => {
+              // Ép commit ô đang gõ (onBlur) trước khi in — bản in đọc state, không phải DOM.
+              const el = document.activeElement as HTMLElement | null
+              el?.blur()
+              window.api.danhDauInDanhSach({ thang: kq.thang, soNguoi: kq.dongBang.length })
+              window.print()
+            }}
+          >
             In danh sách
           </button>
           <button className="btn" onClick={() => di('s9')}>
@@ -155,7 +180,7 @@ export function S10PhatLuong() {
             </thead>
             <tbody>
               {kq.dongBang.map((d) => {
-                const kt = kq.khauTru[d.maNhanVien] ?? 0
+                const kt = khauTruHt(d.maNhanVien)
                 const tn = tinhThucNhan(d.thanhTien, kt)
                 const daTra = kq.daTra[d.maNhanVien] === true
                 return (
@@ -201,7 +226,7 @@ export function S10PhatLuong() {
                   {vnd(kq.dongBang.reduce((s, d) => s + d.thanhTien, 0))}
                 </td>
                 <td className="num">
-                  {vnd(kq.dongBang.reduce((s, d) => s + (kq.khauTru[d.maNhanVien] ?? 0), 0))}
+                  {vnd(kq.dongBang.reduce((s, d) => s + khauTruHt(d.maNhanVien), 0))}
                 </td>
                 <td className="num big">{vnd(tong.tienMat)}</td>
                 <td className="ok-tick">
@@ -211,9 +236,7 @@ export function S10PhatLuong() {
             </tfoot>
           </table>
         </div>
-        {kq.dongBang.some(
-          (d) => tinhThucNhan(d.thanhTien, kq.khauTru[d.maNhanVien] ?? 0) < 0
-        ) && (
+        {kq.dongBang.some((d) => tinhThucNhan(d.thanhTien, khauTruHt(d.maNhanVien)) < 0) && (
           <p className="note" role="status">
             ⚠ Có nhân viên “thực nhận” âm (khấu trừ lớn hơn lương) — kiểm lại nếu không cố ý.
           </p>
@@ -244,7 +267,7 @@ export function S10PhatLuong() {
               <tr key={d.maNhanVien}>
                 <td>{i + 1}</td>
                 <td>{d.tenBangLuong}</td>
-                <td className="num">{vnd(tinhThucNhan(d.thanhTien, kq.khauTru[d.maNhanVien] ?? 0))}</td>
+                <td className="num">{vnd(tinhThucNhan(d.thanhTien, khauTruHt(d.maNhanVien)))}</td>
                 <td></td>
               </tr>
             ))}

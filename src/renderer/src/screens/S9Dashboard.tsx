@@ -136,6 +136,11 @@ export function S9Dashboard() {
                     <span>{so2(ky.tongGioOTCaKy)} OT</span>
                     <span>{vnd(ky.tongThanhTienCaKy)}₫</span>
                   </div>
+                  {ky.thieuSetup.length > 0 && (
+                    <div className="pc-luu small" style={{ color: 'var(--color-danger)' }}>
+                      ⚠ chưa đủ Setup ({ky.thieuSetup.length}) — số còn thiếu người
+                    </div>
+                  )}
                 </button>
               )}
               {danhSachKy.map((k) => {

@@ -28,6 +28,8 @@ export interface TrangThaiApp {
   kyXuLyGanNhat: string
   thuMucXuatGanNhat: string
   fileMauBangLuongGanNhat: string
+  /** != null khi migration config.json lỗi ở lần mở này và đã khôi phục `.bak`. */
+  loiMigration?: string | null
 }
 
 export interface LoiTruongForm {
@@ -104,4 +106,6 @@ export interface Api {
     khauTru?: number
     daTra?: boolean
   }): Promise<KetQua<KetQuaKy>>
+  /** Ghi mốc "đã in danh sách phát lương" vào log cục bộ (§Nhóm 4). Fire-and-forget. */
+  danhDauInDanhSach(payload: { thang: string; soNguoi: number }): Promise<void>
 }

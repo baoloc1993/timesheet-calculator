@@ -126,13 +126,19 @@ export function dmy(iso: string): string {
 }
 
 function Noi() {
-  const { manHinh } = useApp()
+  const { manHinh, trangThai } = useApp()
   const ref = useRef<HTMLElement>(null)
   useEffect(() => {
     ref.current?.scrollTo(0, 0)
   }, [manHinh])
   return (
     <main className="content" ref={ref}>
+      {trangThai?.loiMigration && (
+        <div className="errorbox" role="alert" style={{ marginBottom: 'var(--space-lg)' }}>
+          <strong>Không nâng cấp được dữ liệu.</strong>
+          <p className="small">{trangThai.loiMigration}</p>
+        </div>
+      )}
       <ManHinhHienTai />
     </main>
   )

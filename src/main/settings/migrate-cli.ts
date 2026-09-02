@@ -19,7 +19,10 @@ const store = new Store<Schema>(opts)
 
 const truoc = (store.get('appConfig.schemaVersion') as number) || 0
 const argDich = process.argv[2] != null ? Number(process.argv[2]) : SCHEMA_VERSION_HIEN_TAI
-const dich = Number.isFinite(argDich) ? argDich : SCHEMA_VERSION_HIEN_TAI
+// Kẹp version đích về [0, hiện tại] — gõ sai ("migrate -- 5") không để lại schemaVersion vô nghĩa.
+const dich = Number.isFinite(argDich)
+  ? Math.max(0, Math.min(SCHEMA_VERSION_HIEN_TAI, Math.trunc(argDich)))
+  : SCHEMA_VERSION_HIEN_TAI
 
 if (dich === truoc) {
   console.log(`config.json đã ở schemaVersion ${truoc} — không cần migrate.`)
@@ -39,8 +42,9 @@ const sau = chayMigration(
   dich
 )
 store.set('nhanVien', sau.nhanVien)
-store.set('appConfig', { ...sau.appConfig, schemaVersion: dich })
 store.set('ketQuaKy', sau.ketQuaKy)
+if (dich < 2) store.delete('ketQuaKy') // hạ về trước-vòng-3: xoá hẳn khoá khỏi config.json
+store.set('appConfig', { ...sau.appConfig, schemaVersion: dich }) // schemaVersion sau cùng
 console.log(
   `Xong. ${sau.nhanVien.length} nhân viên, ${Object.keys(sau.ketQuaKy).length} kỳ đã lưu. File: ${store.path}`
 )
