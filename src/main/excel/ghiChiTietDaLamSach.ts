@@ -13,7 +13,7 @@ import { ghiFileAtomic } from './ghiAtomic'
 const vang = (): ExcelJS.Fill => ({
   type: 'pattern',
   pattern: 'solid',
-  fgColor: { argb: 'FFFFF4CE' } // --color-warning-bg
+  fgColor: { argb: 'FFFFF4CE' } // --color-warning-soft (khoá, tổ hợp sáng/thường)
 })
 
 /** Gán fill cho MỘT ô mà không đụng style chung của hàng. */

@@ -1,8 +1,16 @@
-import { app, BrowserWindow, shell } from 'electron'
+import { app, BrowserWindow, nativeTheme, shell } from 'electron'
 import { join } from 'path'
-import { moStore } from './settings/store'
+import { moStore, layHienThi } from './settings/store'
 import { dangKyIpc } from './ipc'
 import { log } from './logger'
+
+/** Màu nền cửa sổ trước khi renderer kịp vẽ (tránh chớp trắng/đen) — đoán theo thiết lập
+ * Hiển thị đã lưu (vòng 4); "Theo Windows" thì đoán theo `nativeTheme` của OS. */
+function mauNenCuaSo(): string {
+  const h = layHienThi()
+  const toi = h.theme === 'dark' || (h.theme === 'auto' && nativeTheme.shouldUseDarkColors)
+  return toi ? '#0F141B' : '#EDF0F5'
+}
 
 function taoCuaSo(): void {
   const win = new BrowserWindow({
@@ -13,7 +21,7 @@ function taoCuaSo(): void {
     show: false,
     autoHideMenuBar: true,
     title: 'Timesheet Calculator',
-    backgroundColor: '#F5F5F7',
+    backgroundColor: mauNenCuaSo(),
     webPreferences: {
       preload: join(__dirname, '../preload/index.mjs'),
       sandbox: false,

@@ -21,7 +21,11 @@ const api: Api = {
   danhSachKy: () => ipcRenderer.invoke('ky-luu:danh-sach'),
   docKy: (thang) => ipcRenderer.invoke('ky-luu:doc', thang),
   capNhatPhatLuong: (payload) => ipcRenderer.invoke('ky-luu:cap-nhat-phat-luong', payload),
-  danhDauInDanhSach: (payload) => ipcRenderer.invoke('ky-luu:danh-dau-in', payload)
+  danhDauInDanhSach: (payload) => ipcRenderer.invoke('ky-luu:danh-dau-in', payload),
+
+  // Vòng 4
+  layHienThi: () => ipcRenderer.invoke('hien-thi:doc'),
+  capNhatHienThi: (patch) => ipcRenderer.invoke('hien-thi:cap-nhat', patch)
 }
 
 if (process.contextIsolated) {

@@ -13,6 +13,7 @@ import { docBangLuong, nhanVienTuBangLuong } from './excel/docBangLuong'
 import { ghiBangLuong } from './excel/ghiBangLuong'
 import { duongDanMauBangLuong } from './excel/mauBangLuong'
 import { ghiChiTietDaLamSach } from './excel/ghiChiTietDaLamSach'
+import type { HienThi } from '../core/hienThi'
 import {
   layNhanVien,
   layConfig,
@@ -20,7 +21,9 @@ import {
   layDanhSachKy,
   layMotKy,
   ghiMotKy,
-  layLoiMigration
+  layLoiMigration,
+  layHienThi,
+  ghiHienThi
 } from './settings/store'
 import { themHoacSua, xoaNhanVien, tronTuFileKyTruoc, chuanTen } from './settings/nhanVien'
 import { chuanHoaMa } from '../core/ma'
@@ -328,6 +331,10 @@ export function dangKyIpc(): void {
     const tieuDe = encodeURIComponent('Góp ý / báo lỗi — Timesheet Calculator')
     shell.openExternal(`mailto:feedback@example.com?subject=${tieuDe}`)
   })
+
+  // ---- Vòng 4 — thiết lập Hiển thị (cỡ chữ/độ cao hàng/nền/tương phản) ----
+  ipcMain.handle('hien-thi:doc', () => layHienThi())
+  ipcMain.handle('hien-thi:cap-nhat', (_e, patch: Partial<HienThi>) => ghiHienThi(patch))
 
   // ---- Vòng 3 — lưu kỳ + dashboard + phát lương ----
 

@@ -1,6 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useState } from 'react'
 import type { ReactNode } from 'react'
-import type { NhanVien, KetQuaKyCong, KetQuaKy, TrangThaiApp } from '../../preload/api-types'
+import type { NhanVien, KetQuaKyCong, KetQuaKy, TrangThaiApp, HienThi } from '../../preload/api-types'
+import { apDungHienThi } from './hienThi'
 
 export type ManHinh = 's1' | 's2' | 's3' | 's4' | 's5' | 's6' | 's7' | 's8' | 's9' | 's10'
 
@@ -23,12 +24,22 @@ interface AppState {
   /** `thang` của kỳ đang mở ở S9/S10 — null nghĩa là đang xem kỳ hiện tại (chưa lưu). */
   thangDangXem: string | null
   moKy(thang: string | null): void
+  // Vòng 4
+  hienThi: HienThi
+  capNhatHienThi(patch: Partial<HienThi>): Promise<void>
 }
 
 const Ctx = createContext<AppState | null>(null)
 
-export function AppStore({ children }: { children: ReactNode }) {
+export function AppStore({
+  children,
+  hienThiBanDau
+}: {
+  children: ReactNode
+  hienThiBanDau: HienThi
+}) {
   const [manHinh, setManHinh] = useState<ManHinh>('s9')
+  const [hienThi, setHienThi] = useState<HienThi>(hienThiBanDau)
   const [trangThai, setTrangThai] = useState<TrangThaiApp | null>(null)
   const [nhanVien, setNhanVien] = useState<NhanVien[]>([])
   const [ky, setKy] = useState<KetQuaKyCong | null>(null)
@@ -87,6 +98,12 @@ export function AppStore({ children }: { children: ReactNode }) {
     moKy: (thang) => {
       setThangDangXem(thang)
       setManHinh('s9')
+    },
+    hienThi,
+    capNhatHienThi: async (patch) => {
+      const moi = await window.api.capNhatHienThi(patch)
+      apDungHienThi(moi)
+      setHienThi(moi)
     }
   }
 

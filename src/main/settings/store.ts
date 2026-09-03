@@ -6,6 +6,8 @@ import { readFileSync, existsSync, copyFileSync } from 'fs'
 import { log } from '../logger'
 import type { NhanVien } from '../../core/types'
 import type { KetQuaKy } from '../../core/ketQuaKy'
+import type { HienThi } from '../../core/hienThi'
+import { chuanHoaHienThi } from '../../core/hienThi'
 import { chuanHoaMa } from '../../core/ma'
 import { chayMigration, SCHEMA_VERSION_HIEN_TAI } from './migrations'
 import { saoLuuTruocMigrate } from './saoLuu'
@@ -15,6 +17,8 @@ export interface AppConfig {
   thuMucXuatGanNhat: string
   fileMauBangLuongGanNhat: string
   kyXuLyGanNhat: string
+  /** Vòng 4 — optional: thiếu thì dùng mặc định tại code, KHÔNG cần migration. */
+  hienThi?: HienThi
 }
 
 interface Schema {
@@ -132,6 +136,18 @@ export function ghiConfig(patch: Partial<AppConfig>): AppConfig {
   const moi = { ...layConfig(), ...patch }
   moStore().set('appConfig', moi)
   return moi
+}
+
+// ---- Hiển thị (vòng 4) ----
+
+export function layHienThi(): HienThi {
+  return chuanHoaHienThi(layConfig().hienThi)
+}
+
+export function ghiHienThi(patch: Partial<HienThi>): HienThi {
+  const hienThi = chuanHoaHienThi({ ...layHienThi(), ...patch })
+  ghiConfig({ hienThi })
+  return hienThi
 }
 
 // ---- KếtQuảKỳ (vòng 3) ----

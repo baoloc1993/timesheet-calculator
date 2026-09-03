@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import { useApp } from '../store'
 import { dmy } from '../App'
+import { PageHead } from '../components/PageHead'
 import type { KetQuaNgay } from '../../../preload/api-types'
 
 const so2 = (n: number) => Math.round(n * 100) / 100
@@ -23,7 +24,8 @@ export function S3RaDongVang() {
   if (!th) {
     return (
       <>
-        <h1>Rà dòng bất thường</h1>
+        <PageHead crumb="Kỳ hiện tại" title="Rà dòng bất thường" />
+        <div className="page-body">
         <div className="card">
           <div className="empty">
             <p>Chọn một nhân viên ở bảng tổng hợp để xem chi tiết.</p>
@@ -31,6 +33,7 @@ export function S3RaDongVang() {
               Về bảng tổng hợp
             </button>
           </div>
+        </div>
         </div>
       </>
     )
@@ -40,20 +43,24 @@ export function S3RaDongVang() {
 
   return (
     <>
-      <h1>
-        {th.tenMay} <span className="sub">chi tiết kỳ {ky!.thang}</span>
-      </h1>
+      <PageHead
+        crumb="Kỳ hiện tại"
+        title={th.tenMay}
+        sub={<>chi tiết kỳ {ky!.thang}</>}
+        actions={
+          <>
+            <button className="btn" onClick={() => di('s2')}>
+              Xong, quay lại tổng hợp
+            </button>
+            <button className="btn" onClick={() => xemChamCongGoc(th.maNhanVien)}>
+              Xem chấm công gốc để đối chiếu
+            </button>
+          </>
+        }
+      />
+      <div className="page-body">
 
       <div className="card">
-        <div className="toolbar">
-          <button className="btn" onClick={() => di('s2')}>
-            Xong, quay lại tổng hợp
-          </button>
-          <button className="btn" onClick={() => xemChamCongGoc(th.maNhanVien)}>
-            Xem chấm công gốc để đối chiếu
-          </button>
-        </div>
-
         {!coVang && (
           <p className="note">
             Không có dòng cần xem lại cho nhân viên này — bảng dưới là toàn bộ ngày trong kỳ.
@@ -88,6 +95,7 @@ export function S3RaDongVang() {
           </table>
         </div>
         <p className="note">Sửa một ô giờ vào/ra rồi rời ô → công cụ tính lại dòng đó ngay.</p>
+      </div>
       </div>
     </>
   )

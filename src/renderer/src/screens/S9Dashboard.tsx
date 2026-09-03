@@ -1,11 +1,62 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useApp } from '../store'
 import { dmy } from '../App'
+import { PageHead } from '../components/PageHead'
 import type { KetQuaKy } from '../../../preload/api-types'
 import { tongKetQuaKy } from '../../../preload/api-types'
 
 const so2 = (n: number) => Math.round(n * 100) / 100
 const vnd = (n: number) => n.toLocaleString('vi-VN')
+
+interface DiemQuy {
+  thang: string
+  nhan: string
+  tong: number
+  hienTai: boolean
+}
+
+/** Biểu đồ quỹ lương 3 kỳ gần nhất (SVG tĩnh, không tương tác) — S9 vòng 4.
+ *  Chỉ ngữ cảnh hình ảnh, không phải "so sánh liên kỳ" đầy đủ. */
+function BieuDoQuyLuong({ diem }: { diem: DiemQuy[] }) {
+  if (diem.length < 2) return null
+  const w = 380
+  const h = 110
+  const bw = 64
+  const gap = (w - bw * diem.length) / (diem.length + 1)
+  const max = Math.max(...diem.map((d) => d.tong), 1)
+  return (
+    <div className="card chartcard">
+      <div className="ct">
+        <h2 style={{ margin: 0 }}>Quỹ lương 3 kỳ gần nhất</h2>
+      </div>
+      <svg viewBox={`0 0 ${w} ${h}`} role="img" aria-label="Biểu đồ quỹ lương 3 kỳ gần nhất">
+        <line x1={0} y1={h - 20} x2={w} y2={h - 20} stroke="var(--chart-axis)" />
+        {diem.map((d, i) => {
+          const x = gap + i * (bw + gap)
+          const barH = (d.tong / max) * (h - 40)
+          return (
+            <g key={d.thang}>
+              <rect
+                x={x}
+                y={h - 20 - barH}
+                width={bw}
+                height={barH}
+                fill={d.hienTai ? 'var(--chart-bar-strong)' : 'var(--chart-bar)'}
+                rx={3}
+              />
+              <text className="cv" x={x + bw / 2} y={h - 24 - barH} textAnchor="middle">
+                {vnd(Math.round(d.tong / 1000))}k
+              </text>
+              <text className="cx" x={x + bw / 2} y={h - 6} textAnchor="middle">
+                {d.nhan}
+              </text>
+            </g>
+          )
+        })}
+      </svg>
+    </div>
+  )
+}
 
 interface DongXem {
   ten: string
@@ -104,11 +155,35 @@ export function S9Dashboard() {
 
   const trong = !kyChuaLuu && danhSachKy.length === 0
 
+  // Quỹ lương 3 kỳ gần nhất (kỳ đang tính chưa lưu, nếu có, + tối đa 2 kỳ đã lưu gần nhất),
+  // sắp xưa → nay. Thuần ngữ cảnh hình ảnh, không đọc lại dữ liệu mới.
+  const diemQuy = useMemo(() => {
+    const dsSau = danhSachKy.filter((k) => !(kyChuaLuu && k.thang === ky!.thang))
+    const arr = [
+      ...dsSau.slice(0, kyChuaLuu ? 2 : 3).map((k) => ({
+        thang: k.thang,
+        nhan: k.thang.slice(-2) + '/' + k.thang.slice(2, 4),
+        tong: tongKetQuaKy(k).tongThanhTien,
+        hienTai: false
+      })),
+      ...(kyChuaLuu && ky
+        ? [
+            {
+              thang: ky.thang,
+              nhan: ky.thang.slice(-2) + '/' + ky.thang.slice(2, 4) + ' (chưa lưu)',
+              tong: ky.tongThanhTienCaKy,
+              hienTai: true
+            }
+          ]
+        : [])
+    ]
+    return arr.sort((a, b) => a.thang.localeCompare(b.thang))
+  }, [danhSachKy, kyChuaLuu, ky])
+
   return (
     <>
-      <h1>
-        Dashboard <span className="sub">lịch sử các kỳ đã lưu</span>
-      </h1>
+      <PageHead title="Dashboard" sub="lịch sử các kỳ đã lưu" />
+      <div className="page-body">
 
       <div className="dash">
         <div className="dash-list">
@@ -236,6 +311,8 @@ export function S9Dashboard() {
                 </div>
               </div>
 
+              <BieuDoQuyLuong diem={diemQuy} />
+
               <div className="card">
                 <div className="table-wrap">
                   <table>
@@ -277,6 +354,7 @@ export function S9Dashboard() {
             </>
           )}
         </div>
+      </div>
       </div>
     </>
   )

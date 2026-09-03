@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useApp } from '../store'
 import { dmy } from '../App'
+import { PageHead } from '../components/PageHead'
 
 export function S1NapFile() {
   const { trangThai, di, datKy, lamMoiTrangThai } = useApp()
@@ -28,11 +29,15 @@ export function S1NapFile() {
 
   return (
     <>
-      <button className="lien-ket" onClick={() => di('s9')} style={{ marginBottom: 'var(--space-md)' }}>
-        ← Về dashboard
-      </button>
-      <h1>Nạp file máy chấm công</h1>
-
+      <PageHead
+        crumb={
+          <button className="lien-ket" onClick={() => di('s9')}>
+            ← Dashboard
+          </button>
+        }
+        title="Nạp file máy chấm công"
+      />
+      <div className="page-body">
       <div className="stats">
         <div className="stat">
           <div className={'num' + (soNV === 0 ? ' alert' : '')}>{soNV}</div>
@@ -110,6 +115,7 @@ export function S1NapFile() {
             {trangThai.kyXuLyGanNhat && ` · kỳ ${dmy(trangThai.kyXuLyGanNhat + '-01')}`}
           </p>
         )}
+      </div>
       </div>
     </>
   )

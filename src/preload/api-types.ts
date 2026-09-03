@@ -6,8 +6,9 @@ import type {
   KetQuaNgay
 } from '../core/types'
 import type { KetQuaKy, DongBang } from '../core/ketQuaKy'
+import type { HienThi } from '../core/hienThi'
 
-export type { NhanVien, KetQuaKyCong, TongHopNhanVien, KetQuaNgay, KetQuaKy, DongBang }
+export type { NhanVien, KetQuaKyCong, TongHopNhanVien, KetQuaNgay, KetQuaKy, DongBang, HienThi }
 // Hàm thuần vòng 3 — renderer dùng để tính "thực nhận" / Σ mà không cần round-trip IPC.
 export { tinhThucNhan, lamTronNghin, tongKetQuaKy } from '../core/ketQuaKy'
 
@@ -108,4 +109,10 @@ export interface Api {
   }): Promise<KetQua<KetQuaKy>>
   /** Ghi mốc "đã in danh sách phát lương" vào log cục bộ (§Nhóm 4). Fire-and-forget. */
   danhDauInDanhSach(payload: { thang: string; soNguoi: number }): Promise<void>
+
+  // ---- Vòng 4 — thiết lập Hiển thị ----
+  /** Đọc `AppConfig.hienThi` (thiếu → mặc định tại code, không throw). */
+  layHienThi(): Promise<HienThi>
+  /** Ghi đè một phần thiết lập Hiển thị, trả về bộ đầy đủ đã chuẩn hoá. */
+  capNhatHienThi(patch: Partial<HienThi>): Promise<HienThi>
 }

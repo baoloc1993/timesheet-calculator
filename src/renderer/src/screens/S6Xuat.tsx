@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useApp } from '../store'
+import { PageHead } from '../components/PageHead'
 import type { XuatKetQua } from '../../../preload/api-types'
 
 export function S6Xuat() {
@@ -12,7 +13,8 @@ export function S6Xuat() {
   if (!ky) {
     return (
       <>
-        <h1>Xuất kết quả</h1>
+        <PageHead title="Xuất kết quả" />
+        <div className="page-body">
         <div className="card">
           <div className="empty">
             <p>Chưa nạp kỳ công.</p>
@@ -20,6 +22,7 @@ export function S6Xuat() {
               Nạp file
             </button>
           </div>
+        </div>
         </div>
       </>
     )
@@ -52,10 +55,11 @@ export function S6Xuat() {
 
   return (
     <>
-      <h1>
-        Xuất kết quả <span className="sub">kỳ {ky.thang} · đường phụ — chỉ cần xem thì mở Xem công</span>
-      </h1>
-
+      <PageHead
+        title="Xuất kết quả"
+        sub={<>kỳ {ky.thang} · đường phụ — chỉ cần xem thì mở Xem công</>}
+      />
+      <div className="page-body">
       <div className="card">
         <p className="note" style={{ marginTop: 0 }}>
           Chỉ cần xem số để đối chiếu / duyệt lương thì mở{' '}
@@ -153,6 +157,7 @@ export function S6Xuat() {
             </div>
           )
         )}
+      </div>
       </div>
     </>
   )

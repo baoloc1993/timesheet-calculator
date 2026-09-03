@@ -1,4 +1,5 @@
 import { useApp } from '../store'
+import { PageHead } from '../components/PageHead'
 
 export function S4ChanThieuSetup() {
   const { ky, di } = useApp()
@@ -6,8 +7,8 @@ export function S4ChanThieuSetup() {
 
   return (
     <>
-      <h1>Chưa thể tính — thiếu thông số nhân viên</h1>
-
+      <PageHead crumb="Kỳ hiện tại" title="Chưa thể tính — thiếu thông số nhân viên" />
+      <div className="page-body">
       <div className="card">
         {thieu.length === 0 ? (
           <div className="empty">
@@ -39,6 +40,7 @@ export function S4ChanThieuSetup() {
             <p className="note">Khai xong tất cả → tự quay lại bảng tổng hợp.</p>
           </>
         )}
+      </div>
       </div>
     </>
   )

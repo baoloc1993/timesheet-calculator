@@ -1,6 +1,7 @@
 import { useMemo } from 'react'
 import { useApp } from '../store'
 import { dmy } from '../App'
+import { PageHead } from '../components/PageHead'
 import type { KetQuaNgay } from '../../../preload/api-types'
 
 const so2 = (n: number) => Math.round(n * 100) / 100
@@ -42,7 +43,8 @@ export function S8XemChamCongGoc() {
   if (!ky || !th) {
     return (
       <>
-        <h1>Xem chấm công gốc</h1>
+        <PageHead crumb="Kỳ hiện tại" title="Xem chấm công gốc" />
+        <div className="page-body">
         <div className="card">
           <div className="empty">
             <p>Chọn một nhân viên ở màn Xem công để đối chiếu chấm công gốc.</p>
@@ -50,6 +52,7 @@ export function S8XemChamCongGoc() {
               {ky ? 'Sang Xem công' : 'Sang màn Nạp file'}
             </button>
           </div>
+        </div>
         </div>
       </>
     )
@@ -59,11 +62,12 @@ export function S8XemChamCongGoc() {
 
   return (
     <>
-      <h1>
-        {tenHienThi}{' '}
-        <span className="sub">chấm công gốc so với số công cụ đã dựng · kỳ {ky.thang}</span>
-      </h1>
-
+      <PageHead
+        crumb="Kỳ hiện tại"
+        title={tenHienThi}
+        sub={<>chấm công gốc so với số công cụ đã dựng · kỳ {ky.thang}</>}
+      />
+      <div className="page-body">
       <div className="card">
         <div className="toolbar">
           <button className="btn" onClick={() => di('s7')}>
@@ -133,6 +137,7 @@ export function S8XemChamCongGoc() {
           Cột Mốc máy gốc là giá trị máy chấm công xuất ra, giữ nguyên để đối chiếu. Ô nền vàng
           là chỗ công cụ đã tự sửa hoặc bạn đã sửa tay ở màn Rà dòng vàng.
         </p>
+      </div>
       </div>
     </>
   )

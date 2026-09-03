@@ -1,6 +1,8 @@
 import { useEffect, useRef } from 'react'
 import { AppStore, useApp } from './store'
 import type { ManHinh } from './store'
+import type { HienThi } from '../../preload/api-types'
+import { BangHienThi } from './components/BangHienThi'
 import { S1NapFile } from './screens/S1NapFile'
 import { S2BangTongHop } from './screens/S2BangTongHop'
 import { S3RaDongVang } from './screens/S3RaDongVang'
@@ -113,9 +115,12 @@ function TitleBar() {
           ? `— kỳ ${ky.thang} · ${dmy(ky.ngayBatDau)} – ${dmy(ky.ngayKetThuc)}`
           : '— chưa nạp kỳ công'}
       </span>
-      <button className="lien-ket" onClick={() => window.api.moGopY()}>
-        Góp ý / báo lỗi
-      </button>
+      <div className="tb-right">
+        <BangHienThi />
+        <button className="lien-ket" onClick={() => window.api.moGopY()}>
+          Góp ý / báo lỗi
+        </button>
+      </div>
     </div>
   )
 }
@@ -144,9 +149,9 @@ function Noi() {
   )
 }
 
-export function App() {
+export function App({ hienThiBanDau }: { hienThiBanDau: HienThi }) {
   return (
-    <AppStore>
+    <AppStore hienThiBanDau={hienThiBanDau}>
       <div className="shell">
         <TitleBar />
         <div className="body">

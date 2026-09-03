@@ -1,5 +1,6 @@
 import { useApp } from '../store'
 import { dmy } from '../App'
+import { PageHead } from '../components/PageHead'
 
 export function S2BangTongHop() {
   const { ky, di, chonNhanVien } = useApp()
@@ -7,7 +8,8 @@ export function S2BangTongHop() {
   if (!ky) {
     return (
       <>
-        <h1>Bảng tổng hợp</h1>
+        <PageHead crumb="Kỳ hiện tại" title="Bảng tổng hợp" />
+        <div className="page-body">
         <div className="card">
           <div className="empty">
             <p>Chưa nạp file máy chấm công.</p>
@@ -16,19 +18,34 @@ export function S2BangTongHop() {
             </button>
           </div>
         </div>
+        </div>
       </>
     )
   }
 
   return (
     <>
-      <h1>
-        Bảng tổng hợp{' '}
-        <span className="sub">
-          kỳ {ky.thang} · {dmy(ky.ngayBatDau)} – {dmy(ky.ngayKetThuc)} · {ky.tongHop.length} nhân
-          viên
-        </span>
-      </h1>
+      <PageHead
+        crumb="Kỳ hiện tại"
+        title="Bảng tổng hợp"
+        sub={
+          <>
+            kỳ {ky.thang} · {dmy(ky.ngayBatDau)} – {dmy(ky.ngayKetThuc)} · {ky.tongHop.length} nhân
+            viên
+          </>
+        }
+        actions={
+          <>
+            <button className="btn primary" disabled={ky.thieuSetup.length > 0} onClick={() => di('s7')}>
+              Xem công / bảng lương
+            </button>
+            <button className="btn" disabled={ky.thieuSetup.length > 0} onClick={() => di('s6')}>
+              Xuất 2 file Excel
+            </button>
+          </>
+        }
+      />
+      <div className="page-body">
 
       {ky.thieuSetup.length > 0 && (
         <p className="note" role="status">
@@ -67,23 +84,6 @@ export function S2BangTongHop() {
       )}
 
       <div className="card">
-        <div className="toolbar">
-          <button
-            className="btn primary"
-            disabled={ky.thieuSetup.length > 0}
-            onClick={() => di('s7')}
-          >
-            Xem công / bảng lương
-          </button>
-          <button
-            className="btn"
-            disabled={ky.thieuSetup.length > 0}
-            onClick={() => di('s6')}
-          >
-            Xuất 2 file Excel
-          </button>
-        </div>
-
         <div className="table-wrap">
         <table>
           <thead>
@@ -122,6 +122,7 @@ export function S2BangTongHop() {
         <p className="note">
           Bấm một nhân viên để xem chi tiết theo ngày và các dòng công cụ đã tự sửa.
         </p>
+      </div>
       </div>
     </>
   )

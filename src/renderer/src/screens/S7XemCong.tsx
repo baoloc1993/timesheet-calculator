@@ -1,6 +1,7 @@
 import { useEffect } from 'react'
 import { useApp } from '../store'
 import { dmy } from '../App'
+import { PageHead } from '../components/PageHead'
 
 const so2 = (n: number) => Math.round(n * 100) / 100
 const vnd = (n: number) => n.toLocaleString('vi-VN')
@@ -17,7 +18,8 @@ export function S7XemCong() {
   if (!ky) {
     return (
       <>
-        <h1>Xem công / bảng lương</h1>
+        <PageHead crumb="Kỳ hiện tại" title="Xem công / bảng lương" />
+        <div className="page-body">
         <div className="card">
           <div className="empty">
             <p>Chưa nạp kỳ công nào — nạp file ở màn Nạp file.</p>
@@ -26,6 +28,7 @@ export function S7XemCong() {
             </button>
           </div>
         </div>
+        </div>
       </>
     )
   }
@@ -33,7 +36,8 @@ export function S7XemCong() {
   if (ky.thieuSetup.length > 0) {
     return (
       <>
-        <h1>Xem công / bảng lương</h1>
+        <PageHead crumb="Kỳ hiện tại" title="Xem công / bảng lương" />
+        <div className="page-body">
         <div className="card">
           <div className="errorbox">
             <strong>{ky.thieuSetup.length} nhân viên trong file máy chưa khai Setup.</strong>
@@ -45,6 +49,7 @@ export function S7XemCong() {
             </button>
           </div>
         </div>
+        </div>
       </>
     )
   }
@@ -53,13 +58,22 @@ export function S7XemCong() {
 
   return (
     <>
-      <h1>
-        Xem công / bảng lương{' '}
-        <span className="sub">
-          kỳ {ky.thang} · {dmy(ky.ngayBatDau)} – {dmy(ky.ngayKetThuc)} · {ky.tongHop.length} nhân
-          viên · không cần xuất Excel
-        </span>
-      </h1>
+      <PageHead
+        crumb="Kỳ hiện tại"
+        title="Xem công / bảng lương"
+        sub={
+          <>
+            kỳ {ky.thang} · {dmy(ky.ngayBatDau)} – {dmy(ky.ngayKetThuc)} · {ky.tongHop.length} nhân
+            viên · không cần xuất Excel
+          </>
+        }
+        actions={
+          <button className="btn" onClick={() => di('s6')}>
+            Xuất Excel (tuỳ chọn)
+          </button>
+        }
+      />
+      <div className="page-body">
 
       {chuaKhaiDonGia.length > 0 && (
         <p className="note" role="status">
@@ -86,12 +100,6 @@ export function S7XemCong() {
       </div>
 
       <div className="card">
-        <div className="toolbar">
-          <button className="btn" onClick={() => di('s6')}>
-            Xuất Excel (tuỳ chọn)
-          </button>
-        </div>
-
         <div className="table-wrap wide">
           <table>
             <thead>
@@ -145,6 +153,7 @@ export function S7XemCong() {
           đơn giá ngày + giờ OT × đơn giá OT; chưa gồm chuyên cần / bù lương / lễ / bảo hiểm /
           vay.
         </p>
+      </div>
       </div>
     </>
   )

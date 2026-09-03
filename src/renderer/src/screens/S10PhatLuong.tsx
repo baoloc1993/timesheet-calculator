@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useApp } from '../store'
 import { dmy } from '../App'
+import { PageHead } from '../components/PageHead'
 import type { KetQuaKy } from '../../../preload/api-types'
 import { tinhThucNhan } from '../../../preload/api-types'
 
@@ -91,7 +92,8 @@ export function S10PhatLuong() {
   if (!thangDangXem) {
     return (
       <>
-        <h1>Phát lương</h1>
+        <PageHead title="Phát lương" />
+        <div className="page-body">
         <div className="card">
           <div className="empty">
             <p>Chọn một kỳ đã lưu ở Dashboard, hoặc lưu kỳ đang tính trước.</p>
@@ -100,6 +102,7 @@ export function S10PhatLuong() {
             </button>
           </div>
         </div>
+        </div>
       </>
     )
   }
@@ -107,8 +110,10 @@ export function S10PhatLuong() {
   if (dangTai) {
     return (
       <>
-        <h1>Phát lương</h1>
+        <PageHead title="Phát lương" />
+        <div className="page-body">
         <p className="loading">Đang tải kỳ…</p>
+        </div>
       </>
     )
   }
@@ -116,7 +121,8 @@ export function S10PhatLuong() {
   if (!kq) {
     return (
       <>
-        <h1>Phát lương</h1>
+        <PageHead title="Phát lương" />
+        <div className="page-body">
         <div className="card">
           <div className="empty">
             <p>Không tìm thấy kỳ {thangDangXem} đã lưu.</p>
@@ -124,6 +130,7 @@ export function S10PhatLuong() {
               Về Dashboard
             </button>
           </div>
+        </div>
         </div>
       </>
     )
@@ -133,9 +140,34 @@ export function S10PhatLuong() {
 
   return (
     <>
-      <h1>
-        Phát lương <span className="sub">kỳ {kq.thang} · {dmy(kq.khoangNgay.tu)} – {dmy(kq.khoangNgay.den)}</span>
-      </h1>
+      <PageHead
+        title="Phát lương"
+        sub={
+          <>
+            kỳ {kq.thang} · {dmy(kq.khoangNgay.tu)} – {dmy(kq.khoangNgay.den)}
+          </>
+        }
+        actions={
+          <>
+            <button
+              className="btn primary"
+              onClick={() => {
+                // Ép commit ô đang gõ (onBlur) trước khi in — bản in đọc state, không phải DOM.
+                const el = document.activeElement as HTMLElement | null
+                el?.blur()
+                window.api.danhDauInDanhSach({ thang: kq.thang, soNguoi: kq.dongBang.length })
+                window.print()
+              }}
+            >
+              In danh sách
+            </button>
+            <button className="btn" onClick={() => di('s9')}>
+              Về Dashboard
+            </button>
+          </>
+        }
+      />
+      <div className="page-body">
 
       <div className="stats">
         <div className="stat">
@@ -149,24 +181,6 @@ export function S10PhatLuong() {
       </div>
 
       <div className="card">
-        <div className="toolbar">
-          <button
-            className="btn primary"
-            onClick={() => {
-              // Ép commit ô đang gõ (onBlur) trước khi in — bản in đọc state, không phải DOM.
-              const el = document.activeElement as HTMLElement | null
-              el?.blur()
-              window.api.danhDauInDanhSach({ thang: kq.thang, soNguoi: kq.dongBang.length })
-              window.print()
-            }}
-          >
-            In danh sách
-          </button>
-          <button className="btn" onClick={() => di('s9')}>
-            Về Dashboard
-          </button>
-        </div>
-
         <div className="table-wrap wide">
           <table>
             <thead>
@@ -273,6 +287,7 @@ export function S10PhatLuong() {
             ))}
           </tbody>
         </table>
+      </div>
       </div>
     </>
   )

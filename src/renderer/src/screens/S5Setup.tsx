@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useApp } from '../store'
+import { PageHead } from '../components/PageHead'
 import type { NhanVien, LoiTruongForm } from '../../../preload/api-types'
 
 type Form = {
@@ -128,24 +129,28 @@ export function S5Setup() {
 
   return (
     <>
-      <h1>Setup nhân viên</h1>
+      <PageHead
+        title="Setup nhân viên"
+        actions={
+          <>
+            <button
+              className="btn primary"
+              onClick={() => {
+                setLoiTruong([])
+                setForm({ ...RONG })
+              }}
+            >
+              Thêm nhân viên
+            </button>
+            <button className="btn" aria-busy={dangNap} disabled={dangNap} onClick={napTuFile}>
+              {dangNap ? 'Đang đọc file kỳ trước…' : 'Nạp từ file kỳ trước'}
+            </button>
+          </>
+        }
+      />
+      <div className="page-body">
 
       <div className="card">
-        <div className="toolbar">
-          <button
-            className="btn primary"
-            onClick={() => {
-              setLoiTruong([])
-              setForm({ ...RONG })
-            }}
-          >
-            Thêm nhân viên
-          </button>
-          <button className="btn" aria-busy={dangNap} disabled={dangNap} onClick={napTuFile}>
-            {dangNap ? 'Đang đọc file kỳ trước…' : 'Nạp từ file kỳ trước'}
-          </button>
-        </div>
-
         {thongBao && <p className="note">{thongBao}</p>}
 
         {nhanVien.length === 0 ? (
@@ -227,6 +232,7 @@ export function S5Setup() {
           </div>
         </div>
       )}
+      </div>
     </>
   )
 }
