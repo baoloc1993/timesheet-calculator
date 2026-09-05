@@ -25,7 +25,12 @@ const api: Api = {
 
   // Vòng 4
   layHienThi: () => ipcRenderer.invoke('hien-thi:doc'),
-  capNhatHienThi: (patch) => ipcRenderer.invoke('hien-thi:cap-nhat', patch)
+  capNhatHienThi: (patch) => ipcRenderer.invoke('hien-thi:cap-nhat', patch),
+
+  // Vòng 5
+  layCauHinhMay: () => ipcRenderer.invoke('may-cham-cong:doc-cau-hinh'),
+  capNhatCauHinhMay: (patch) => ipcRenderer.invoke('may-cham-cong:cap-nhat-cau-hinh', patch),
+  dongBoTuMay: (payload) => ipcRenderer.invoke('may-cham-cong:dong-bo', payload)
 }
 
 if (process.contextIsolated) {

@@ -2,7 +2,7 @@
 
 import { ipcMain, dialog, shell, BrowserWindow, app } from 'electron'
 import { basename, join, dirname } from 'path'
-import { existsSync } from 'fs'
+import { existsSync, readFileSync } from 'fs'
 import type { KetQuaKyCong, NhanVien } from '../core/types'
 import { xuLyKyCong, tinhLaiMotDong, tinhLaiTongHop, tongToanKy } from '../core/xuLyKyCong'
 import { dongBangKetQuaKy, mergePhatLuongCu } from '../core/ketQuaKy'
@@ -12,8 +12,13 @@ import { docFileMay, LoiDocFileMay } from './excel/docFileMay'
 import { docBangLuong, nhanVienTuBangLuong } from './excel/docBangLuong'
 import { ghiBangLuong } from './excel/ghiBangLuong'
 import { duongDanMauBangLuong } from './excel/mauBangLuong'
-import { ghiChiTietDaLamSach } from './excel/ghiChiTietDaLamSach'
+import { ghiChiTietDaLamSach, ghiChiTietTuMocCham } from './excel/ghiChiTietDaLamSach'
 import type { HienThi } from '../core/hienThi'
+import type { CauHinhMayChamCong } from '../core/mayChamCong'
+import { ipHopLe, congHopLe } from '../core/mayChamCong'
+import { gomMocCham } from '../core/gomMocCham'
+import type { MocChamTho } from '../core/gomMocCham'
+import { dongBo as dongBoTuMay, LoiKetNoiMayChamCong } from './mayChamCong/ketNoi'
 import {
   layNhanVien,
   layConfig,
@@ -23,7 +28,9 @@ import {
   ghiMotKy,
   layLoiMigration,
   layHienThi,
-  ghiHienThi
+  ghiHienThi,
+  layCauHinhMay,
+  ghiCauHinhMay
 } from './settings/store'
 import { themHoacSua, xoaNhanVien, tronTuFileKyTruoc, chuanTen } from './settings/nhanVien'
 import { chuanHoaMa } from '../core/ma'
@@ -35,8 +42,14 @@ interface SuaTay {
   cap: { vao: string | null; ra: string | null }[]
 }
 
+/** Kỳ đang tính lấy dữ liệu từ đâu — quyết định cách "làm mới sau khi Setup đổi" (§lamMoiKyHienTai)
+ * và cách xuất file "chi tiết đã làm sạch" (chỉ nguồn 'file' có file gốc để nhân bản layout). */
+type NguonKy =
+  | { loai: 'file'; duongDan: string }
+  | { loai: 'may'; ip: string; port: number; tu: string; den: string }
+
 interface KyHienTai {
-  fileMay: string
+  nguon: NguonKy
   ky: KetQuaKyCong
   /** Các dòng người dùng đã sửa tay ở S3 — phát lại sau khi dựng lại kỳ (BH vòng 2). */
   suaTay: SuaTay[]
@@ -57,6 +70,21 @@ function duongDanTest(bien: string): string | null {
   if (app.isPackaged) return null
   const v = process.env[bien]
   return v && existsSync(v) ? v : null
+}
+
+// Test seam cho "Đồng bộ từ máy" (vòng 5) — dogfood/e2e không có máy ZKTeco-compatible thật.
+// TSC_TEST_MOC_CHAM_JSON trỏ tới file JSON [{userId, timestamp}] thay cho dongBoTuMay();
+// TSC_TEST_MAY_LOI ép nhánh lỗi kết nối. Cùng guard app.isPackaged như duongDanTest ở trên.
+function mocChamThoTest(): MocChamTho[] | null {
+  if (app.isPackaged) return null
+  const f = process.env.TSC_TEST_MOC_CHAM_JSON
+  if (!f || !existsSync(f)) return null
+  try {
+    const raw = JSON.parse(readFileSync(f, 'utf-8')) as { userId: string | number; timestamp: string }[]
+    return raw.map((r) => ({ userId: r.userId, timestamp: new Date(r.timestamp) }))
+  } catch {
+    return null
+  }
 }
 
 function loi(e: unknown) {
@@ -113,7 +141,7 @@ export function dangKyIpc(): void {
       }
       const file = await docFileMay(duongDan)
       const ky = xuLyKyCong(file, layNhanVien())
-      kyHienTai = { fileMay: duongDan, ky, suaTay: [] }
+      kyHienTai = { nguon: { loai: 'file', duongDan }, ky, suaTay: [] }
       ghiConfig({ kyXuLyGanNhat: file.thang })
       log.info('nạp file máy', duongDan, `${file.khoi.length} khối`)
       log.event('nap-file-may', {
@@ -244,9 +272,12 @@ export function dangKyIpc(): void {
       let thuMuc = duongDanTest('TSC_TEST_THU_MUC_XUAT')
       if (!thuMuc) {
         const w = win()
+        const macDinh =
+          c.thuMucXuatGanNhat ||
+          (kyHienTai.nguon.loai === 'file' ? dirname(kyHienTai.nguon.duongDan) : undefined)
         const rDir = await dialog.showOpenDialog(w!, {
           title: 'Chọn thư mục lưu 2 file kết quả',
-          defaultPath: c.thuMucXuatGanNhat || dirname(kyHienTai.fileMay),
+          ...(macDinh ? { defaultPath: macDinh } : {}),
           properties: ['openDirectory', 'createDirectory']
         })
         if (rDir.canceled || !rDir.filePaths[0]) return { ok: false, loi: 'Đã huỷ chọn thư mục.' }
@@ -268,7 +299,10 @@ export function dangKyIpc(): void {
       })
       let ct: { duongDanRa: string; soDongToVang: number }
       try {
-        ct = await ghiChiTietDaLamSach(kyHienTai.fileMay, pCT, kyHienTai.ky.tongHop)
+        ct =
+          kyHienTai.nguon.loai === 'file'
+            ? await ghiChiTietDaLamSach(kyHienTai.nguon.duongDan, pCT, kyHienTai.ky.tongHop)
+            : await ghiChiTietTuMocCham(pCT, kyHienTai.ky.tongHop)
       } catch (e) {
         // Bảng lương đã ghi xong, file chi tiết lỗi → nói rõ trạng thái từng file (BH-12).
         const r = loi(e)
@@ -342,6 +376,58 @@ export function dangKyIpc(): void {
       throw e
     }
   })
+
+  // ---- Vòng 5 — kết nối máy chấm công vân tay (LAN) ----
+  ipcMain.handle('may-cham-cong:doc-cau-hinh', () => layCauHinhMay())
+  ipcMain.handle('may-cham-cong:cap-nhat-cau-hinh', (_e, patch: Partial<CauHinhMayChamCong>) =>
+    ghiCauHinhMay(patch)
+  )
+
+  ipcMain.handle(
+    'may-cham-cong:dong-bo',
+    async (_e, p: { ip: string; port: number; tu: string; den: string }) => {
+      try {
+        const ip = String(p?.ip ?? '').trim()
+        const port = Number(p?.port)
+        if (!ipHopLe(ip))
+          return { ok: false, loi: 'Địa chỉ IP không đúng dạng (ví dụ: 192.0.2.201).' }
+        if (!congHopLe(port)) return { ok: false, loi: 'Cổng phải là số từ 1 đến 65535.' }
+        // Lưu cấu hình NGAY, kể cả khi kết nối bên dưới thất bại — IP/cổng đã gõ không mất (AC-3).
+        ghiCauHinhMay({ ip, port })
+
+        let logTho = mocChamThoTest()
+        if (!logTho) {
+          if (!app.isPackaged && process.env.TSC_TEST_MAY_LOI) {
+            throw new LoiKetNoiMayChamCong(
+              'Không kết nối được máy chấm công — kiểm tra lại địa chỉ mạng hoặc dùng Chọn file.'
+            )
+          }
+          logTho = await dongBoTuMay(ip, port)
+        }
+
+        const { file, canhBao } = gomMocCham(logTho, p.tu, p.den)
+        const ky = xuLyKyCong(file, layNhanVien())
+        kyHienTai = { nguon: { loai: 'may', ip, port, tu: p.tu, den: p.den }, ky, suaTay: [] }
+        ghiConfig({ kyXuLyGanNhat: file.thang })
+        log.info('đồng bộ từ máy chấm công', ip, `${file.khoi.length} người, ${logTho.length} mốc`)
+        log.event('dong-bo-may-cham-cong', {
+          thang: file.thang,
+          soNguoi: file.khoi.length,
+          thieuSetup: ky.thieuSetup.length,
+          soMoc: logTho.length,
+          canhBao: canhBao.length
+        })
+        return {
+          ok: true,
+          data: { ky, fileMay: `may-cham-cong://${ip}:${port}` },
+          canhBao: canhBao.length ? canhBao : undefined
+        }
+      } catch (e) {
+        if (e instanceof LoiKetNoiMayChamCong) return { ok: false, loi: e.message }
+        return loi(e)
+      }
+    }
+  )
 
   // ---- Vòng 3 — lưu kỳ + dashboard + phát lương ----
 
@@ -421,8 +507,16 @@ export function dangKyIpc(): void {
  */
 async function lamMoiKyHienTai(): Promise<{ loi?: string }> {
   if (!kyHienTai) return {}
+  const nguon = kyHienTai.nguon
   try {
-    const file = await docFileMay(kyHienTai.fileMay)
+    const file =
+      nguon.loai === 'file'
+        ? await docFileMay(nguon.duongDan)
+        : gomMocCham(
+            mocChamThoTest() ?? (await dongBoTuMay(nguon.ip, nguon.port)),
+            nguon.tu,
+            nguon.den
+          ).file
     const ky = xuLyKyCong(file, layNhanVien())
     const suaTay = kyHienTai.suaTay
     // Phát lại các chỉnh tay ở S3 lên kỳ vừa dựng lại (khớp maNhanVien + ngay).
@@ -438,12 +532,15 @@ async function lamMoiKyHienTai(): Promise<{ loi?: string }> {
       conHieuLuc.push(s)
     }
     Object.assign(ky, tongToanKy(ky.tongHop))
-    kyHienTai = { fileMay: kyHienTai.fileMay, ky, suaTay: conHieuLuc }
+    kyHienTai = { nguon, ky, suaTay: conHieuLuc }
     return {}
   } catch (e) {
     log.error('làm mới kỳ', (e as Error).message)
     return {
-      loi: 'Đã lưu Setup, nhưng không đọc lại được file máy chấm công (có thể đã bị di chuyển hoặc đang mở ở Excel). Nạp lại file máy để cập nhật bảng tổng hợp.'
+      loi:
+        nguon.loai === 'file'
+          ? 'Đã lưu Setup, nhưng không đọc lại được file máy chấm công (có thể đã bị di chuyển hoặc đang mở ở Excel). Nạp lại file máy để cập nhật bảng tổng hợp.'
+          : 'Đã lưu Setup, nhưng không kết nối lại được máy chấm công để cập nhật bảng tổng hợp. Bấm "Đồng bộ từ máy" lại khi máy sẵn sàng.'
     }
   }
 }

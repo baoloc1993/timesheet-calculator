@@ -7,8 +7,18 @@ import type {
 } from '../core/types'
 import type { KetQuaKy, DongBang } from '../core/ketQuaKy'
 import type { HienThi } from '../core/hienThi'
+import type { CauHinhMayChamCong } from '../core/mayChamCong'
 
-export type { NhanVien, KetQuaKyCong, TongHopNhanVien, KetQuaNgay, KetQuaKy, DongBang, HienThi }
+export type {
+  NhanVien,
+  KetQuaKyCong,
+  TongHopNhanVien,
+  KetQuaNgay,
+  KetQuaKy,
+  DongBang,
+  HienThi,
+  CauHinhMayChamCong
+}
 // Hàm thuần vòng 3 — renderer dùng để tính "thực nhận" / Σ mà không cần round-trip IPC.
 export { tinhThucNhan, lamTronNghin, tongKetQuaKy } from '../core/ketQuaKy'
 
@@ -115,4 +125,14 @@ export interface Api {
   layHienThi(): Promise<HienThi>
   /** Ghi đè một phần thiết lập Hiển thị, trả về bộ đầy đủ đã chuẩn hoá. */
   capNhatHienThi(patch: Partial<HienThi>): Promise<HienThi>
+
+  // ---- Vòng 5 — kết nối máy chấm công (LAN) ----
+  /** Đọc `AppConfig.mayChamCong` (thiếu → ip rỗng/cổng 4970 tại code, không throw). */
+  layCauHinhMay(): Promise<CauHinhMayChamCong>
+  /** Ghi đè một phần cấu hình kết nối máy, trả về bộ đầy đủ đã chuẩn hoá. */
+  capNhatCauHinhMay(patch: Partial<CauHinhMayChamCong>): Promise<CauHinhMayChamCong>
+  /** Kết nối máy qua LAN, lấy log trong khoảng ngày ["YYYY-MM-DD", "YYYY-MM-DD"], gom + tính công. */
+  dongBoTuMay(payload: { ip: string; port: number; tu: string; den: string }): Promise<
+    KetQua<NapFileKetQua> & { canhBao?: string[] }
+  >
 }

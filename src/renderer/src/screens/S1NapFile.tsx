@@ -1,12 +1,43 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useApp } from '../store'
 import { dmy } from '../App'
 import { PageHead } from '../components/PageHead'
+import type { NapFileKetQua } from '../../../preload/api-types'
+
+// Vòng 5 (AC-1/AC-3/AC-4): segment "Chọn file" / "Đồng bộ từ máy" thêm cạnh luồng cũ.
+
+function padDate(n: number) {
+  return String(n).padStart(2, '0')
+}
+function dauThangHienTai() {
+  const d = new Date()
+  return `${d.getFullYear()}-${padDate(d.getMonth() + 1)}-01`
+}
+function homNay() {
+  const d = new Date()
+  return `${d.getFullYear()}-${padDate(d.getMonth() + 1)}-${padDate(d.getDate())}`
+}
 
 export function S1NapFile() {
-  const { trangThai, di, datKy, lamMoiTrangThai } = useApp()
+  const { trangThai, ky, di, datKy, lamMoiTrangThai } = useApp()
   const [dangNap, setDangNap] = useState(false)
   const [loi, setLoi] = useState<string | null>(null)
+
+  const [nguon, setNguon] = useState<'file' | 'may'>('file')
+  const [ip, setIp] = useState('')
+  const [port, setPort] = useState('4970')
+  const [tu, setTu] = useState(dauThangHienTai())
+  const [den, setDen] = useState(homNay())
+  const [dangDongBo, setDangDongBo] = useState(false)
+  const [loiMay, setLoiMay] = useState<string | null>(null)
+  const [choXacNhan, setChoXacNhan] = useState<{ data: NapFileKetQua; canhBao: string[] } | null>(null)
+
+  useEffect(() => {
+    window.api.layCauHinhMay().then((c) => {
+      if (c.ip) setIp(c.ip)
+      if (c.port) setPort(String(c.port))
+    })
+  }, [])
 
   async function nap() {
     setLoi(null)
@@ -25,7 +56,40 @@ export function S1NapFile() {
     }
   }
 
+  function xongDongBo(data: NapFileKetQua) {
+    datKy(data.ky, data.fileMay)
+    lamMoiTrangThai()
+    di(data.ky.thieuSetup.length > 0 ? 's4' : 's2')
+  }
+
+  async function dongBoTuMay() {
+    // Ca biên vòng 5: đang có kỳ mở dở (đã lưu hay chưa) → hỏi trước khi thay bằng dữ liệu mới.
+    if (ky && !window.confirm(
+      'Đang có kỳ đang xử lý. Đồng bộ từ máy sẽ nạp dữ liệu mới và mất mọi chỉnh sửa tay chưa lưu ở kỳ hiện tại. Tiếp tục?'
+    )) {
+      return
+    }
+    setLoiMay(null)
+    setChoXacNhan(null)
+    setDangDongBo(true)
+    try {
+      const r = await window.api.dongBoTuMay({ ip: ip.trim(), port: Number(port), tu, den })
+      if (!r.ok || !r.data) {
+        setLoiMay(r.loi || 'Không kết nối được máy chấm công.')
+        return
+      }
+      if (r.canhBao?.length) {
+        setChoXacNhan({ data: r.data, canhBao: r.canhBao })
+      } else {
+        xongDongBo(r.data)
+      }
+    } finally {
+      setDangDongBo(false)
+    }
+  }
+
   const soNV = trangThai?.soNhanVien ?? 0
+  const ipRong = ip.trim() === ''
 
   return (
     <>
@@ -72,6 +136,16 @@ export function S1NapFile() {
         </p>
       )}
 
+      <div className="seg" role="group" aria-label="Nguồn dữ liệu" style={{ marginBottom: 'var(--space-lg)' }}>
+        <button aria-pressed={nguon === 'file'} onClick={() => setNguon('file')}>
+          Chọn file
+        </button>
+        <button aria-pressed={nguon === 'may'} onClick={() => setNguon('may')}>
+          Đồng bộ từ máy
+        </button>
+      </div>
+
+      {nguon === 'file' && (
       <div className="card">
         <div className="dropzone">
           Chọn file <strong>.xlsx</strong> do máy chấm công xuất ra (sheet &quot;Chi Tiet&quot;)
@@ -116,6 +190,80 @@ export function S1NapFile() {
           </p>
         )}
       </div>
+      )}
+
+      {nguon === 'may' && (
+      <div className="card">
+        <p className="note" role="status">
+          Lấy log chấm công thẳng từ máy qua mạng LAN — cách nạp <strong>thêm</strong>, song song
+          với &quot;Chọn file&quot;. Không đổi gì ở cách &quot;Chọn file&quot; cũ.
+        </p>
+
+        <div className="field">
+          <label htmlFor="mcc-ip">Địa chỉ IP máy chấm công</label>
+          <input
+            id="mcc-ip"
+            type="text"
+            placeholder="vd: 192.0.2.201"
+            value={ip}
+            onChange={(e) => setIp(e.target.value)}
+          />
+        </div>
+        <div className="field">
+          <label htmlFor="mcc-port">Cổng</label>
+          <input
+            id="mcc-port"
+            type="number"
+            value={port}
+            onChange={(e) => setPort(e.target.value)}
+          />
+        </div>
+        <div className="field">
+          <label>Khoảng ngày lấy dữ liệu</label>
+          <div className="toolbar">
+            <input type="date" value={tu} onChange={(e) => setTu(e.target.value)} />
+            <span>đến</span>
+            <input type="date" value={den} onChange={(e) => setDen(e.target.value)} />
+          </div>
+        </div>
+
+        <div className="toolbar">
+          <button
+            className="btn primary"
+            aria-busy={dangDongBo}
+            disabled={dangDongBo || ipRong}
+            onClick={dongBoTuMay}
+          >
+            {dangDongBo ? 'Đang kết nối…' : 'Kết nối & lấy dữ liệu'}
+          </button>
+          {ipRong && <span className="note" style={{ margin: 0 }}>Nhập địa chỉ máy trước</span>}
+        </div>
+
+        {choXacNhan && (
+          <p className="note" role="status">
+            <strong>{choXacNhan.canhBao.length} cảnh báo khi gom dữ liệu:</strong>{' '}
+            {choXacNhan.canhBao.join('; ')}
+            <br />
+            <button className="btn small" onClick={() => xongDongBo(choXacNhan.data)} style={{ marginTop: 'var(--space-sm)' }}>
+              Đã hiểu, tiếp tục
+            </button>
+          </p>
+        )}
+
+        {loiMay && (
+          <div className="errorbox">
+            <strong>Không kết nối được máy chấm công.</strong>
+            <p className="small">{loiMay}</p>
+            <button className="btn" onClick={dongBoTuMay}>
+              Thử lại
+            </button>
+            <button className="btn" onClick={() => setNguon('file')}>
+              Dùng Chọn file
+            </button>
+          </div>
+        )}
+      </div>
+      )}
       </div>
     </>
   )
