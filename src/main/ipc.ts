@@ -379,9 +379,14 @@ export function dangKyIpc(): void {
 
   // ---- Vòng 5 — kết nối máy chấm công vân tay (LAN) ----
   ipcMain.handle('may-cham-cong:doc-cau-hinh', () => layCauHinhMay())
-  ipcMain.handle('may-cham-cong:cap-nhat-cau-hinh', (_e, patch: Partial<CauHinhMayChamCong>) =>
-    ghiCauHinhMay(patch)
-  )
+  ipcMain.handle('may-cham-cong:cap-nhat-cau-hinh', (_e, patch: Partial<CauHinhMayChamCong>) => {
+    try {
+      return ghiCauHinhMay(patch)
+    } catch (e) {
+      log.error('ghi cấu hình máy chấm công', (e as Error)?.message || '', (e as Error)?.stack || '')
+      throw e
+    }
+  })
 
   ipcMain.handle(
     'may-cham-cong:dong-bo',

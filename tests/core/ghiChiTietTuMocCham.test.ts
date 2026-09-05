@@ -146,4 +146,42 @@ describe('ghiChiTietTuMocCham — dựng file "chi tiết đã làm sạch" từ
     })
     expect(coHeaderKhongCham).toBe(true)
   })
+
+  it('ngày có cặp 3 (6 mốc) — cột G/H (cặp 3) phải ghi mốc gốc, không bị bỏ mất (BH pha P vòng 5)', async () => {
+    // Cặp 3 KHÔNG đi vào capVaoRa (chỉ cặp 1/2 — phatHienBatThuong.ts), chỉ nằm ở nguonGoc[4]/[5].
+    // Nguồn máy không có file gốc để "giữ hộ" cột G/H như nguồn file — phải ghi tay.
+    const { file } = gomMocCham(
+      [
+        moc('00001', '2026-08-05T07:00:00'),
+        moc('00001', '2026-08-05T11:30:00'),
+        moc('00001', '2026-08-05T13:30:00'),
+        moc('00001', '2026-08-05T17:00:00'),
+        moc('00001', '2026-08-05T18:00:00'),
+        moc('00001', '2026-08-05T19:00:00')
+      ],
+      '2026-08-01',
+      '2026-08-31'
+    )
+    const ky = xuLyKyCong(file, SETUP)
+    const an = ky.tongHop.find((t) => t.maNhanVien === '00001')!
+    const ngay05 = an.ketQuaNgay.find((k) => k.ngay === '2026-08-05')!
+    expect(ngay05.nguonGoc[4]).toBe('18:00')
+    expect(ngay05.nguonGoc[5]).toBe('19:00')
+    expect(ngay05.daSua).toBe(true) // co3 tự flag daSua dù cặp 1/2 không đổi gì
+
+    const ra2 = join(dir, 'chi tiet cap 3.xlsx')
+    await ghiChiTietTuMocCham(ra2, [an])
+
+    const wb = new ExcelJS.Workbook()
+    await wb.xlsx.readFile(ra2)
+    const ws = wb.getWorksheet('Chi Tiet')!
+    let r05 = 0
+    ws.eachRow({ includeEmpty: false }, (row, r) => {
+      const v = row.getCell(1).value
+      if (v instanceof Date && v.getUTCDate() === 5) r05 = r
+    })
+    expect(r05).toBeGreaterThan(0)
+    expect(ws.getRow(r05).getCell(7).value).toBe('18:00')
+    expect(ws.getRow(r05).getCell(8).value).toBe('19:00')
+  })
 })

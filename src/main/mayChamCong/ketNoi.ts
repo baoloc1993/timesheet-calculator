@@ -4,6 +4,7 @@
 
 import ZKLib from 'node-zklib'
 import type { MocChamTho } from '../../core/gomMocCham'
+import { log } from '../logger'
 
 const TIMEOUT_MS = 5000
 const THONG_BAO_LOI =
@@ -43,6 +44,14 @@ export async function dongBo(ip: string, port: number): Promise<MocChamTho[]> {
     const raw = await coGioiHan(layLogTho(zk))
     return raw.map((r) => ({ userId: r.deviceUserId, timestamp: r.recordTime }))
   } catch (e) {
+    // Ghi đủ ngữ cảnh (IP/cổng/lỗi gốc) — thứ duy nhất người dùng gửi được khi báo lỗi là
+    // file log (không gửi lỗi từ xa), nên lỗi kết nối phải lần lại được từ đó (reviewer pha P).
+    log.error(
+      'kết nối máy chấm công',
+      `${ip}:${port}`,
+      (e as Error)?.message || String(e),
+      (e as Error)?.stack || ''
+    )
     if (e instanceof LoiKetNoiMayChamCong) throw e
     throw new LoiKetNoiMayChamCong(THONG_BAO_LOI)
   } finally {

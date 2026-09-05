@@ -144,7 +144,9 @@ export async function ghiChiTietTuMocCham(
 
     for (const kq of th.ketQuaNgay) {
       const row = ws.getRow(r)
-      row.getCell(1).value = new Date(`${kq.ngay}T00:00:00Z`)
+      const oNgay = row.getCell(1)
+      oNgay.value = new Date(`${kq.ngay}T00:00:00Z`)
+      oNgay.numFmt = 'yyyy-mm-dd'
       const moc = [
         kq.capVaoRa[0]?.vao ?? '',
         kq.capVaoRa[0]?.ra ?? '',
@@ -152,6 +154,13 @@ export async function ghiChiTietTuMocCham(
         kq.capVaoRa[1]?.ra ?? ''
       ]
       for (let k = 0; k < 4; k++) row.getCell(3 + k).value = moc[k]
+      // Cặp 3 (G/H) — công cụ KHÔNG tự sửa cặp 3 (chỉ cặp 1/2 đi vào capVaoRa, xem
+      // phatHienBatThuong.ts), nên ghi thẳng mốc gốc như nguồn "Chọn file" vẫn giữ
+      // nguyên cột G/H khi nhân bản file thật. Cùng vị trí cột đã hứa ở
+      // 2026-09-05 ("A=ngày, C..H=3 cặp") — thiếu cột này thì audit-trail nguồn máy
+      // kém trung thực hơn nguồn file (BH pha P vòng 5).
+      row.getCell(7).value = kq.nguonGoc[4] ?? ''
+      row.getCell(8).value = kq.nguonGoc[5] ?? ''
       if (ghiVaToVangMotDong(row, kq)) soDongToVang++
       row.commit()
       r++
