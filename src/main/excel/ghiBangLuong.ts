@@ -226,19 +226,21 @@ export async function ghiBangLuong(
   const dienThe = (the: TheNhanVienBangLuong, th: TongHopNhanVien): void => {
     if (the.oSoLuongNgay) ws.getCell(the.oSoLuongNgay).value = th.tongNgayCong
     if (the.oSoLuongGio) ws.getCell(the.oSoLuongGio).value = th.tongGioOT
-    if (the.oDonGiaNgay && th.donGiaNgay) ws.getCell(the.oDonGiaNgay).value = th.donGiaNgay
-    if (the.oDonGiaGio && th.donGiaGioOT) ws.getCell(the.oDonGiaGio).value = th.donGiaGioOT
+    // "0 thật" (đơn giá/khoản = 0 hợp lệ) khác "không có dữ liệu" (undefined, ô để trống như mẫu
+    // gốc) — dùng != null thay vì truthy để không lẫn hai trạng thái (soi bug pha P vòng 6).
+    if (the.oDonGiaNgay && th.donGiaNgay != null) ws.getCell(the.oDonGiaNgay).value = th.donGiaNgay
+    if (the.oDonGiaGio && th.donGiaGioOT != null) ws.getCell(the.oDonGiaGio).value = th.donGiaGioOT
     // Vòng 6 (AC-5) — 5 khoản phát lương đã nhập ở S10, đọc từ kỳ đã lưu cùng thang (nếu có).
     const cc = phuCap?.chuyenCan?.[th.maNhanVien]
     const bl = phuCap?.buLuong?.[th.maNhanVien]
     const le = phuCap?.le?.[th.maNhanVien]
     const bh = phuCap?.baoHiem?.[th.maNhanVien]
     const vay = phuCap?.khauTru?.[th.maNhanVien]
-    if (the.oChuyenCan && cc) ws.getCell(the.oChuyenCan).value = cc
-    if (the.oBuLuong && bl) ws.getCell(the.oBuLuong).value = bl
-    if (the.oLe && le) ws.getCell(the.oLe).value = le
-    if (the.oBaoHiem && bh) ws.getCell(the.oBaoHiem).value = bh
-    if (the.oVay && vay) ws.getCell(the.oVay).value = vay
+    if (the.oChuyenCan && cc != null) ws.getCell(the.oChuyenCan).value = cc
+    if (the.oBuLuong && bl != null) ws.getCell(the.oBuLuong).value = bl
+    if (the.oLe && le != null) ws.getCell(the.oLe).value = le
+    if (the.oBaoHiem && bh != null) ws.getCell(the.oBaoHiem).value = bh
+    if (the.oVay && vay != null) ws.getCell(the.oVay).value = vay
   }
 
   for (const th of tongHop) {

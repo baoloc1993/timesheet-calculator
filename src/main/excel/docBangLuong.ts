@@ -154,7 +154,7 @@ export async function docBangLuong(duongDan: string): Promise<{ wb: ExcelJS.Work
         if (rCC < 0 && nhan === KHOAN_KHONG_DAU.chuyenCan) rCC = r + k
         else if (rBL < 0 && nhan === KHOAN_KHONG_DAU.buLuong) rBL = r + k
         else if (rLe < 0 && nhan === KHOAN_KHONG_DAU.le) rLe = r + k
-        else if (rBH < 0 && nhan.startsWith(KHOAN_KHONG_DAU.baoHiem)) rBH = r + k
+        else if (rBH < 0 && nhan === KHOAN_KHONG_DAU.baoHiem) rBH = r + k
         else if (rVay < 0 && nhan === KHOAN_KHONG_DAU.vay) rVay = r + k
       }
 

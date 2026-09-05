@@ -1,7 +1,8 @@
-// Dùng chung cho S12 (phát từng người) + S13 (in phiếu) — cùng đọc một KetQuaKy, cùng
-// công thức giải trình 5 khoản. Nguồn: (vòng 6, ca biên S12/S13).
-import type { KetQuaKy, DongBang } from '../../preload/api-types'
-import { tinhThucNhanDayDu } from '../../preload/api-types'
+// Vòng 6 — dùng chung cho S12 (phát từng người) + S13 (in phiếu) — cùng đọc một KetQuaKy,
+// cùng công thức giải trình 5 khoản. Hàm thuần ( — logic nghiệp vụ chỉ ở
+// src/core/, không nằm trong component renderer — soi bug pha P vòng 6).
+import type { KetQuaKy, DongBang } from './ketQuaKy'
+import { tinhThucNhanDayDu } from './ketQuaKy'
 
 export interface NguoiPhat {
   d: DongBang
@@ -12,6 +13,12 @@ export interface NguoiPhat {
   luongCong: number
   tienOt: number
   tho: number
+  /** 3 khoản cộng — 0 khi thiếu field (kỳ cũ), dùng để hiện/ẩn từng dòng giải trình. */
+  chuyenCan: number
+  buLuong: number
+  le: number
+  /** 2 khoản trừ. */
+  baoHiem: number
   khauTru: number
   thucNhan: number
   daTra: boolean
@@ -28,12 +35,10 @@ export function dungNguoiPhat(kq: KetQuaKy, d: DongBang): NguoiPhat {
   const luongCong = (d.donGiaNgay ?? 0) * d.ngayCong
   const tienOt = (d.donGiaGioOT ?? 0) * d.gioOT
   const khauTru = kq.khauTru[d.maNhanVien] ?? 0
-  const phuCap = {
-    chuyenCan: kq.chuyenCan?.[d.maNhanVien],
-    buLuong: kq.buLuong?.[d.maNhanVien],
-    le: kq.le?.[d.maNhanVien],
-    baoHiem: kq.baoHiem?.[d.maNhanVien]
-  }
+  const chuyenCan = kq.chuyenCan?.[d.maNhanVien] ?? 0
+  const buLuong = kq.buLuong?.[d.maNhanVien] ?? 0
+  const le = kq.le?.[d.maNhanVien] ?? 0
+  const baoHiem = kq.baoHiem?.[d.maNhanVien] ?? 0
   return {
     d,
     chan,
@@ -41,8 +46,12 @@ export function dungNguoiPhat(kq: KetQuaKy, d: DongBang): NguoiPhat {
     luongCong,
     tienOt,
     tho: coDonGia ? luongCong + tienOt : d.thanhTien,
+    chuyenCan,
+    buLuong,
+    le,
+    baoHiem,
     khauTru,
-    thucNhan: tinhThucNhanDayDu(d.thanhTien, khauTru, phuCap),
+    thucNhan: tinhThucNhanDayDu(d.thanhTien, khauTru, { chuyenCan, buLuong, le, baoHiem }),
     daTra: kq.daTra[d.maNhanVien] === true
   }
 }

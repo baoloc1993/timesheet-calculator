@@ -3,6 +3,7 @@ import { describe, it, expect } from 'vitest'
 import {
   lamTronNghin,
   tinhThucNhan,
+  tinhThucNhanDayDu,
   dongBangKetQuaKy,
   tongKetQuaKy,
   mergePhatLuongCu
@@ -85,6 +86,40 @@ describe('tinhThucNhan', () => {
   })
 })
 
+describe('tinhThucNhanDayDu — thực nhận đủ 5 khoản (vòng 6)', () => {
+  it('cộng đúng 3 khoản cộng (Chuyên cần/Bù lương/Lễ) + trừ đúng 2 khoản trừ (Bảo hiểm/Vay), làm tròn nghìn', () => {
+    // 7.000.000 + 200.000 + 100.000 + 50.000 − 300.000 − 500.000 = 6.550.000
+    const r = tinhThucNhanDayDu(7_000_000, 500_000, {
+      chuyenCan: 200_000,
+      buLuong: 100_000,
+      le: 50_000,
+      baoHiem: 300_000
+    })
+    expect(r).toBe(6_550_000)
+  })
+
+  it('phuCap thiếu hoàn toàn (undefined) → giống hệt tinhThucNhan cũ (2 tham số)', () => {
+    expect(tinhThucNhanDayDu(9_571_900, 500_000)).toBe(tinhThucNhan(9_571_900, 500_000))
+    expect(tinhThucNhanDayDu(6_543_210, 0)).toBe(tinhThucNhan(6_543_210, 0))
+    expect(tinhThucNhanDayDu(5_000_000, 8_000_000)).toBe(tinhThucNhan(5_000_000, 8_000_000))
+  })
+
+  it('từng field trong phuCap thiếu riêng lẻ → coi như 0, không lan NaN sang các khoản khác', () => {
+    expect(tinhThucNhanDayDu(7_000_000, 0, { chuyenCan: 200_000 })).toBe(7_200_000)
+    expect(tinhThucNhanDayDu(7_000_000, 0, { buLuong: 100_000 })).toBe(7_100_000)
+    expect(tinhThucNhanDayDu(7_000_000, 0, { le: 50_000 })).toBe(7_050_000)
+    expect(tinhThucNhanDayDu(7_000_000, 0, { baoHiem: 300_000 })).toBe(6_700_000)
+    // một field lỡ là NaN không được làm hỏng phép cộng các field còn lại
+    expect(tinhThucNhanDayDu(7_000_000, 0, { chuyenCan: NaN, buLuong: 100_000 })).toBe(7_100_000)
+  })
+
+  it('kết quả âm sâu khi Bảo hiểm + Vay lớn hơn nhiều tổng thu', () => {
+    // 3.000.000 + 100.000 − 2.000.000 − 5.000.000 = −3.900.000
+    const r = tinhThucNhanDayDu(3_000_000, 5_000_000, { chuyenCan: 100_000, baoHiem: 2_000_000 })
+    expect(r).toBe(-3_900_000)
+  })
+})
+
 describe('dongBangKetQuaKy', () => {
   const ky = { thang: '2026-09', ngayBatDau: '2026-09-01', ngayKetThuc: '2026-09-30' }
   const tongHop = [
@@ -142,6 +177,27 @@ describe('dongBangKetQuaKy', () => {
 
     expect(kq9.dongBang[0].thanhTien).toBe(8_400_000)
     expect(kq8.dongBang[0].thanhTien).toBe(7_200_000) // kỳ cũ KHÔNG đổi
+  })
+
+  it('donGiaNgay/donGiaGioOT đóng băng lúc lưu từ TổngHợpNhânViên — sửa TổngHợpNhânViên sau đó không đụng dongBang', () => {
+    const t = [
+      th({
+        maNhanVien: '00020',
+        donGiaNgay: 300_000,
+        donGiaGioOT: 40_000,
+        tongNgayCong: 22,
+        thanhTien: 6_600_000
+      })
+    ]
+    const kq = dongBangKetQuaKy(ky, t, 'x')
+    expect(kq.dongBang[0].donGiaNgay).toBe(300_000)
+    expect(kq.dongBang[0].donGiaGioOT).toBe(40_000)
+
+    // Giả lập Setup đổi đơn giá SAU khi đã lưu kỳ — dongBang không được đọc lại NhanVien.
+    t[0].donGiaNgay = 999_999
+    t[0].donGiaGioOT = 888_888
+    expect(kq.dongBang[0].donGiaNgay).toBe(300_000)
+    expect(kq.dongBang[0].donGiaGioOT).toBe(40_000)
   })
 })
 
@@ -282,5 +338,79 @@ describe('mergePhatLuongCu — ghi đè kỳ đã lưu (ca biên "gửi hai lầ
     expect(moi.khauTru).toEqual({ a: 500_000 }) // a giữ, b bỏ, c không có
     expect(moi.daTra).toEqual({ a: true })
     expect(moi.khauTru.c).toBeUndefined()
+  })
+})
+
+describe('mergePhatLuongCu — 4 khoản vòng 6 (chuyenCan/buLuong/le/baoHiem)', () => {
+  const dong = (ma: string): KetQuaKy['dongBang'][number] => ({
+    maNhanVien: ma,
+    tenBangLuong: ma,
+    ngayCong: 20,
+    gioOT: 0,
+    thanhTien: 5_000_000,
+    soDongDaSua: 0
+  })
+
+  it('mã còn khớp giữ đúng 4 khoản cũ theo mã; mã biến mất bị bỏ; mã mới không có', () => {
+    const cu: KetQuaKy = {
+      thang: '2026-08',
+      ngayLuu: 'x',
+      khoangNgay: { tu: '2026-08-01', den: '2026-08-31' },
+      dongBang: [dong('a'), dong('b')],
+      khauTru: {},
+      daTra: {},
+      chuyenCan: { a: 100_000, b: 200_000 },
+      buLuong: { a: 50_000 },
+      le: { b: 300_000 },
+      baoHiem: { a: 20_000, b: 30_000 }
+    }
+    const moi: KetQuaKy = {
+      thang: '2026-08',
+      ngayLuu: 'y',
+      khoangNgay: { tu: '2026-08-01', den: '2026-08-31' },
+      dongBang: [dong('a'), dong('c')], // b rời kỳ, c mới vào
+      khauTru: {},
+      daTra: {},
+      chuyenCan: {},
+      buLuong: {},
+      le: {},
+      baoHiem: {}
+    }
+    mergePhatLuongCu(moi, cu)
+    expect(moi.chuyenCan).toEqual({ a: 100_000 }) // b bỏ, c không có
+    expect(moi.buLuong).toEqual({ a: 50_000 })
+    expect(moi.le).toEqual({}) // le chỉ có b trong kỳ cũ → bị bỏ hết
+    expect(moi.baoHiem).toEqual({ a: 20_000 })
+  })
+
+  it('kỳ CŨ thiếu hẳn 4 field mới (dữ liệu lưu trước vòng 6, chỉ có khauTru+daTra) → không throw, không tạo field rác', () => {
+    const cuTruocVong6 = {
+      thang: '2026-07',
+      ngayLuu: 'x',
+      khoangNgay: { tu: '2026-07-01', den: '2026-07-31' },
+      dongBang: [dong('a')],
+      khauTru: { a: 500_000 },
+      daTra: { a: true }
+      // KHÔNG có chuyenCan/buLuong/le/baoHiem — mô phỏng KetQuaKy lưu trước vòng 6.
+    } as KetQuaKy
+    const moi: KetQuaKy = {
+      thang: '2026-07',
+      ngayLuu: 'y',
+      khoangNgay: { tu: '2026-07-01', den: '2026-07-31' },
+      dongBang: [dong('a')],
+      khauTru: {},
+      daTra: {},
+      chuyenCan: {},
+      buLuong: {},
+      le: {},
+      baoHiem: {}
+    }
+    expect(() => mergePhatLuongCu(moi, cuTruocVong6)).not.toThrow()
+    expect(moi.khauTru).toEqual({ a: 500_000 })
+    expect(moi.daTra).toEqual({ a: true })
+    expect(moi.chuyenCan).toEqual({})
+    expect(moi.buLuong).toEqual({})
+    expect(moi.le).toEqual({})
+    expect(moi.baoHiem).toEqual({})
   })
 })

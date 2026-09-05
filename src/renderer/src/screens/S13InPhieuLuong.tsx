@@ -2,10 +2,8 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useApp } from '../store'
 import { dmy } from '../App'
 import { PageHead } from '../components/PageHead'
-import type { KetQuaKy } from '../../../preload/api-types'
-import { docSoTienBangChu } from '../../../preload/api-types'
-import { dsNguoiPhat } from '../phatLuong'
-import type { NguoiPhat } from '../phatLuong'
+import type { KetQuaKy, NguoiPhat } from '../../../preload/api-types'
+import { docSoTienBangChu, dsNguoiPhat } from '../../../preload/api-types'
 
 const vnd = (n: number) => n.toLocaleString('vi-VN') + ' ₫'
 const so2 = (n: number) => n.toLocaleString('vi-VN', { minimumFractionDigits: 1, maximumFractionDigits: 1 })
@@ -46,17 +44,47 @@ function Phieu({ kq, p }: { kq: KetQuaKy; p: NguoiPhat }) {
                   </td>
                   <td className="v">{vnd(p.tienOt)}</td>
                 </tr>
-                <tr className="tong">
-                  <td>Tổng</td>
-                  <td className="c"></td>
-                  <td className="v">{vnd(p.tho)}</td>
-                </tr>
               </>
+            )}
+            {p.chuyenCan > 0 && (
+              <tr>
+                <td>Chuyên cần</td>
+                <td className="c"></td>
+                <td className="v">{vnd(p.chuyenCan)}</td>
+              </tr>
+            )}
+            {p.buLuong > 0 && (
+              <tr>
+                <td>Bù lương</td>
+                <td className="c"></td>
+                <td className="v">{vnd(p.buLuong)}</td>
+              </tr>
+            )}
+            {p.le > 0 && (
+              <tr>
+                <td>Lễ</td>
+                <td className="c"></td>
+                <td className="v">{vnd(p.le)}</td>
+              </tr>
+            )}
+            {p.coDonGia && (
+              <tr className="tong">
+                <td>Tổng</td>
+                <td className="c"></td>
+                <td className="v">{vnd(p.tho + p.chuyenCan + p.buLuong + p.le)}</td>
+              </tr>
+            )}
+            {p.baoHiem > 0 && (
+              <tr>
+                <td className="tru">Trừ bảo hiểm</td>
+                <td className="c"></td>
+                <td className="v">−{vnd(p.baoHiem)}</td>
+              </tr>
             )}
             {p.khauTru > 0 && (
               <tr>
-                <td className="tru">Trừ vay đã lấy</td>
-                <td className="c">trong tháng</td>
+                <td className="tru">Trừ vay</td>
+                <td className="c">đã ứng trong tháng</td>
                 <td className="v">−{vnd(p.khauTru)}</td>
               </tr>
             )}

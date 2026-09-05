@@ -1901,7 +1901,9 @@ td.lgk {
 @media print {
   @page phieu {
     size: A4 portrait;
-    margin: 6mm;
+    /* 4mm (không phải 6mm) — 297 − 2×4 = 289mm chừa dư 4mm so với đúng 3×95mm=285mm cần,
+       tránh việc engine in làm tròn đẩy phiếu thứ 3 sang tờ sau (soi bug pha P vòng 6). */
+    margin: 4mm;
   }
   .phieusheet,
   .phieusheet * {

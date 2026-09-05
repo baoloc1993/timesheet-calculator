@@ -24,6 +24,8 @@ export { tinhThucNhan, tinhThucNhanDayDu, lamTronNghin, tongKetQuaKy } from '../
 export { dungKyHieuNgay, ngayLaChuNhat } from '../core/luoiCong'
 export type { KyHieuNgay } from '../core/luoiCong'
 export { docSoTienBangChu } from '../core/soTienBangChu'
+export { dsNguoiPhat, dungNguoiPhat } from '../core/phatLuong'
+export type { NguoiPhat } from '../core/phatLuong'
 
 export interface KetQua<T> {
   ok: boolean

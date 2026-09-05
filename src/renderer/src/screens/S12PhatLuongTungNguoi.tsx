@@ -2,9 +2,8 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useApp } from '../store'
 import { dmy } from '../App'
 import { PageHead } from '../components/PageHead'
-import type { KetQuaKy } from '../../../preload/api-types'
-import { dsNguoiPhat } from '../phatLuong'
-import type { NguoiPhat } from '../phatLuong'
+import type { KetQuaKy, NguoiPhat } from '../../../preload/api-types'
+import { dsNguoiPhat } from '../../../preload/api-types'
 
 const vnd = (n: number) => n.toLocaleString('vi-VN') + ' ₫'
 const so2 = (n: number) => n.toLocaleString('vi-VN', { minimumFractionDigits: 1, maximumFractionDigits: 1 })
@@ -271,17 +270,36 @@ export function S12PhatLuongTungNguoi() {
                           </span>
                           <span className="v">{vnd(nguoiXem.tienOt)}</span>
                         </div>
-                        <div>
-                          <span className="k">Tổng trước trừ</span>
-                          <span className="calc"></span>
-                          <span className="v">{vnd(nguoiXem.tho)}</span>
-                        </div>
                       </>
+                    )}
+                    {/* 5 khoản (AC-2) — chỉ hiện dòng có giá trị khác 0, */}
+                    {nguoiXem.chuyenCan > 0 && (
+                      <div>
+                        <span className="k">Chuyên cần</span>
+                        <span className="v">{vnd(nguoiXem.chuyenCan)}</span>
+                      </div>
+                    )}
+                    {nguoiXem.buLuong > 0 && (
+                      <div>
+                        <span className="k">Bù lương</span>
+                        <span className="v">{vnd(nguoiXem.buLuong)}</span>
+                      </div>
+                    )}
+                    {nguoiXem.le > 0 && (
+                      <div>
+                        <span className="k">Lễ</span>
+                        <span className="v">{vnd(nguoiXem.le)}</span>
+                      </div>
+                    )}
+                    {nguoiXem.baoHiem > 0 && (
+                      <div>
+                        <span className="k">Bảo hiểm</span>
+                        <span className="v tru">−{vnd(nguoiXem.baoHiem)}</span>
+                      </div>
                     )}
                     {nguoiXem.khauTru > 0 && (
                       <div>
-                        <span className="k">Trừ vay</span>
-                        <span className="calc">đã ứng trong tháng</span>
+                        <span className="k">Vay</span>
                         <span className="v tru">−{vnd(nguoiXem.khauTru)}</span>
                       </div>
                     )}

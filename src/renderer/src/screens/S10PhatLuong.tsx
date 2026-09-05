@@ -7,6 +7,14 @@ import { tinhThucNhanDayDu } from '../../../preload/api-types'
 
 const vnd = (n: number) => n.toLocaleString('vi-VN')
 
+/** "1.234" / " 500 " → 1234 / 500; rỗng → 0; không phải số/âm → null (báo lỗi). Dùng chung cho
+ * cả lưu (onBlur) lẫn hiển thị tạm khi đang gõ — một chỗ đổi luật, không lệch nhau. */
+function parseSoNhap(raw: string): number | null {
+  const s = raw.trim().replace(/[.\s]/g, '')
+  const n = s === '' ? 0 : Number(s)
+  return Number.isFinite(n) && n >= 0 ? Math.round(n) : null
+}
+
 // Vòng 6 — 5 khoản: 3 cộng (chuyenCan/buLuong/le) + 2 trừ (baoHiem, khauTru = "Vay").
 const KHOAN = [
   { truong: 'chuyenCan', nhan: 'Chuyên cần' },
@@ -56,9 +64,8 @@ export function S10PhatLuong() {
   async function luuGiaTri(ma: string, truong: Truong, nhanHienThi: string) {
     if (!kq) return
     const khoa = `${ma}:${truong}`
-    const raw = (nhap[ma]?.[truong] ?? '').trim().replace(/[.\s]/g, '')
-    const so = raw === '' ? 0 : Number(raw)
-    if (!Number.isFinite(so) || so < 0) {
+    const so = parseSoNhap(nhap[ma]?.[truong] ?? '')
+    if (so === null) {
       setLoiO((m) => ({ ...m, [khoa]: `${nhanHienThi} phải là số không âm.` }))
       return
     }
@@ -96,9 +103,8 @@ export function S10PhatLuong() {
     (ma: string, truong: Truong): number => {
       const raw = nhap[ma]?.[truong]
       if (raw !== undefined) {
-        const s = raw.trim().replace(/[.\s]/g, '')
-        const n = s === '' ? 0 : Number(s)
-        if (Number.isFinite(n) && n >= 0) return Math.round(n)
+        const so = parseSoNhap(raw)
+        if (so !== null) return so
       }
       if (!kq) return 0
       return truong === 'khauTru' ? kq.khauTru[ma] ?? 0 : kq[truong]?.[ma] ?? 0
