@@ -127,7 +127,7 @@ export interface Api {
   capNhatHienThi(patch: Partial<HienThi>): Promise<HienThi>
 
   // ---- Vòng 5 — kết nối máy chấm công (LAN) ----
-  /** Đọc `AppConfig.mayChamCong` (thiếu → ip rỗng/cổng 4970 tại code, không throw). */
+  /** Đọc `AppConfig.mayChamCong` (thiếu → ip rỗng/cổng 4370 tại code, không throw). */
   layCauHinhMay(): Promise<CauHinhMayChamCong>
   /** Ghi đè một phần cấu hình kết nối máy, trả về bộ đầy đủ đã chuẩn hoá. */
   capNhatCauHinhMay(patch: Partial<CauHinhMayChamCong>): Promise<CauHinhMayChamCong>

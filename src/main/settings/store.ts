@@ -21,7 +21,7 @@ export interface AppConfig {
   kyXuLyGanNhat: string
   /** Vòng 4 — optional: thiếu thì dùng mặc định tại code, KHÔNG cần migration. */
   hienThi?: HienThi
-  /** Vòng 5 — optional: thiếu thì mặc định ip rỗng/cổng 4970 tại code, KHÔNG migration. */
+  /** Vòng 5 — optional: thiếu thì mặc định ip rỗng/cổng 4370 tại code, KHÔNG migration. */
   mayChamCong?: CauHinhMayChamCong
 }
 

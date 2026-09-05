@@ -25,7 +25,7 @@ export function S1NapFile() {
 
   const [nguon, setNguon] = useState<'file' | 'may'>('file')
   const [ip, setIp] = useState('')
-  const [port, setPort] = useState('4970')
+  const [port, setPort] = useState('4370')
   const [tu, setTu] = useState(dauThangHienTai())
   const [den, setDen] = useState(homNay())
   const [dangDongBo, setDangDongBo] = useState(false)

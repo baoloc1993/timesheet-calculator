@@ -5,7 +5,9 @@ export interface CauHinhMayChamCong {
   port: number
 }
 
-export const MAC_DINH_CAU_HINH_MAY: CauHinhMayChamCong = { ip: '', port: 4970 }
+// Cổng 4370 — mặc định thật của node-zklib (test.js chính chủ) và của máy ZKTeco-compatible
+// người dùng cung cấp — sửa từ giả định sai "4970" ở pha V.
+export const MAC_DINH_CAU_HINH_MAY: CauHinhMayChamCong = { ip: '', port: 4370 }
 
 const RE_IPV4 = /^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/
 

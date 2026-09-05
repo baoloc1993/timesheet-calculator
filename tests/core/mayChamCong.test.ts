@@ -37,7 +37,7 @@ describe('congHopLe', () => {
 })
 
 describe('chuanHoaCauHinhMay', () => {
-  it('undefined/null → mặc định (ip rỗng, cổng 4970)', () => {
+  it('undefined/null → mặc định (ip rỗng, cổng 4370)', () => {
     expect(chuanHoaCauHinhMay(undefined)).toEqual(MAC_DINH_CAU_HINH_MAY)
     expect(chuanHoaCauHinhMay(null)).toEqual(MAC_DINH_CAU_HINH_MAY)
   })
@@ -46,14 +46,14 @@ describe('chuanHoaCauHinhMay', () => {
     expect(chuanHoaCauHinhMay({ ip: '10.0.0.5', port: 4370 })).toEqual({ ip: '10.0.0.5', port: 4370 })
   })
 
-  it('cổng hỏng (config.json bị sửa tay) → về mặc định 4970, không throw, IP hợp lệ vẫn giữ', () => {
+  it('cổng hỏng (config.json bị sửa tay) → về mặc định 4370, không throw, IP hợp lệ vẫn giữ', () => {
     expect(chuanHoaCauHinhMay({ ip: '10.0.0.5', port: 99999 as unknown as number })).toEqual({
       ip: '10.0.0.5',
-      port: 4970
+      port: 4370
     })
   })
 
   it('ip khoảng trắng được trim', () => {
-    expect(chuanHoaCauHinhMay({ ip: '  10.0.0.5  ', port: 4970 })).toEqual({ ip: '10.0.0.5', port: 4970 })
+    expect(chuanHoaCauHinhMay({ ip: '  10.0.0.5  ', port: 4370 })).toEqual({ ip: '10.0.0.5', port: 4370 })
   })
 })
