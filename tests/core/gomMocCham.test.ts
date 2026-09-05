@@ -79,6 +79,24 @@ describe('gomMocCham — ghép cặp + lọc khoảng ngày', () => {
     expect(file.thang).toBe('2026-08')
   })
 
+  it('cùng một nhân viên nhưng máy trả nhiều dạng userId khác nhau ("2"/"02"/"00002") → gộp chung MỘT khối, không tách thành 3 người khác nhau', () => {
+    const { file } = gomMocCham(
+      [
+        moc('2', '2026-08-01T07:00:00'),
+        moc('2', '2026-08-01T17:00:00'),
+        moc('02', '2026-08-02T07:00:00'),
+        moc('02', '2026-08-02T17:00:00'),
+        moc('00002', '2026-08-03T07:00:00'),
+        moc('00002', '2026-08-03T17:00:00')
+      ],
+      '2026-08-01',
+      '2026-08-31'
+    )
+    expect(file.khoi).toHaveLength(1)
+    expect(file.khoi[0].maNhanVien).toBe('00002')
+    expect(file.khoi[0].dongNgay.map((d) => d.ngay)).toEqual(['2026-08-01', '2026-08-02', '2026-08-03'])
+  })
+
   it('userId không có chữ số nào → chuanHoaMa giữ nguyên chuỗi (cùng quy ước docFileMay), không throw', () => {
     const { file } = gomMocCham([moc('abc', '2026-08-01T07:00:00')], '2026-08-01', '2026-08-31')
     expect(file.khoi.map((k) => k.maNhanVien)).toEqual(['abc'])
