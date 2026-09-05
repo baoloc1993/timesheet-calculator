@@ -53,6 +53,7 @@ function Hang<T extends string | number>({
 export function BangHienThi() {
   const { hienThi, capNhatHienThi } = useApp()
   const [mo, setMo] = useState(false)
+  const [loi, setLoi] = useState(false)
   const wrapRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -63,6 +64,15 @@ export function BangHienThi() {
     document.addEventListener('mousedown', onDocClick)
     return () => document.removeEventListener('mousedown', onDocClick)
   }, [mo])
+
+  async function apDung(patch: Partial<HienThi>) {
+    try {
+      setLoi(false)
+      await capNhatHienThi(patch)
+    } catch {
+      setLoi(true)
+    }
+  }
 
   return (
     <div className="popwrap" ref={wrapRef}>
@@ -77,23 +87,29 @@ export function BangHienThi() {
       </button>
       {mo && (
         <div className="disp-pop" id="disp-pop" role="dialog" aria-label="Thiết lập hiển thị">
-          <Hang nhan="Cỡ chữ" gia={CO_CHU} hienTai={hienThi.scale} onChon={(v) => capNhatHienThi({ scale: v })} />
+          <Hang nhan="Cỡ chữ" gia={CO_CHU} hienTai={hienThi.scale} onChon={(v) => apDung({ scale: v })} />
           <Hang
             nhan="Độ cao hàng"
             gia={DO_CAO_HANG}
             hienTai={hienThi.rowHeight}
-            onChon={(v) => capNhatHienThi({ rowHeight: v })}
+            onChon={(v) => apDung({ rowHeight: v })}
           />
-          <Hang nhan="Nền" gia={NEN} hienTai={hienThi.theme} onChon={(v) => capNhatHienThi({ theme: v })} />
+          <Hang nhan="Nền" gia={NEN} hienTai={hienThi.theme} onChon={(v) => apDung({ theme: v })} />
           <Hang
             nhan="Tương phản"
             gia={TUONG_PHAN}
             hienTai={hienThi.contrast}
-            onChon={(v) => capNhatHienThi({ contrast: v })}
+            onChon={(v) => apDung({ contrast: v })}
           />
-          <p className="note" style={{ margin: 0 }}>
-            Áp ngay toàn app, nhớ cho lần mở sau.
-          </p>
+          {loi ? (
+            <p className="note" role="status" style={{ margin: 0, color: 'var(--color-danger)' }}>
+              Không lưu được lựa chọn này — thử bấm lại. Nếu vẫn vậy, kiểm tra quyền ghi file cấu hình.
+            </p>
+          ) : (
+            <p className="note" style={{ margin: 0 }}>
+              Áp ngay toàn app, nhớ cho lần mở sau.
+            </p>
+          )}
         </div>
       )}
     </div>

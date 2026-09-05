@@ -337,7 +337,7 @@ body {
 #disp-btn {
   font: inherit;
   font-size: var(--text-sm);
-  min-height: 36px;
+  min-height: var(--control-min);
   padding: 0 var(--space-md);
   background: var(--color-surface);
   color: var(--color-text-muted);
@@ -379,7 +379,7 @@ body {
 }
 .seg button {
   flex: 1;
-  min-height: 36px;
+  min-height: var(--control-min);
   padding: 0 var(--space-sm);
   border: 0;
   border-right: 1px solid var(--color-divider-strong);

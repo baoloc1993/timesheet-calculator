@@ -9,6 +9,7 @@ import { log } from './logger'
 function mauNenCuaSo(): string {
   const h = layHienThi()
   const toi = h.theme === 'dark' || (h.theme === 'auto' && nativeTheme.shouldUseDarkColors)
+  if (h.contrast === 'high') return toi ? '#000000' : '#FFFFFF'
   return toi ? '#0F141B' : '#EDF0F5'
 }
 

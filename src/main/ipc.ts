@@ -334,7 +334,14 @@ export function dangKyIpc(): void {
 
   // ---- Vòng 4 — thiết lập Hiển thị (cỡ chữ/độ cao hàng/nền/tương phản) ----
   ipcMain.handle('hien-thi:doc', () => layHienThi())
-  ipcMain.handle('hien-thi:cap-nhat', (_e, patch: Partial<HienThi>) => ghiHienThi(patch))
+  ipcMain.handle('hien-thi:cap-nhat', (_e, patch: Partial<HienThi>) => {
+    try {
+      return ghiHienThi(patch)
+    } catch (e) {
+      log.error('ghi thiết lập hiển thị', (e as Error)?.message || '', (e as Error)?.stack || '')
+      throw e
+    }
+  })
 
   // ---- Vòng 3 — lưu kỳ + dashboard + phát lương ----
 
