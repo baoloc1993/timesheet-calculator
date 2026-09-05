@@ -3,7 +3,20 @@ import type { ReactNode } from 'react'
 import type { NhanVien, KetQuaKyCong, KetQuaKy, TrangThaiApp, HienThi } from '../../preload/api-types'
 import { apDungHienThi } from './hienThi'
 
-export type ManHinh = 's1' | 's2' | 's3' | 's4' | 's5' | 's6' | 's7' | 's8' | 's9' | 's10'
+export type ManHinh =
+  | 's1'
+  | 's2'
+  | 's3'
+  | 's4'
+  | 's5'
+  | 's6'
+  | 's7'
+  | 's8'
+  | 's9'
+  | 's10'
+  | 's11'
+  | 's12'
+  | 's13'
 
 interface AppState {
   manHinh: ManHinh
@@ -24,6 +37,10 @@ interface AppState {
   /** `thang` của kỳ đang mở ở S9/S10 — null nghĩa là đang xem kỳ hiện tại (chưa lưu). */
   thangDangXem: string | null
   moKy(thang: string | null): void
+  /** Vòng 6 — mã nhân viên cần in riêng ở S13 (từ nút "In phiếu cho người này" ở S12).
+   *  null = in theo bộ lọc Tất cả/Chỉ người chưa nhận thay vì một người. */
+  inPhieuMa: string | null
+  moInPhieu(maNhanVien: string | null): void
   // Vòng 4
   hienThi: HienThi
   capNhatHienThi(patch: Partial<HienThi>): Promise<void>
@@ -47,6 +64,7 @@ export function AppStore({
   const [maNhanVienDangXem, setMa] = useState<string | null>(null)
   const [danhSachKy, setDanhSachKy] = useState<KetQuaKy[]>([])
   const [thangDangXem, setThangDangXem] = useState<string | null>(null)
+  const [inPhieuMa, setInPhieuMa] = useState<string | null>(null)
 
   const lamMoiTrangThai = useCallback(async () => {
     setTrangThai(await window.api.layTrangThai())
@@ -98,6 +116,11 @@ export function AppStore({
     moKy: (thang) => {
       setThangDangXem(thang)
       setManHinh('s9')
+    },
+    inPhieuMa,
+    moInPhieu: (ma) => {
+      setInPhieuMa(ma)
+      setManHinh('s13')
     },
     hienThi,
     capNhatHienThi: async (patch) => {

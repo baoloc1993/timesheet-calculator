@@ -293,10 +293,25 @@ export function dangKyIpc(): void {
         if (trung.length) return { ok: false, canXacNhanGhiDe: trung }
       }
 
-      const bl = await ghiBangLuong(fileMau, pBL, kyHienTai.ky.tongHop, {
-        ngayBatDau: kyHienTai.ky.ngayBatDau,
-        ngayKetThuc: kyHienTai.ky.ngayKetThuc
-      })
+      // Vòng 6 (AC-5) — 5 khoản phát lương chỉ tồn tại trên kỳ ĐÃ lưu (nhập ở S10); kỳ đang
+      // xuất chưa từng "Lưu kỳ này" → không có, giữ nguyên bộ ô trống trong mẫu (challenge
+      // pha I 2026-09-05 log).
+      const kqDaLuu = layMotKy(kyHienTai.ky.thang)
+      const bl = await ghiBangLuong(
+        fileMau,
+        pBL,
+        kyHienTai.ky.tongHop,
+        { ngayBatDau: kyHienTai.ky.ngayBatDau, ngayKetThuc: kyHienTai.ky.ngayKetThuc },
+        kqDaLuu
+          ? {
+              chuyenCan: kqDaLuu.chuyenCan,
+              buLuong: kqDaLuu.buLuong,
+              le: kqDaLuu.le,
+              baoHiem: kqDaLuu.baoHiem,
+              khauTru: kqDaLuu.khauTru
+            }
+          : undefined
+      )
       let ct: { duongDanRa: string; soDongToVang: number }
       try {
         ct =
@@ -481,10 +496,22 @@ export function dangKyIpc(): void {
     log.event('in-danh-sach-phat-luong', { thang: p?.thang, soNguoi: p?.soNguoi })
   })
 
-  // Cập nhật khấu trừ / đã-trả một nhân viên trong một kỳ đã lưu (AC-3).
+  // Cập nhật khấu trừ / đã-trả / 4 khoản phát lương (vòng 6) một nhân viên trong một kỳ đã lưu.
   ipcMain.handle(
     'ky-luu:cap-nhat-phat-luong',
-    (_e, p: { thang: string; maNhanVien: string; khauTru?: number; daTra?: boolean }) => {
+    (
+      _e,
+      p: {
+        thang: string
+        maNhanVien: string
+        khauTru?: number
+        daTra?: boolean
+        chuyenCan?: number
+        buLuong?: number
+        le?: number
+        baoHiem?: number
+      }
+    ) => {
       const kq: KetQuaKy | null = layMotKy(p.thang)
       if (!kq) return { ok: false, loi: 'Không tìm thấy kỳ đã lưu.' }
       if (!kq.dongBang.some((d) => d.maNhanVien === p.maNhanVien))
@@ -493,11 +520,25 @@ export function dangKyIpc(): void {
       if (p.khauTru !== undefined) {
         const k = Number(p.khauTru)
         if (!Number.isFinite(k) || k < 0)
-          return { ok: false, loi: 'Khấu trừ phải là số không âm.' }
+          return { ok: false, loi: 'Vay phải là số không âm.' }
         kq.khauTru = { ...kq.khauTru, [p.maNhanVien]: Math.round(k) }
       }
       if (p.daTra !== undefined) {
         kq.daTra = { ...kq.daTra, [p.maNhanVien]: !!p.daTra }
+      }
+      // Vòng 6 — 4 khoản mới, cùng luật validate ≥ 0.
+      const KHOAN_MOI = [
+        ['chuyenCan', 'Chuyên cần'],
+        ['buLuong', 'Bù lương'],
+        ['le', 'Lễ'],
+        ['baoHiem', 'Bảo hiểm']
+      ] as const
+      for (const [truong, nhan] of KHOAN_MOI) {
+        const v = p[truong]
+        if (v === undefined) continue
+        const n = Number(v)
+        if (!Number.isFinite(n) || n < 0) return { ok: false, loi: `${nhan} phải là số không âm.` }
+        kq[truong] = { ...(kq[truong] ?? {}), [p.maNhanVien]: Math.round(n) }
       }
       ghiMotKy(kq)
       return { ok: true, data: kq }

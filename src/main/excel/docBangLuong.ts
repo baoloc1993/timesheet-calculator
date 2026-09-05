@@ -18,6 +18,12 @@ export interface TheNhanVienBangLuong {
   oSoLuongGio: string
   oDonGiaNgay: string
   oDonGiaGio: string
+  // Vòng 6 (AC-5) — ô "Thành tiền" của 5 khoản nhập tay sẵn có trong mẫu. '' nếu không tìm thấy.
+  oChuyenCan: string
+  oBuLuong: string
+  oLe: string
+  oBaoHiem: string
+  oVay: string
 }
 
 export interface BangLuongDaDoc {
@@ -57,11 +63,33 @@ function so(v: ExcelJS.CellValue): number {
   return 0
 }
 
-// Với mỗi cụm cột (trái: A/B/C/D, phải: G/H/I/J) tìm thẻ nhân viên.
+// Với mỗi cụm cột (trái: A/B/C/D/E, phải: G/H/I/J/K) tìm thẻ nhân viên. `tt` = cột "Thành tiền",
+// nơi 5 khoản Chuyên cần/bù lương/Lễ/bảo hiểm/vay ghi số (vòng 6, AC-5).
 const CUM = [
-  { ten: 1, tenPhu: 2, ma: 4, dvt: 2, soLuong: 3, donGia: 4 }, // A B C D
-  { ten: 7, tenPhu: 8, ma: 10, dvt: 8, soLuong: 9, donGia: 10 } // G H I J
+  { ten: 1, tenPhu: 2, ma: 4, dvt: 2, soLuong: 3, donGia: 4, tt: 5 }, // A B C D E
+  { ten: 7, tenPhu: 8, ma: 10, dvt: 8, soLuong: 9, donGia: 10, tt: 11 } // G H I J K
 ]
+
+/** Bỏ dấu tiếng Việt (mỗi dấu thanh/dấu phụ là MỘT ký tự Unicode riêng — không thể liệt kê
+ * bằng character class như `[âa]`, phải chuẩn hoá rồi so bằng chữ không dấu). */
+function boDau(s: string): string {
+  return s
+    .normalize('NFD')
+    .replace(/\p{Diacritic}/gu, '')
+    .replace(/đ/gi, 'd')
+    .trim()
+    .toLowerCase()
+}
+
+/** Nhãn 5 khoản nhập tay, đúng thứ tự xuất hiện trong mẫu — so KHÔNG DẤU nên khớp cả khi
+ * file thật của công ty ghi thiếu dấu ("bu luong" thay vì "bù lương"). */
+const KHOAN_KHONG_DAU = {
+  chuyenCan: 'chuyen can',
+  buLuong: 'bu luong',
+  le: 'le',
+  baoHiem: 'bao hiem',
+  vay: 'vay'
+} as const
 
 export async function docBangLuong(duongDan: string): Promise<{ wb: ExcelJS.Workbook; doc: BangLuongDaDoc }> {
   const wb = new ExcelJS.Workbook()
@@ -114,7 +142,24 @@ export async function docBangLuong(duongDan: string): Promise<{ wb: ExcelJS.Work
       const rrNgay = rNgay > 0 ? timDong('ngay', /ngày/i) : -1
       const rrGio = rGio > 0 ? timDong('gio', /giờ/i) : -1
 
+      // Vòng 6 (AC-5) — quét tiếp xuống tìm 5 dòng khoản nhập tay (thường ngay sau dòng kỳ,
+      // có thể cách một dòng trống — quét cửa sổ rộng hơn Lương tháng/Làm thêm ở trên).
+      let rCC = -1
+      let rBL = -1
+      let rLe = -1
+      let rBH = -1
+      let rVay = -1
+      for (let k = 0; k <= 20 && r + k <= tongDong; k++) {
+        const nhan = boDau(chuoi(ws.getRow(r + k).getCell(cum.ten).value))
+        if (rCC < 0 && nhan === KHOAN_KHONG_DAU.chuyenCan) rCC = r + k
+        else if (rBL < 0 && nhan === KHOAN_KHONG_DAU.buLuong) rBL = r + k
+        else if (rLe < 0 && nhan === KHOAN_KHONG_DAU.le) rLe = r + k
+        else if (rBH < 0 && nhan.startsWith(KHOAN_KHONG_DAU.baoHiem)) rBH = r + k
+        else if (rVay < 0 && nhan === KHOAN_KHONG_DAU.vay) rVay = r + k
+      }
+
       const colL = (c: number) => String.fromCharCode(64 + c)
+      const colTT = colL(cum.tt)
       the.push({
         maNhanVien: ma,
         tenBangLuong: ten,
@@ -123,7 +168,12 @@ export async function docBangLuong(duongDan: string): Promise<{ wb: ExcelJS.Work
         oSoLuongNgay: rrNgay > 0 ? `${colL(cum.soLuong)}${rrNgay}` : '',
         oSoLuongGio: rrGio > 0 ? `${colL(cum.soLuong)}${rrGio}` : '',
         oDonGiaNgay: rrNgay > 0 ? `${colL(cum.donGia)}${rrNgay}` : '',
-        oDonGiaGio: rrGio > 0 ? `${colL(cum.donGia)}${rrGio}` : ''
+        oDonGiaGio: rrGio > 0 ? `${colL(cum.donGia)}${rrGio}` : '',
+        oChuyenCan: rCC > 0 ? `${colTT}${rCC}` : '',
+        oBuLuong: rBL > 0 ? `${colTT}${rBL}` : '',
+        oLe: rLe > 0 ? `${colTT}${rLe}` : '',
+        oBaoHiem: rBH > 0 ? `${colTT}${rBH}` : '',
+        oVay: rVay > 0 ? `${colTT}${rVay}` : ''
       })
     }
   }

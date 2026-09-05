@@ -1140,6 +1140,814 @@ td.tiennhan.am {
   }
 }
 
+/* ---- Card đầu/thân tách rời (dùng khi nội dung cần full-bleed, VD lưới C17) ---- */
+.card.flush {
+  padding: 0;
+}
+.card-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-md);
+  padding: var(--space-lg) var(--space-xl);
+  border-bottom: 1px solid var(--color-divider);
+}
+.card-head h2 {
+  margin: 0;
+}
+.card-head .right {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  flex-wrap: wrap;
+}
+.card-body {
+  padding: var(--space-xl);
+}
+.card-foot {
+  padding: var(--space-md) var(--space-xl);
+  border-top: 1px solid var(--color-divider);
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+}
+.chip.err {
+  background: var(--color-danger-soft);
+  color: var(--color-danger);
+  border-color: var(--color-danger-line);
+}
+
+/* ---- C17 — lưới công cả tháng (S11, vòng 6) ---- */
+.gridwrap {
+  overflow: auto;
+  max-height: calc(100vh - 320px);
+}
+table.month {
+  border-collapse: separate;
+  border-spacing: 0;
+  width: auto;
+  min-width: 100%;
+}
+table.month th,
+table.month td {
+  padding: 0;
+  border: 0;
+  border-bottom: 1px solid var(--color-divider);
+  border-right: 1px solid var(--color-divider);
+}
+table.month thead th {
+  position: sticky;
+  top: 0;
+  z-index: 3;
+  background: var(--color-surface-sunken);
+  font-size: var(--text-xs);
+  font-weight: 700;
+  text-align: center;
+  padding: 6px 2px;
+  min-width: 2.6rem;
+  border-bottom: 2px solid var(--color-divider-strong);
+  text-transform: none;
+  letter-spacing: 0;
+}
+table.month thead th .dw {
+  display: block;
+  font-size: 10px;
+  font-weight: 400;
+  color: var(--color-text-faint);
+}
+table.month thead th.sun {
+  color: var(--color-danger);
+  background: var(--color-danger-soft);
+}
+table.month .namec,
+table.month thead th.nameh {
+  position: sticky;
+  left: 0;
+  z-index: 4;
+  min-width: 15rem;
+  max-width: 15rem;
+  text-align: left;
+  padding: 6px var(--space-md);
+  background: var(--color-surface);
+  border-right: 2px solid var(--color-divider-strong);
+}
+table.month thead th.nameh {
+  z-index: 5;
+  background: var(--color-surface-sunken);
+}
+table.month tbody tr:nth-child(even) .namec {
+  background: var(--color-surface-sunken);
+}
+table.month .namec .alias {
+  font-size: var(--text-sm);
+  color: var(--color-text-faint);
+  font-family: var(--font-num);
+}
+table.month .sumc,
+table.month thead th.sumh {
+  position: sticky;
+  right: 0;
+  z-index: 4;
+  min-width: 6.5rem;
+  background: var(--color-surface);
+  border-left: 2px solid var(--color-divider-strong);
+  text-align: right;
+  padding: 6px var(--space-md);
+  font-family: var(--font-num);
+  font-weight: 700;
+}
+table.month thead th.sumh {
+  z-index: 5;
+  background: var(--color-surface-sunken);
+  font-weight: 700;
+}
+table.month tbody tr:nth-child(even) .sumc {
+  background: var(--color-surface-sunken);
+}
+table.month .sumc .oth {
+  display: block;
+  font-size: var(--text-xs);
+  font-weight: 500;
+  color: var(--color-text-muted);
+}
+.cellbtn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1px;
+  width: 100%;
+  min-width: 2.6rem;
+  height: var(--row-h);
+  border: 0;
+  background: transparent;
+  font: inherit;
+  font-family: var(--font-num);
+  font-weight: 600;
+  font-size: var(--text-base);
+  color: var(--color-text);
+  cursor: pointer;
+}
+.cellbtn:hover {
+  box-shadow: inset 0 0 0 2px var(--color-primary);
+}
+.cellbtn .ot {
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1;
+  color: var(--color-primary);
+}
+.cellbtn.c-F {
+  box-shadow: inset 0 0 0 2px var(--color-warning);
+  background: var(--color-warning-soft);
+}
+.cellbtn.c-F:hover {
+  box-shadow: inset 0 0 0 2px var(--color-primary);
+}
+table.month tfoot td {
+  position: sticky;
+  bottom: 0;
+  z-index: 3;
+  background: var(--color-surface-sunken);
+  border-top: 2px solid var(--color-divider-strong);
+  font-family: var(--font-num);
+  font-weight: 700;
+  text-align: center;
+  padding: 8px 2px;
+  font-size: var(--text-sm);
+}
+table.month tfoot td.namec {
+  z-index: 4;
+  text-align: left;
+  font-family: var(--font-sans);
+}
+table.month tfoot td.sumc {
+  z-index: 4;
+}
+tr.locked .namec {
+  opacity: 0.75;
+}
+tr.locked td.lockc {
+  background: repeating-linear-gradient(45deg, transparent 0 6px, var(--color-divider) 6px 7px);
+}
+table.month.dim .cellbtn {
+  opacity: 0.24;
+}
+table.month.dim .cellbtn.hi {
+  opacity: 1;
+  box-shadow: inset 0 0 0 3px var(--color-primary);
+}
+
+/* bảng nghĩa ký hiệu (C17) */
+table.lgtable tbody tr:hover > td {
+  background: var(--color-primary-soft);
+}
+.lgbox {
+  display: inline-grid;
+  place-items: center;
+  min-width: 2.6rem;
+  height: 2.2rem;
+  padding: 0 0.4rem;
+  font-family: var(--font-num);
+  font-weight: 600;
+  font-size: var(--text-base);
+  border: 1px solid var(--color-divider-strong);
+  border-radius: var(--radius-sm);
+  color: var(--color-text);
+}
+.lgbox.c-F {
+  border-color: var(--color-warning);
+  border-width: 2px;
+}
+.lgbox.lgdash {
+  background: repeating-linear-gradient(45deg, transparent 0 6px, var(--color-divider) 6px 7px);
+}
+.lgot {
+  font-style: normal;
+  font-size: 11px;
+  color: var(--color-primary);
+  font-weight: 600;
+}
+td.lgk {
+  width: 5rem;
+}
+.lgextra {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(17rem, 1fr));
+  gap: var(--space-md);
+  margin-top: var(--space-lg);
+  padding-top: var(--space-lg);
+  border-top: 1px solid var(--color-divider);
+}
+.lgextra > div {
+  display: flex;
+  gap: var(--space-md);
+  align-items: flex-start;
+}
+.lgextra b {
+  display: block;
+  font-weight: 600;
+}
+.lgextra span {
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+}
+
+/* ---- C18 — phát lương một việc một màn (S12, vòng 6) ---- */
+.pay1 {
+  max-width: 52rem;
+  margin: 0 auto;
+}
+.pay1-step {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  margin-bottom: var(--space-md);
+  font-size: var(--text-lg);
+  font-weight: 600;
+}
+.pay1-step .bar {
+  flex: 1;
+  height: 14px;
+  background: var(--color-surface-sunken);
+  border: 1px solid var(--color-divider-strong);
+  border-radius: var(--radius-pill);
+  overflow: hidden;
+}
+.pay1-step .bar > i {
+  display: block;
+  height: 100%;
+  background: var(--color-success);
+}
+.pay1-card {
+  background: var(--color-surface);
+  border: 3px solid var(--color-text);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+}
+.pay1-head {
+  padding: var(--space-lg);
+  border-bottom: 2px solid var(--color-divider);
+  text-align: center;
+}
+.pay1-name {
+  font-size: 2.4rem;
+  font-weight: 700;
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+}
+.pay1-meta {
+  font-size: var(--text-lg);
+  color: var(--color-text-muted);
+  font-family: var(--font-num);
+  margin-top: 4px;
+}
+.pay1-body {
+  padding: var(--space-lg);
+}
+.pay1-rows {
+  display: grid;
+  gap: 0;
+  margin-bottom: var(--space-lg);
+}
+.pay1-rows > div {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-md);
+  flex-wrap: wrap;
+  padding: var(--space-md) 0;
+  border-bottom: 1px solid var(--color-divider);
+  font-size: var(--text-lg);
+}
+.pay1-rows > div:last-child {
+  border-bottom: none;
+}
+.pay1-rows .k {
+  flex: 1;
+  min-width: 11rem;
+}
+.pay1-rows .calc {
+  font-family: var(--font-num);
+  color: var(--color-text-muted);
+  font-size: var(--text-base);
+}
+.pay1-rows .v {
+  font-family: var(--font-num);
+  font-weight: 700;
+  min-width: 8.5rem;
+  text-align: right;
+}
+.pay1-rows .v.tru {
+  color: var(--color-danger);
+}
+.pay1-net {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-md);
+  flex-wrap: wrap;
+  padding: var(--space-lg);
+  background: var(--color-success-soft);
+  border: 2px solid var(--color-success);
+  border-radius: var(--radius);
+  color: var(--color-success);
+}
+.pay1-net .k {
+  font-size: var(--text-lg);
+  font-weight: 700;
+}
+.pay1-net .v {
+  font-family: var(--font-num);
+  font-size: 3rem;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -0.02em;
+}
+.pay1-net.am {
+  background: var(--color-danger-soft);
+  border-color: var(--color-danger);
+  color: var(--color-danger);
+}
+.pay1-acts {
+  display: grid;
+  gap: var(--space-md);
+  margin-top: var(--space-lg);
+}
+.btn.huge {
+  min-height: 5rem;
+  font-size: var(--text-lg);
+  font-weight: 700;
+  border-radius: var(--radius);
+  border-width: 2px;
+  padding: 0 var(--space-lg);
+}
+.btn.huge.pay {
+  background: var(--color-success);
+  border-color: var(--color-success);
+  color: #fff;
+}
+:root[data-theme='dark'] .btn.huge.pay {
+  color: #06210e;
+}
+.btn.huge.pay:hover {
+  filter: brightness(1.08);
+  background: var(--color-success);
+}
+.btn.danger {
+  background: var(--color-danger-soft);
+  color: var(--color-danger);
+  border-color: var(--color-danger-line);
+}
+.btn.danger:hover {
+  background: var(--color-danger-soft);
+  filter: brightness(0.97);
+}
+.pay1-side {
+  display: flex;
+  gap: var(--space-md);
+  flex-wrap: wrap;
+}
+.pay1-side .btn {
+  flex: 1;
+  min-width: 12rem;
+}
+.pay1-done {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  justify-content: center;
+  padding: var(--space-md);
+  background: var(--color-success-soft);
+  border: 2px solid var(--color-success);
+  border-radius: var(--radius);
+  color: var(--color-success);
+  font-size: var(--text-lg);
+  font-weight: 700;
+}
+.pay1-hint {
+  text-align: center;
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
+  margin-top: var(--space-md);
+}
+.pay1-hint kbd {
+  font-family: var(--font-num);
+  font-size: var(--text-xs);
+  border: 1px solid var(--color-divider-strong);
+  border-bottom-width: 2px;
+  border-radius: var(--radius-sm);
+  padding: 1px 6px;
+  background: var(--color-surface-sunken);
+}
+
+.pick-filter {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-sm);
+  margin-bottom: var(--space-md);
+}
+.pick-filter button {
+  font: inherit;
+  font-size: var(--text-base);
+  font-weight: 600;
+  cursor: pointer;
+  min-height: 3.4rem;
+  padding: 0 var(--space-lg);
+  border-radius: var(--radius-pill);
+  border: 2px solid var(--color-divider-strong);
+  background: var(--color-surface);
+  color: var(--color-text);
+}
+.pick-filter button:hover {
+  background: var(--color-hover);
+}
+.pick-filter button[aria-pressed='true'] {
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+  color: var(--color-on-primary);
+}
+.pick-filter button .n {
+  font-family: var(--font-num);
+  opacity: 0.75;
+  margin-left: 8px;
+  font-weight: 500;
+}
+.pick-note {
+  align-self: center;
+  font-size: var(--text-sm);
+  color: var(--color-text-faint);
+  margin-left: var(--space-sm);
+}
+.pick-or {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  margin-bottom: var(--space-sm);
+  font-size: var(--text-sm);
+  color: var(--color-text-faint);
+}
+.pick-or::before,
+.pick-or::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--color-divider);
+}
+.pick-search {
+  position: relative;
+  margin-bottom: var(--space-lg);
+}
+.pick-search input {
+  font: inherit;
+  font-size: var(--text-lg);
+  width: 100%;
+  min-height: 3.6rem;
+  padding: 0 var(--space-lg) 0 3rem;
+  border: 2px solid var(--color-border);
+  border-radius: var(--radius);
+  background: var(--color-surface);
+  color: var(--color-text);
+}
+.pick-search input:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 4px var(--color-primary-soft);
+}
+.pick-search .si {
+  position: absolute;
+  left: var(--space-md);
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: var(--text-lg);
+  color: var(--color-text-faint);
+  pointer-events: none;
+}
+.pick-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr));
+  gap: var(--space-md);
+}
+.pick-btn {
+  font: inherit;
+  text-align: left;
+  display: grid;
+  gap: 2px;
+  cursor: pointer;
+  padding: var(--space-md) var(--space-lg);
+  min-height: 5.6rem;
+  background: var(--color-surface);
+  color: var(--color-text);
+  border: 2px solid var(--color-divider-strong);
+  border-radius: var(--radius);
+}
+.pick-btn:hover {
+  border-color: var(--color-primary);
+  background: var(--color-primary-soft);
+}
+.pick-btn .pn {
+  font-size: var(--text-lg);
+  font-weight: 700;
+  line-height: 1.2;
+}
+.pick-btn .pm {
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+  font-family: var(--font-num);
+}
+.pick-btn .pv {
+  font-family: var(--font-num);
+  font-size: var(--text-lg);
+  font-weight: 700;
+  margin-top: 2px;
+}
+.pick-btn.xong {
+  background: var(--color-success-soft);
+  border-color: var(--color-success-line);
+}
+.pick-btn.xong .pn,
+.pick-btn.xong .pv {
+  color: var(--color-success);
+}
+.pick-btn.chan {
+  background: var(--color-danger-soft);
+  border-color: var(--color-danger-line);
+}
+.pick-btn.chan .pn,
+.pick-btn.chan .pv {
+  color: var(--color-danger);
+}
+.pick-sec {
+  grid-column: 1/-1;
+  font-size: var(--text-xs);
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--color-text-faint);
+  margin-top: var(--space-sm);
+}
+.pick-empty {
+  grid-column: 1/-1;
+  padding: var(--space-xl);
+  text-align: center;
+  color: var(--color-text-muted);
+}
+
+/* ---- C19 — phiếu lương in (S13, vòng 6) — tách hẳn khỏi .printsheet (C14, S10) ---- */
+.sheetbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-md);
+  align-items: center;
+  padding: var(--space-md) var(--space-lg);
+  background: var(--color-surface);
+  border: 1px solid var(--color-divider);
+  border-radius: var(--radius-lg);
+  margin-bottom: var(--space-lg);
+}
+.sheetbar .lb {
+  font-weight: 600;
+}
+.sheetstage {
+  display: grid;
+  gap: var(--space-lg);
+  justify-items: center;
+}
+.sheet {
+  width: 210mm;
+  min-height: 297mm;
+  background: #ffffff;
+  color: #000000;
+  padding: 6mm;
+  box-shadow: var(--shadow);
+  border: 1px solid var(--color-divider-strong);
+  display: flex;
+  flex-direction: column;
+  page: phieu;
+}
+.sheet .pgno {
+  position: absolute;
+  margin-top: -5.4mm;
+  margin-left: 1mm;
+  font-family: var(--font-num);
+  font-size: 9px;
+  color: #666;
+}
+.phieu {
+  box-sizing: border-box;
+  width: 100%;
+  height: 95mm;
+  padding: 7mm 8mm;
+  border-bottom: 1px dashed #555;
+  display: grid;
+  grid-template-columns: 1fr 74mm;
+  gap: 6mm;
+  break-inside: avoid;
+  page-break-inside: avoid;
+  position: relative;
+  font-family: var(--font-sans);
+  color: #000;
+}
+.phieu:last-child {
+  border-bottom: none;
+}
+.phieu .cut {
+  position: absolute;
+  left: 0;
+  bottom: -2.6mm;
+  font-size: 10px;
+  color: #555;
+  background: #fff;
+  padding-right: 3px;
+}
+.phieu .ph-top {
+  grid-column: 1/-1;
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  border-bottom: 1.5pt solid #000;
+  padding-bottom: 2mm;
+  margin-bottom: 1mm;
+}
+.phieu .ph-ky {
+  font-size: 12pt;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+.phieu .ph-xuong {
+  font-size: 9pt;
+  color: #333;
+}
+.phieu .ph-ten {
+  font-size: 19pt;
+  font-weight: 700;
+  line-height: 1.1;
+}
+.phieu .ph-ma {
+  font-size: 9.5pt;
+  color: #333;
+  font-family: var(--font-num);
+  margin-bottom: 2mm;
+}
+.phieu table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 11pt;
+}
+.phieu table td {
+  padding: 1.1mm 0;
+  border: 0;
+  border-bottom: 0.4pt dotted #999;
+}
+.phieu table td.c {
+  font-family: var(--font-num);
+  font-size: 9.5pt;
+  color: #333;
+  text-align: right;
+}
+.phieu table td.v {
+  font-family: var(--font-num);
+  text-align: right;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.phieu table tr.tong td {
+  border-bottom: 1pt solid #000;
+  font-weight: 700;
+}
+.phieu .ph-right {
+  display: flex;
+  flex-direction: column;
+}
+.phieu .ph-net {
+  border: 2pt solid #000;
+  padding: 3mm;
+  text-align: center;
+}
+.phieu .ph-net .k {
+  font-size: 9.5pt;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+}
+.phieu .ph-net .v {
+  font-family: var(--font-num);
+  font-size: 21pt;
+  font-weight: 700;
+  line-height: 1.15;
+  white-space: nowrap;
+}
+.phieu .ph-chu {
+  font-size: 8.5pt;
+  font-style: italic;
+  margin-top: 1.5mm;
+  line-height: 1.35;
+}
+.phieu .ph-ky2 {
+  margin-top: auto;
+  font-size: 9.5pt;
+  line-height: 1.9;
+}
+.phieu .ph-ky2 .dot {
+  border-bottom: 0.6pt dotted #000;
+  display: inline-block;
+  min-width: 34mm;
+}
+.phieu.trong {
+  border-bottom: none;
+}
+
+.phieusheet {
+  display: none;
+}
+@media print {
+  @page phieu {
+    size: A4 portrait;
+    margin: 6mm;
+  }
+  .phieusheet,
+  .phieusheet * {
+    visibility: visible;
+  }
+  .phieusheet {
+    display: block;
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    gap: 0;
+  }
+  .phieusheet .sheet {
+    width: 100%;
+    min-height: auto;
+    padding: 0;
+    margin: 0;
+    border: 0;
+    box-shadow: none;
+    break-after: page;
+    page-break-after: always;
+  }
+  .phieusheet .sheet:last-child {
+    break-after: auto;
+    page-break-after: auto;
+  }
+  .phieusheet .sheet .pgno {
+    display: none;
+  }
+  .phieusheet .phieu {
+    height: 95mm;
+  }
+}
+@media (max-width: 1120px) {
+  .sheet {
+    width: 100%;
+    min-height: auto;
+  }
+  .phieu {
+    height: auto;
+  }
+}
+
 @media (max-width: 1024px) {
   nav.rail {
     width: 200px;

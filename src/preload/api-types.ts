@@ -20,7 +20,10 @@ export type {
   CauHinhMayChamCong
 }
 // Hàm thuần vòng 3 — renderer dùng để tính "thực nhận" / Σ mà không cần round-trip IPC.
-export { tinhThucNhan, lamTronNghin, tongKetQuaKy } from '../core/ketQuaKy'
+export { tinhThucNhan, tinhThucNhanDayDu, lamTronNghin, tongKetQuaKy } from '../core/ketQuaKy'
+export { dungKyHieuNgay, ngayLaChuNhat } from '../core/luoiCong'
+export type { KyHieuNgay } from '../core/luoiCong'
+export { docSoTienBangChu } from '../core/soTienBangChu'
 
 export interface KetQua<T> {
   ok: boolean
@@ -110,12 +113,16 @@ export interface Api {
   danhSachKy(): Promise<KetQuaKy[]>
   /** Một kỳ đã lưu theo `thang`. */
   docKy(thang: string): Promise<KetQuaKy | null>
-  /** Cập nhật khấu trừ / trạng thái đã-trả của MỘT nhân viên trong MỘT kỳ đã lưu. */
+  /** Cập nhật khấu trừ / trạng thái đã-trả / 4 khoản vòng 6 của MỘT nhân viên trong MỘT kỳ đã lưu. */
   capNhatPhatLuong(payload: {
     thang: string
     maNhanVien: string
     khauTru?: number
     daTra?: boolean
+    chuyenCan?: number
+    buLuong?: number
+    le?: number
+    baoHiem?: number
   }): Promise<KetQua<KetQuaKy>>
   /** Ghi mốc "đã in danh sách phát lương" vào log cục bộ (§Nhóm 4). Fire-and-forget. */
   danhDauInDanhSach(payload: { thang: string; soNguoi: number }): Promise<void>

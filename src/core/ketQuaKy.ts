@@ -10,7 +10,17 @@ export interface DongBang {
   gioOT: number
   thanhTien: number
   soDongDaSua: number
+  /**
+   * Vòng 6, optional — đơn giá TẠI THỜI ĐIỂM LƯU (đóng băng cùng lúc với thanhTien) để
+   * S12/S13 giải trình đúng "ngày công × giá + OT × giá". Kỳ lưu TRƯỚC vòng 6 thiếu field
+   * này → giải trình rút gọn còn một dòng "Thành tiền".
+   */
+  donGiaNgay?: number
+  donGiaGioOT?: number
 }
+
+/** Map maNhanVien → số VND ≥ 0, sửa được sau khi lưu (khấu trừ/phụ cấp). */
+type MapTien = Record<string, number>
 
 /** Một kỳ đã lưu — collection thứ 2 trong config.json, khoá theo `thang` ("2026-09"). */
 export interface KetQuaKy {
@@ -19,10 +29,19 @@ export interface KetQuaKy {
   khoangNgay: { tu: string; den: string }
   /** Đóng băng lúc lưu. */
   dongBang: DongBang[]
-  /** Sửa được sau khi lưu — map maNhanVien → số VND ≥ 0. */
-  khauTru: Record<string, number>
+  /** Sửa được sau khi lưu — map maNhanVien → số VND ≥ 0. Hiển thị là "Vay" từ vòng 6. */
+  khauTru: MapTien
   /** Sửa được sau khi lưu — map maNhanVien → đã trả chưa. */
   daTra: Record<string, boolean>
+  /**
+   * Vòng 6, optional — 3 khoản CỘNG vào thực nhận (map maNhanVien → số VND ≥ 0).
+   * Thiếu field (kỳ lưu trước vòng 6) → đọc như rỗng `{}`, không throw.
+   */
+  chuyenCan?: MapTien
+  buLuong?: MapTien
+  le?: MapTien
+  /** Vòng 6, optional — khoản TRỪ (cùng chiều `khauTru`). */
+  baoHiem?: MapTien
 }
 
 /** Làm tròn thường đến 1.000đ — chỉ cho số tiền mặt cầm tay. */
@@ -33,6 +52,26 @@ export function lamTronNghin(x: number): number {
 /** Thực nhận = làm tròn nghìn(thành tiền − khấu trừ). Có thể âm (vay > lương). */
 export function tinhThucNhan(thanhTien: number, khauTru: number): number {
   return lamTronNghin(thanhTien - (Number.isFinite(khauTru) ? khauTru : 0))
+}
+
+/**
+ * Vòng 6 — thực nhận đầy đủ 5 khoản: thành tiền + Chuyên cần + Bù lương + Lễ − Bảo hiểm − Vay
+ * (`khauTru`), làm tròn nghìn. Field thiếu (kỳ cũ chưa khai) → coi như 0.
+ */
+export function tinhThucNhanDayDu(
+  thanhTien: number,
+  khauTru: number,
+  phuCap?: { chuyenCan?: number; buLuong?: number; le?: number; baoHiem?: number }
+): number {
+  const so = (x: number | undefined) => (Number.isFinite(x) ? (x as number) : 0)
+  return lamTronNghin(
+    thanhTien +
+      so(phuCap?.chuyenCan) +
+      so(phuCap?.buLuong) +
+      so(phuCap?.le) -
+      so(phuCap?.baoHiem) -
+      (Number.isFinite(khauTru) ? khauTru : 0)
+  )
 }
 
 /**
@@ -54,10 +93,16 @@ export function dongBangKetQuaKy(
       ngayCong: t.tongNgayCong,
       gioOT: t.tongGioOT,
       thanhTien: t.thanhTien,
-      soDongDaSua: t.soDongCanXemLai
+      soDongDaSua: t.soDongCanXemLai,
+      donGiaNgay: t.donGiaNgay,
+      donGiaGioOT: t.donGiaGioOT
     })),
     khauTru: {},
-    daTra: {}
+    daTra: {},
+    chuyenCan: {},
+    buLuong: {},
+    le: {},
+    baoHiem: {}
   }
 }
 
@@ -73,6 +118,14 @@ export function mergePhatLuongCu(kqMoi: KetQuaKy, kqCu: KetQuaKy | null | undefi
   }
   for (const [ma, v] of Object.entries(kqCu.daTra)) {
     if (maTrongKyMoi.has(ma)) kqMoi.daTra[ma] = v
+  }
+  // Vòng 6 — 4 khoản mới giữ cùng cơ chế khauTru/daTra (kỳ cũ chưa vòng 6 thì thiếu field, bỏ qua).
+  for (const truong of ['chuyenCan', 'buLuong', 'le', 'baoHiem'] as const) {
+    const cu = kqCu[truong]
+    if (!cu) continue
+    for (const [ma, v] of Object.entries(cu)) {
+      if (maTrongKyMoi.has(ma)) kqMoi[truong]![ma] = v
+    }
   }
   return kqMoi
 }
@@ -95,7 +148,12 @@ export function tongKetQuaKy(kq: KetQuaKy): {
     tongNgayCong += d.ngayCong
     tongGioOT += d.gioOT
     tongThanhTien += d.thanhTien
-    tongThucNhan += tinhThucNhan(d.thanhTien, kq.khauTru[d.maNhanVien] ?? 0)
+    tongThucNhan += tinhThucNhanDayDu(d.thanhTien, kq.khauTru[d.maNhanVien] ?? 0, {
+      chuyenCan: kq.chuyenCan?.[d.maNhanVien],
+      buLuong: kq.buLuong?.[d.maNhanVien],
+      le: kq.le?.[d.maNhanVien],
+      baoHiem: kq.baoHiem?.[d.maNhanVien]
+    })
     if (kq.daTra[d.maNhanVien] !== true) soNguoiChuaNhan++
   }
   return {

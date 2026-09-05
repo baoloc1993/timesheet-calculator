@@ -130,6 +130,7 @@ function themThe(
     set(cum.ten, base + 5 + i, nhan)
     tien(set(cum.tt, base + 5 + i, null))
   })
+  const [rCC, rBL, rLe, rBH, rVay] = [0, 1, 2, 3, 4].map((i) => base + 5 + i)
 
   const rTong = base + 10
   for (const col of cols) {
@@ -154,7 +155,12 @@ function themThe(
     oSoLuongNgay: `${cum.sl}${rNgay}`,
     oSoLuongGio: `${cum.sl}${rGio}`,
     oDonGiaNgay: `${cum.dg}${rNgay}`,
-    oDonGiaGio: `${cum.dg}${rGio}`
+    oDonGiaGio: `${cum.dg}${rGio}`,
+    oChuyenCan: `${cum.tt}${rCC}`,
+    oBuLuong: `${cum.tt}${rBL}`,
+    oLe: `${cum.tt}${rLe}`,
+    oBaoHiem: `${cum.tt}${rBH}`,
+    oVay: `${cum.tt}${rVay}`
   }
 }
 
@@ -171,11 +177,22 @@ function dongCuoiCoNoiDung(ws: import('exceljs').Worksheet): number {
   return max
 }
 
+/** Vòng 6 (AC-5) — 5 khoản phát lương của kỳ đang xuất, map maNhanVien → số VND. Thiếu (kỳ
+ * chưa từng "Lưu kỳ này") → để nguyên bộ ô trống trong mẫu, không bịa số. */
+export interface PhuCapBangLuong {
+  chuyenCan?: Record<string, number>
+  buLuong?: Record<string, number>
+  le?: Record<string, number>
+  baoHiem?: Record<string, number>
+  khauTru?: Record<string, number>
+}
+
 export async function ghiBangLuong(
   fileMau: string,
   duongDanRa: string,
   tongHop: TongHopNhanVien[],
-  ky?: { ngayBatDau: string; ngayKetThuc: string }
+  ky?: { ngayBatDau: string; ngayKetThuc: string },
+  phuCap?: PhuCapBangLuong
 ): Promise<KetQuaGhiBangLuong> {
   if (!existsSync(fileMau)) {
     throw new LoiDocFileMay('FILE_HONG', 'Không tìm thấy file mẫu bảng lương.')
@@ -211,6 +228,17 @@ export async function ghiBangLuong(
     if (the.oSoLuongGio) ws.getCell(the.oSoLuongGio).value = th.tongGioOT
     if (the.oDonGiaNgay && th.donGiaNgay) ws.getCell(the.oDonGiaNgay).value = th.donGiaNgay
     if (the.oDonGiaGio && th.donGiaGioOT) ws.getCell(the.oDonGiaGio).value = th.donGiaGioOT
+    // Vòng 6 (AC-5) — 5 khoản phát lương đã nhập ở S10, đọc từ kỳ đã lưu cùng thang (nếu có).
+    const cc = phuCap?.chuyenCan?.[th.maNhanVien]
+    const bl = phuCap?.buLuong?.[th.maNhanVien]
+    const le = phuCap?.le?.[th.maNhanVien]
+    const bh = phuCap?.baoHiem?.[th.maNhanVien]
+    const vay = phuCap?.khauTru?.[th.maNhanVien]
+    if (the.oChuyenCan && cc) ws.getCell(the.oChuyenCan).value = cc
+    if (the.oBuLuong && bl) ws.getCell(the.oBuLuong).value = bl
+    if (the.oLe && le) ws.getCell(the.oLe).value = le
+    if (the.oBaoHiem && bh) ws.getCell(the.oBaoHiem).value = bh
+    if (the.oVay && vay) ws.getCell(the.oVay).value = vay
   }
 
   for (const th of tongHop) {

@@ -101,10 +101,17 @@ describe('dongBangKetQuaKy', () => {
       ngayCong: 24,
       gioOT: 10,
       thanhTien: 7_000_000,
-      soDongDaSua: 2
+      soDongDaSua: 2,
+      // Vòng 6 — đơn giá đóng băng cùng lúc (để S12/S13 giải trình công×giá).
+      donGiaNgay: 0,
+      donGiaGioOT: 0
     })
     expect(kq.khauTru).toEqual({})
     expect(kq.daTra).toEqual({})
+    expect(kq.chuyenCan).toEqual({})
+    expect(kq.buLuong).toEqual({})
+    expect(kq.le).toEqual({})
+    expect(kq.baoHiem).toEqual({})
   })
 
   it('đóng băng: sửa tongHop sau khi lưu KHÔNG đổi dongBang', () => {

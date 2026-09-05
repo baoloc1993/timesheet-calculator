@@ -13,17 +13,27 @@ import { S7XemCong } from './screens/S7XemCong'
 import { S8XemChamCongGoc } from './screens/S8XemChamCongGoc'
 import { S9Dashboard } from './screens/S9Dashboard'
 import { S10PhatLuong } from './screens/S10PhatLuong'
+import { S11BangCongThang } from './screens/S11BangCongThang'
+import { S12PhatLuongTungNguoi } from './screens/S12PhatLuongTungNguoi'
+import { S13InPhieuLuong } from './screens/S13InPhieuLuong'
 
-// Nav-rail gộp theo việc: 6 mục, nhãn theo việc người dùng.
+// Nav-rail gộp theo việc: nhãn theo việc người dùng.
 const KY_HIEN_TAI_SUB: { id: ManHinh; nhan: string }[] = [
   { id: 's2', nhan: 'Bảng tổng hợp' },
   { id: 's3', nhan: 'Rà dòng vàng' },
   { id: 's7', nhan: 'Xem công / bảng lương' },
-  { id: 's8', nhan: 'Xem chấm công gốc' }
+  { id: 's8', nhan: 'Xem chấm công gốc' },
+  { id: 's11', nhan: 'Bảng công cả tháng' }
+]
+// Vòng 6 — nhóm "Phát lương": S10 danh sách + S12 phát từng người + S13 in phiếu.
+const PHAT_LUONG_SUB: { id: ManHinh; nhan: string }[] = [
+  { id: 's10', nhan: 'Danh sách' },
+  { id: 's12', nhan: 'Phát từng người' },
+  { id: 's13', nhan: 'In phiếu' }
 ]
 
 function Rail() {
-  const { manHinh, di, ky, maNhanVienDangXem } = useApp()
+  const { manHinh, di, ky, maNhanVienDangXem, moInPhieu } = useApp()
   const coKy = !!ky
   const thieu = ky?.thieuSetup.length ?? 0
   const canXem = ky?.tongDongCanXemLai ?? 0
@@ -66,9 +76,20 @@ function Rail() {
         )}
       </div>
 
-      <button aria-current={manHinh === 's10'} onClick={() => di('s10')}>
-        Phát lương
-      </button>
+      <div className="rail-group">
+        <span className="rail-group-label">Phát lương</span>
+        {PHAT_LUONG_SUB.map((m) => (
+          <button
+            key={m.id}
+            className="rail-sub"
+            aria-current={manHinh === m.id}
+            onClick={() => (m.id === 's13' ? moInPhieu(null) : di(m.id))}
+          >
+            {m.nhan}
+          </button>
+        ))}
+      </div>
+
       <button aria-current={manHinh === 's5'} onClick={() => di('s5')}>
         Setup nhân viên
       </button>
@@ -102,6 +123,12 @@ function ManHinhHienTai() {
       return <S9Dashboard />
     case 's10':
       return <S10PhatLuong />
+    case 's11':
+      return <S11BangCongThang />
+    case 's12':
+      return <S12PhatLuongTungNguoi />
+    case 's13':
+      return <S13InPhieuLuong />
   }
 }
 
