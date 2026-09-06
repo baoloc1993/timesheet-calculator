@@ -232,11 +232,11 @@ export function S11BangCongThang() {
               <div>
                 <span className="lgbox c-F">X</span>
                 <div>
-                  <b>Ô có viền vàng</b>
+                  <b>Ô đã sửa</b>
                   <span>
                     Mốc giờ ngày đó bị lỗi, công cụ đã tự sửa. Mở{' '}
-                    <button className="lien-ket" onClick={() => di('s3')}>
-                      Rà dòng vàng
+                    <button className="lien-ket" onClick={() => di('s8')}>
+                      Giải trình & sửa công
                     </button>{' '}
                     để soát lại.
                   </span>

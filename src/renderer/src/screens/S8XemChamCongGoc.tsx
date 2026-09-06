@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { useApp } from '../store'
 import { dmy } from '../App'
 import { PageHead } from '../components/PageHead'
@@ -9,16 +9,6 @@ const so2 = (n: number) => Math.round(n * 100) / 100
 /** 4 khe cố định "HH:MM"/"–" (vào1 · ra1 · vào2 · ra2) — căn theo khe để thấy khe nào lệch. */
 function khe4(moc: (string | null)[]): string {
   return [0, 1, 2, 3].map((k) => moc[k] || '–').join('  ·  ')
-}
-
-/** 4 khe hiện tại từ capVaoRa (vào1, ra1, vào2, ra2). */
-function phang4(kq: KetQuaNgay): (string | null)[] {
-  return [
-    kq.capVaoRa[0]?.vao ?? null,
-    kq.capVaoRa[0]?.ra ?? null,
-    kq.capVaoRa[1]?.vao ?? null,
-    kq.capVaoRa[1]?.ra ?? null
-  ]
 }
 
 function ghiChu(kq: KetQuaNgay): string {
@@ -32,7 +22,7 @@ function ghiChu(kq: KetQuaNgay): string {
 }
 
 export function S8XemChamCongGoc() {
-  const { ky, maNhanVienDangXem, di, chonNhanVien, xemChamCongGoc } = useApp()
+  const { ky, maNhanVienDangXem, di, xemChamCongGoc, datKy } = useApp()
   const th = ky?.tongHop.find((t) => t.maNhanVien === maNhanVienDangXem)
 
   const sap = useMemo(
@@ -40,19 +30,59 @@ export function S8XemChamCongGoc() {
     [th]
   )
 
-  if (!ky || !th) {
+  if (!ky) {
     return (
       <>
-        <PageHead crumb="Kỳ hiện tại" title="Xem chấm công gốc" />
+        <PageHead crumb="Kỳ hiện tại" title="Giải trình & sửa công" />
         <div className="page-body">
-        <div className="card">
-          <div className="empty">
-            <p>Chọn một nhân viên ở màn Xem công để đối chiếu chấm công gốc.</p>
-            <button className="btn primary" onClick={() => di(ky ? 's7' : 's1')}>
-              {ky ? 'Sang Xem công' : 'Sang màn Nạp file'}
-            </button>
+          <div className="card">
+            <div className="empty">
+              <p>Chưa nạp kỳ công nào — nạp file ở màn Nạp file.</p>
+              <button className="btn primary" onClick={() => di('s1')}>
+                Sang màn Nạp file
+              </button>
+            </div>
           </div>
         </div>
+      </>
+    )
+  }
+
+  // Vòng 7 (AC-2) — vào từ mục nav mới, chưa có ngữ cảnh người → hiện danh sách bấm-tên
+  // trước (cùng khuôn danh sách chọn người ở S12), không phải khuôn "quay lại S2 tự chọn"
+  // như hành vi cũ của mục nav S3.
+  if (!th) {
+    return (
+      <>
+        <PageHead
+          crumb="Kỳ hiện tại"
+          title="Giải trình & sửa công"
+          sub={<>chọn một người để xem · kỳ {ky.thang}</>}
+        />
+        <div className="page-body">
+          <div className="card">
+            {ky.tongHop.length === 0 ? (
+              <div className="empty">
+                <p>Chưa có nhân viên nào đủ Setup trong kỳ này.</p>
+              </div>
+            ) : (
+              <div className="pick-grid">
+                {ky.tongHop.map((t) => (
+                  <button
+                    key={t.maNhanVien}
+                    className={'pick-btn' + (t.soDongCanXemLai > 0 ? ' chan' : '')}
+                    onClick={() => xemChamCongGoc(t.maNhanVien)}
+                  >
+                    <span className="pn">{t.tenBangLuong || t.tenMay}</span>
+                    <span className="pm">mã {t.maNhanVien}</span>
+                    <span className="pv">
+                      {t.soDongCanXemLai > 0 ? `${t.soDongCanXemLai} dòng đã sửa` : 'khớp gốc'}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       </>
     )
@@ -65,7 +95,7 @@ export function S8XemChamCongGoc() {
       <PageHead
         crumb="Kỳ hiện tại"
         title={tenHienThi}
-        sub={<>chấm công gốc so với số công cụ đã dựng · kỳ {ky.thang}</>}
+        sub={<>giải trình & sửa công · kỳ {ky.thang}</>}
       />
       <div className="page-body">
       <div className="card">
@@ -73,8 +103,8 @@ export function S8XemChamCongGoc() {
           <button className="btn" onClick={() => di('s7')}>
             Quay lại Xem công
           </button>
-          <button className="btn" onClick={() => chonNhanVien(th.maNhanVien)}>
-            Sang Rà dòng vàng
+          <button className="btn" onClick={() => di('s2')}>
+            Quay lại tổng hợp
           </button>
           <select
             className="picker"
@@ -101,7 +131,7 @@ export function S8XemChamCongGoc() {
                 <tr>
                   <th>Ngày</th>
                   <th>Mốc máy gốc</th>
-                  <th>Mốc hiện tại</th>
+                  <th>Mốc hiện tại (sửa được)</th>
                   <th className="num">Giờ làm</th>
                   <th className="num">Ngày công</th>
                   <th className="num">Giờ OT</th>
@@ -109,36 +139,101 @@ export function S8XemChamCongGoc() {
                 </tr>
               </thead>
               <tbody>
-                {sap.map((d) => {
-                  const nghiCaNgay = d.capVaoRa.length === 0 && d.nguonGoc.every((m) => !m)
-                  // Tô vàng CÙNG LUẬT ghiChiTietDaLamSach: chỉ khi công cụ/người dùng đã đụng vào
-                  // (daSua). Dòng 1 cặp phủ trưa / nửa buổi có daSua=false → không tô, không chip.
-                  return (
-                    <tr key={d.ngay} className={nghiCaNgay ? 'rest' : ''}>
-                      <td>{dmy(d.ngay).slice(0, 5)}</td>
-                      <td className="orig">{nghiCaNgay ? '— (không chấm)' : khe4(d.nguonGoc)}</td>
-                      <td className={d.daSua ? 'cell-fixed' : nghiCaNgay ? 'rest-day' : ''}>
-                        {nghiCaNgay ? '— (không chấm)' : khe4(phang4(d))}
-                      </td>
-                      <td className="num">{so2(d.gioLamQ)}</td>
-                      <td className="num">{d.ngayCongR}</td>
-                      <td className="num">{so2(d.gioOtS)}</td>
-                      <td className="small muted ghichu">
-                        {d.daSua && <span className="chip">đã sửa</span>} {ghiChu(d)}
-                      </td>
-                    </tr>
-                  )
-                })}
+                {sap.map((d) => (
+                  <DongGiaiTrinh
+                    key={d.ngay}
+                    dong={d}
+                    maNhanVien={th.maNhanVien}
+                    onCapNhat={async () => datKy(await window.api.layKyHienTai())}
+                  />
+                ))}
               </tbody>
             </table>
           </div>
         )}
         <p className="note">
-          Cột Mốc máy gốc là giá trị máy chấm công xuất ra, giữ nguyên để đối chiếu. Ô nền vàng
-          là chỗ công cụ đã tự sửa hoặc bạn đã sửa tay ở màn Rà dòng vàng.
+          Sửa một ô giờ ở cột &quot;Mốc hiện tại&quot; rồi rời ô → công cụ tính lại dòng đó ngay, không
+          cần rời màn — đủ rõ để cho công nhân đứng xem và sửa tại chỗ nếu lệch. Ô nền đã sửa
+          là chỗ công cụ đã tự sửa hoặc bạn vừa sửa tay ở đây.
         </p>
       </div>
       </div>
     </>
+  )
+}
+
+function DongGiaiTrinh({
+  dong,
+  maNhanVien,
+  onCapNhat
+}: {
+  dong: KetQuaNgay
+  maNhanVien: string
+  onCapNhat: () => void
+}) {
+  const [cap, setCap] = useState(() => [
+    { vao: dong.capVaoRa[0]?.vao ?? '', ra: dong.capVaoRa[0]?.ra ?? '' },
+    { vao: dong.capVaoRa[1]?.vao ?? '', ra: dong.capVaoRa[1]?.ra ?? '' }
+  ])
+  const [luu, setLuu] = useState(false)
+  const [loi, setLoi] = useState<string | null>(null)
+
+  async function guiSua() {
+    setLuu(true)
+    setLoi(null)
+    try {
+      const r = await window.api.tinhLaiNgay({
+        maNhanVien,
+        ngay: dong.ngay,
+        cap: cap.map((c) => ({ vao: c.vao || null, ra: c.ra || null }))
+      })
+      if (r.ok) onCapNhat()
+      else setLoi(r.loi ?? 'Không tính lại được dòng này.')
+    } finally {
+      setLuu(false)
+    }
+  }
+
+  const o = (ci: number, k: 'vao' | 'ra') => (
+    <input
+      className="inline-input"
+      aria-label={`${k === 'vao' ? 'Vào' : 'Ra'} ${ci + 1} ngày ${dmy(dong.ngay)}`}
+      value={cap[ci][k]}
+      disabled={luu}
+      onChange={(e) => {
+        const moi = cap.map((c) => ({ ...c }))
+        moi[ci][k] = e.target.value
+        setCap(moi)
+      }}
+      onBlur={guiSua}
+      placeholder="—"
+    />
+  )
+
+  const nghiCaNgay = dong.capVaoRa.length === 0 && dong.nguonGoc.every((m) => !m)
+
+  return (
+    <tr>
+      <td>{dmy(dong.ngay).slice(0, 5)}</td>
+      <td className="orig">{nghiCaNgay ? '— (không chấm)' : khe4(dong.nguonGoc)}</td>
+      <td className={dong.daSua ? 'cell-fixed' : ''}>
+        {o(0, 'vao')}
+        {o(0, 'ra')}
+        {o(1, 'vao')}
+        {o(1, 'ra')}
+      </td>
+      <td className="num">{so2(dong.gioLamQ)}</td>
+      <td className="num">{dong.ngayCongR}</td>
+      <td className="num">{so2(dong.gioOtS)}</td>
+      <td className="small muted ghichu">
+        {loi ? (
+          <span className="err">{loi}</span>
+        ) : (
+          <>
+            {dong.daSua && <span className="chip">đã sửa</span>} {ghiChu(dong)}
+          </>
+        )}
+      </td>
+    </tr>
   )
 }

@@ -1,19 +1,41 @@
-import { useEffect } from 'react'
+import { useEffect, useMemo } from 'react'
 import { useApp } from '../store'
 import { dmy } from '../App'
 import { PageHead } from '../components/PageHead'
+import { chonKyMacDinh } from '../../../preload/api-types'
 
 const so2 = (n: number) => Math.round(n * 100) / 100
 const vnd = (n: number) => n.toLocaleString('vi-VN')
 
 export function S7XemCong() {
-  const { ky, di, xemChamCongGoc } = useApp()
+  const { ky, di, xemChamCongGoc, danhSachKy, moKy } = useApp()
+
+  // Vòng 7 (AC-4) — S7 chỉ biết hiện kỳ ĐANG MỞ trong bộ nhớ, không có model cho kỳ đã
+  // lưu. Quy tắc ngày-trong-tháng chỉ ra một kỳ ĐÃ LƯU → không tự vẽ lại ở đây (thiếu dữ
+  // liệu chi tiết), chuyển sang Dashboard (S9) đã hiển thị đúng kỳ đó thay (tái dùng UI,
+  // không thêm state/IPC mới). Xem cho lý do chọn hướng này.
+  const macDinh = useMemo(
+    () => chonKyMacDinh(danhSachKy.map((k) => k.thang), new Date(), !!ky),
+    [danhSachKy, ky]
+  )
+
+  useEffect(() => {
+    if (macDinh.loai === 'da-luu') {
+      moKy(macDinh.thang)
+      di('s9')
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [macDinh])
 
   // Mốc "đọc kết quả kỳ trong app" — success metric vòng 2.
   const sanSang = !!ky && ky.thieuSetup.length === 0
   useEffect(() => {
     if (sanSang) window.api.danhDauXemCong()
   }, [sanSang, ky?.thang])
+
+  if (macDinh.loai === 'da-luu') {
+    return null // đang chuyển sang Dashboard hiện đúng kỳ (vòng 7, AC-4)
+  }
 
   if (!ky) {
     return (

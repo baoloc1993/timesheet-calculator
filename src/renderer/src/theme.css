@@ -947,6 +947,14 @@ tr.rest td {
   background: var(--color-surface);
   color: var(--color-text);
 }
+/* Vòng 7 — 4 ô "Mốc hiện tại" (vào1·ra1·vào2·ra2) gộp chung một ô bảng ở S8 (trước là 4
+   cột riêng ở S3). Dùng token khoảng cách sẵn có, không token mới. */
+td > .inline-input {
+  margin-right: var(--space-xs);
+}
+td > .inline-input:last-child {
+  margin-right: 0;
+}
 .inline-input:focus {
   outline: none;
   border-color: var(--color-primary);

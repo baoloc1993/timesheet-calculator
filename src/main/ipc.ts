@@ -30,7 +30,9 @@ import {
   layHienThi,
   ghiHienThi,
   layCauHinhMay,
-  ghiCauHinhMay
+  ghiCauHinhMay,
+  layNguonGanNhat,
+  ghiNguonGanNhat
 } from './settings/store'
 import { themHoacSua, xoaNhanVien, tronTuFileKyTruoc, chuanTen } from './settings/nhanVien'
 import { chuanHoaMa } from '../core/ma'
@@ -85,6 +87,15 @@ function mocChamThoTest(): MocChamTho[] | null {
   } catch {
     return null
   }
+}
+
+// Vòng 7 — khoảng ngày mặc định khi tự động đồng bộ lại từ máy (đầu tháng hiện tại → hôm
+// nay). Không lưu `tu`/`den` trong `nguonGanNhat` — tính lại mỗi lần.
+function khoangNgayMacDinh(now: Date): { tu: string; den: string } {
+  const p2 = (n: number) => String(n).padStart(2, '0')
+  const tu = `${now.getFullYear()}-${p2(now.getMonth() + 1)}-01`
+  const den = `${now.getFullYear()}-${p2(now.getMonth() + 1)}-${p2(now.getDate())}`
+  return { tu, den }
 }
 
 function loi(e: unknown) {
@@ -143,6 +154,7 @@ export function dangKyIpc(): void {
       const ky = xuLyKyCong(file, layNhanVien())
       kyHienTai = { nguon: { loai: 'file', duongDan }, ky, suaTay: [] }
       ghiConfig({ kyXuLyGanNhat: file.thang })
+      ghiNguonGanNhat({ loai: 'file', duongDan })
       log.info('nạp file máy', duongDan, `${file.khoi.length} khối`)
       log.event('nap-file-may', {
         thang: file.thang,
@@ -429,6 +441,7 @@ export function dangKyIpc(): void {
         const ky = xuLyKyCong(file, layNhanVien())
         kyHienTai = { nguon: { loai: 'may', ip, port, tu: p.tu, den: p.den }, ky, suaTay: [] }
         ghiConfig({ kyXuLyGanNhat: file.thang })
+        ghiNguonGanNhat({ loai: 'may', ip, port })
         log.info('đồng bộ từ máy chấm công', ip, `${file.khoi.length} người, ${logTho.length} mốc`)
         log.event('dong-bo-may-cham-cong', {
           thang: file.thang,
@@ -448,6 +461,50 @@ export function dangKyIpc(): void {
       }
     }
   )
+
+  // ---- Vòng 7 — tự động nạp/đồng bộ nguồn gần nhất khi mở app (AC-1) ----
+  ipcMain.handle('nguon-gan-nhat:doc', () => layNguonGanNhat())
+
+  ipcMain.handle('nguon-gan-nhat:tu-dong-nap', async () => {
+    // Đang có kỳ mở dở dang (module vừa dựng lại trong tiến trình này) → không tự động,
+    // an toàn dữ liệu thắng tiện lợi. Ở app thật mới mở tiến
+    // trình, kyHienTai luôn null tại đây — guard này chỉ phòng hờ.
+    if (kyHienTai) return { ok: false, loi: 'Đang có kỳ mở dở dang.' }
+    const nguon = layNguonGanNhat()
+    if (!nguon) return { ok: false, loi: 'Chưa từng nạp/đồng bộ lần nào.' }
+    try {
+      if (nguon.loai === 'file') {
+        if (!existsSync(nguon.duongDan))
+          return {
+            ok: false,
+            loi: `Không tìm thấy file cũ (${nguon.duongDan}) — có thể đã bị xoá hoặc đổi chỗ.`
+          }
+        const file = await docFileMay(nguon.duongDan)
+        const ky = xuLyKyCong(file, layNhanVien())
+        kyHienTai = { nguon: { loai: 'file', duongDan: nguon.duongDan }, ky, suaTay: [] }
+        ghiConfig({ kyXuLyGanNhat: file.thang })
+        log.info('tự động nạp lại file (mở app)', nguon.duongDan)
+        return { ok: true, data: { ky, fileMay: nguon.duongDan } }
+      }
+      const { tu, den } = khoangNgayMacDinh(new Date())
+      let logTho = mocChamThoTest()
+      if (!logTho) {
+        if (!app.isPackaged && process.env.TSC_TEST_MAY_LOI) {
+          throw new LoiKetNoiMayChamCong('Không kết nối được máy chấm công.')
+        }
+        logTho = await dongBoTuMay(nguon.ip, nguon.port)
+      }
+      const { file } = gomMocCham(logTho, tu, den)
+      const ky = xuLyKyCong(file, layNhanVien())
+      kyHienTai = { nguon: { loai: 'may', ip: nguon.ip, port: nguon.port, tu, den }, ky, suaTay: [] }
+      ghiConfig({ kyXuLyGanNhat: file.thang })
+      log.info('tự động đồng bộ từ máy (mở app)', nguon.ip)
+      return { ok: true, data: { ky, fileMay: `may-cham-cong://${nguon.ip}:${nguon.port}` } }
+    } catch (e) {
+      if (e instanceof LoiKetNoiMayChamCong) return { ok: false, loi: e.message }
+      return loi(e)
+    }
+  })
 
   // ---- Vòng 3 — lưu kỳ + dashboard + phát lương ----
 

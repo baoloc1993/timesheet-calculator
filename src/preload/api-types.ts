@@ -8,6 +8,7 @@ import type {
 import type { KetQuaKy, DongBang } from '../core/ketQuaKy'
 import type { HienThi } from '../core/hienThi'
 import type { CauHinhMayChamCong } from '../core/mayChamCong'
+import type { NguonGanNhat } from '../core/nguonGanNhat'
 
 export type {
   NhanVien,
@@ -17,8 +18,11 @@ export type {
   KetQuaKy,
   DongBang,
   HienThi,
-  CauHinhMayChamCong
+  CauHinhMayChamCong,
+  NguonGanNhat
 }
+export { chonKyMacDinh } from '../core/chonKy'
+export type { KyMacDinh } from '../core/chonKy'
 // Hàm thuần vòng 3 — renderer dùng để tính "thực nhận" / Σ mà không cần round-trip IPC.
 export { tinhThucNhan, tinhThucNhanDayDu, lamTronNghin, tongKetQuaKy } from '../core/ketQuaKy'
 export { dungKyHieuNgay, ngayLaChuNhat } from '../core/luoiCong'
@@ -144,4 +148,10 @@ export interface Api {
   dongBoTuMay(payload: { ip: string; port: number; tu: string; den: string }): Promise<
     KetQua<NapFileKetQua> & { canhBao?: string[] }
   >
+
+  // ---- Vòng 7 — tự động nạp/đồng bộ nguồn gần nhất khi mở app (AC-1) ----
+  /** Đọc `AppConfig.nguonGanNhat` (null nếu chưa từng nạp/đồng bộ lần nào). */
+  layNguonGanNhat(): Promise<NguonGanNhat | null>
+  /** Main tự chạy lại đúng nguồn gần nhất (file hoặc máy). Không có nguồn / đang có kỳ mở dở → ok:false. */
+  tuDongNapNguonGanNhat(): Promise<KetQua<NapFileKetQua>>
 }

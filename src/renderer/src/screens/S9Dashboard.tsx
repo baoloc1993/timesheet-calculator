@@ -3,7 +3,7 @@ import { useApp } from '../store'
 import { dmy } from '../App'
 import { PageHead } from '../components/PageHead'
 import type { KetQuaKy } from '../../../preload/api-types'
-import { tongKetQuaKy } from '../../../preload/api-types'
+import { tongKetQuaKy, chonKyMacDinh } from '../../../preload/api-types'
 
 const so2 = (n: number) => Math.round(n * 100) / 100
 const vnd = (n: number) => n.toLocaleString('vi-VN')
@@ -75,7 +75,8 @@ interface KyXem {
 }
 
 export function S9Dashboard() {
-  const { ky, di, xemChamCongGoc, danhSachKy, lamMoiDanhSachKy, thangDangXem, moKy } = useApp()
+  const { ky, di, xemChamCongGoc, danhSachKy, lamMoiDanhSachKy, thangDangXem, moKy, tuDongNapLoi } =
+    useApp()
   const [luuLoi, setLuuLoi] = useState<string | null>(null)
   const [dangLuu, setDangLuu] = useState(false)
 
@@ -90,9 +91,19 @@ export function S9Dashboard() {
   const kyDaLuu: KetQuaKy | undefined =
     chon != null ? danhSachKy.find((k) => k.thang === chon) : undefined
 
+  // Vòng 7 (AC-4) — chưa có lựa chọn nào (tay hoặc mặc định trước đó) → áp quy tắc
+  // ngày-trong-tháng để quyết BẢNG CHI TIẾT nào mở sẵn. KHÔNG đụng thứ tự thẻ trong danh
+  // sách: ngày ≤5
+  // có thể chọn một kỳ ĐÃ LƯU làm mặc định dù đang có kỳ chưa lưu (`chon` rời khỏi null).
   useEffect(() => {
-    // Chưa chọn gì mà cũng không có kỳ chưa lưu → chọn kỳ đã lưu mới nhất.
-    if (chon == null && !kyChuaLuu && danhSachKy.length > 0) moKy(danhSachKy[0].thang)
+    if (chon != null) return
+    const macDinh = chonKyMacDinh(
+      danhSachKy.map((k) => k.thang),
+      new Date(),
+      kyChuaLuu
+    )
+    if (macDinh.loai === 'da-luu') moKy(macDinh.thang)
+    // 'dang-mo' → giữ chon=null (đúng — hiện kỳ đang mở) · 'khong-co' → giữ khuôn cũ.
   }, [chon, kyChuaLuu, danhSachKy, moKy])
 
   const xem: KyXem | null = useMemo(() => {
@@ -184,6 +195,15 @@ export function S9Dashboard() {
     <>
       <PageHead title="Dashboard" sub="lịch sử các kỳ đã lưu" />
       <div className="page-body">
+
+      {tuDongNapLoi && (
+        <p className="note" role="status">
+          Không tự nạp/đồng bộ được — {tuDongNapLoi}{' '}
+          <button className="lien-ket" onClick={() => di('s1')}>
+            Nạp/đồng bộ tay
+          </button>
+        </p>
+      )}
 
       <div className="dash">
         <div className="dash-list">

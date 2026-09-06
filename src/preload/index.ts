@@ -30,7 +30,11 @@ const api: Api = {
   // Vòng 5
   layCauHinhMay: () => ipcRenderer.invoke('may-cham-cong:doc-cau-hinh'),
   capNhatCauHinhMay: (patch) => ipcRenderer.invoke('may-cham-cong:cap-nhat-cau-hinh', patch),
-  dongBoTuMay: (payload) => ipcRenderer.invoke('may-cham-cong:dong-bo', payload)
+  dongBoTuMay: (payload) => ipcRenderer.invoke('may-cham-cong:dong-bo', payload),
+
+  // Vòng 7
+  layNguonGanNhat: () => ipcRenderer.invoke('nguon-gan-nhat:doc'),
+  tuDongNapNguonGanNhat: () => ipcRenderer.invoke('nguon-gan-nhat:tu-dong-nap')
 }
 
 if (process.contextIsolated) {

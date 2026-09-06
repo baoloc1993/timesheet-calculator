@@ -6,7 +6,6 @@ import { apDungHienThi } from './hienThi'
 export type ManHinh =
   | 's1'
   | 's2'
-  | 's3'
   | 's4'
   | 's5'
   | 's6'
@@ -26,7 +25,7 @@ interface AppState {
   ky: KetQuaKyCong | null
   fileMay: string
   maNhanVienDangXem: string | null
-  chonNhanVien(ma: string): void
+  /** Bấm tên nhân viên (S2/S7/S9/S11) → S8 "Giải trình & sửa công" (vòng 7, gộp từ S3). */
   xemChamCongGoc(ma: string): void
   datKy(k: KetQuaKyCong | null, fileMay?: string): void
   lamMoiTrangThai(): Promise<void>
@@ -44,6 +43,9 @@ interface AppState {
   // Vòng 4
   hienThi: HienThi
   capNhatHienThi(patch: Partial<HienThi>): Promise<void>
+  // Vòng 7 — tự động nạp/đồng bộ nguồn gần nhất khi mở app (AC-1)
+  /** != null khi tự động nạp/đồng bộ lúc mở app thất bại — S9 hiện banner nhẹ. */
+  tuDongNapLoi: string | null
 }
 
 const Ctx = createContext<AppState | null>(null)
@@ -65,6 +67,7 @@ export function AppStore({
   const [danhSachKy, setDanhSachKy] = useState<KetQuaKy[]>([])
   const [thangDangXem, setThangDangXem] = useState<string | null>(null)
   const [inPhieuMa, setInPhieuMa] = useState<string | null>(null)
+  const [tuDongNapLoi, setTuDongNapLoi] = useState<string | null>(null)
 
   const lamMoiTrangThai = useCallback(async () => {
     setTrangThai(await window.api.layTrangThai())
@@ -86,9 +89,33 @@ export function AppStore({
     setKy(k)
     if (fm !== undefined) {
       setFileMay(fm)
-      setMa(null) // nạp file khác → thôi bám nhân viên đang xem ở S3/S8 (BH-13)
+      setMa(null) // nạp file khác → thôi bám nhân viên đang xem ở S8 (BH-13)
       setThangDangXem(null) // nạp kỳ mới → dashboard hiện kỳ đang tính, không phải kỳ đã lưu đang chọn
     }
+  }, [])
+
+  // Vòng 7 (AC-1) — mở app: chưa có kỳ đang mở dở dang → tự chạy lại đúng nguồn nạp/đồng
+  // bộ thành công gần nhất, một lần (nền, không chặn UI). An toàn dữ liệu thắng tiện lợi:
+  // effect này chỉ chạy lúc mount, lúc đó `ky` luôn null.
+  useEffect(() => {
+    if (ky) return
+    let huy = false
+    ;(async () => {
+      const nguon = await window.api.layNguonGanNhat()
+      if (!nguon || huy) return
+      const r = await window.api.tuDongNapNguonGanNhat()
+      if (huy) return
+      if (r.ok && r.data) {
+        datKy(r.data.ky, r.data.fileMay)
+        lamMoiTrangThai()
+      } else {
+        setTuDongNapLoi(r.loi ?? 'Không tự nạp/đồng bộ lại được.')
+      }
+    })()
+    return () => {
+      huy = true
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   const value: AppState = {
@@ -99,10 +126,6 @@ export function AppStore({
     ky,
     fileMay,
     maNhanVienDangXem,
-    chonNhanVien: (ma) => {
-      setMa(ma)
-      setManHinh('s3')
-    },
     xemChamCongGoc: (ma) => {
       setMa(ma)
       setManHinh('s8')
@@ -127,7 +150,8 @@ export function AppStore({
       const moi = await window.api.capNhatHienThi(patch)
       apDungHienThi(moi)
       setHienThi(moi)
-    }
+    },
+    tuDongNapLoi
   }
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>

@@ -5,7 +5,6 @@ import type { HienThi } from '../../preload/api-types'
 import { BangHienThi } from './components/BangHienThi'
 import { S1NapFile } from './screens/S1NapFile'
 import { S2BangTongHop } from './screens/S2BangTongHop'
-import { S3RaDongVang } from './screens/S3RaDongVang'
 import { S4ChanThieuSetup } from './screens/S4ChanThieuSetup'
 import { S5Setup } from './screens/S5Setup'
 import { S6Xuat } from './screens/S6Xuat'
@@ -17,12 +16,12 @@ import { S11BangCongThang } from './screens/S11BangCongThang'
 import { S12PhatLuongTungNguoi } from './screens/S12PhatLuongTungNguoi'
 import { S13InPhieuLuong } from './screens/S13InPhieuLuong'
 
-// Nav-rail gộp theo việc: nhãn theo việc người dùng.
+// Nav-rail gộp theo việc. Vòng 7: bỏ mục "Rà dòng
+// vàng" (S3) — gộp vào S8, đổi tên "Xem chấm công gốc" → "Giải trình & sửa công".
 const KY_HIEN_TAI_SUB: { id: ManHinh; nhan: string }[] = [
   { id: 's2', nhan: 'Bảng tổng hợp' },
-  { id: 's3', nhan: 'Rà dòng vàng' },
   { id: 's7', nhan: 'Xem công / bảng lương' },
-  { id: 's8', nhan: 'Xem chấm công gốc' },
+  { id: 's8', nhan: 'Giải trình & sửa công' },
   { id: 's11', nhan: 'Bảng công cả tháng' }
 ]
 // Vòng 6 — nhóm "Phát lương": S10 danh sách + S12 phát từng người + S13 in phiếu.
@@ -33,7 +32,7 @@ const PHAT_LUONG_SUB: { id: ManHinh; nhan: string }[] = [
 ]
 
 function Rail() {
-  const { manHinh, di, ky, maNhanVienDangXem, moInPhieu } = useApp()
+  const { manHinh, di, ky, moInPhieu } = useApp()
   const coKy = !!ky
   const thieu = ky?.thieuSetup.length ?? 0
   const canXem = ky?.tongDongCanXemLai ?? 0
@@ -50,7 +49,9 @@ function Rail() {
       <div className="rail-group">
         <span className="rail-group-label">Kỳ hiện tại</span>
         {KY_HIEN_TAI_SUB.map((m) => {
-          const khoa = !coKy || (m.id === 's8' && !maNhanVienDangXem)
+          // Vòng 7: S8 không còn khoá theo "đã chọn ai chưa" — chưa có ngữ cảnh thì S8 tự
+          // hiện danh sách bấm-tên (khuôn S12), không cần chọn trước ở màn khác (AC-2).
+          const khoa = !coKy
           return (
             <button
               key={m.id}
@@ -60,7 +61,7 @@ function Rail() {
               onClick={() => di(m.id)}
             >
               {m.nhan}
-              {m.id === 's3' && canXem > 0 && <span className="badge">{canXem}</span>}
+              {m.id === 's8' && canXem > 0 && <span className="badge">{canXem}</span>}
             </button>
           )
         })}
@@ -107,8 +108,6 @@ function ManHinhHienTai() {
       return <S1NapFile />
     case 's2':
       return <S2BangTongHop />
-    case 's3':
-      return <S3RaDongVang />
     case 's4':
       return <S4ChanThieuSetup />
     case 's5':

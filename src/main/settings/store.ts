@@ -10,6 +10,8 @@ import type { HienThi } from '../../core/hienThi'
 import { chuanHoaHienThi } from '../../core/hienThi'
 import type { CauHinhMayChamCong } from '../../core/mayChamCong'
 import { chuanHoaCauHinhMay } from '../../core/mayChamCong'
+import type { NguonGanNhat } from '../../core/nguonGanNhat'
+import { chuanHoaNguonGanNhat } from '../../core/nguonGanNhat'
 import { chuanHoaMa } from '../../core/ma'
 import { chayMigration, SCHEMA_VERSION_HIEN_TAI } from './migrations'
 import { saoLuuTruocMigrate } from './saoLuu'
@@ -23,6 +25,8 @@ export interface AppConfig {
   hienThi?: HienThi
   /** Vòng 5 — optional: thiếu thì mặc định ip rỗng/cổng 4370 tại code, KHÔNG migration. */
   mayChamCong?: CauHinhMayChamCong
+  /** Vòng 7 — optional: nguồn nạp/đồng bộ THÀNH CÔNG gần nhất, tự chạy lại khi mở app. */
+  nguonGanNhat?: NguonGanNhat
 }
 
 interface Schema {
@@ -164,6 +168,16 @@ export function ghiCauHinhMay(patch: Partial<CauHinhMayChamCong>): CauHinhMayCha
   const mayChamCong = chuanHoaCauHinhMay({ ...layCauHinhMay(), ...patch })
   ghiConfig({ mayChamCong })
   return mayChamCong
+}
+
+// ---- Nguồn nạp/đồng bộ gần nhất (vòng 7) ----
+
+export function layNguonGanNhat(): NguonGanNhat | null {
+  return chuanHoaNguonGanNhat(layConfig().nguonGanNhat)
+}
+
+export function ghiNguonGanNhat(n: NguonGanNhat): void {
+  ghiConfig({ nguonGanNhat: n })
 }
 
 // ---- KếtQuảKỳ (vòng 3) ----

@@ -3,7 +3,7 @@ import { dmy } from '../App'
 import { PageHead } from '../components/PageHead'
 
 export function S2BangTongHop() {
-  const { ky, di, chonNhanVien } = useApp()
+  const { ky, di, xemChamCongGoc } = useApp()
 
   if (!ky) {
     return (
@@ -100,7 +100,7 @@ export function S2BangTongHop() {
               <tr
                 key={t.maNhanVien}
                 className={'row' + (t.soDongCanXemLai > 0 ? ' fixed' : '')}
-                onClick={() => chonNhanVien(t.maNhanVien)}
+                onClick={() => xemChamCongGoc(t.maNhanVien)}
               >
                 <td>
                   {t.tenMay}
