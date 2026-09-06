@@ -25,8 +25,17 @@ export function S8XemChamCongGoc() {
   const { ky, maNhanVienDangXem, di, xemChamCongGoc, datKy } = useApp()
   const th = ky?.tongHop.find((t) => t.maNhanVien === maNhanVienDangXem)
 
+  // Dòng "cần xem lại" lên đầu trước, rồi mới theo ngày — hành vi gốc của S3 (đã gộp vào
+  // đây vòng 7), phục vụ soát nhanh bất thường; đọc theo ngày trong bảng vẫn dễ vì mỗi
+  // dòng đều có cột Ngày (soi bug pha P vòng 7 — mất khi gộp, không có chủ đích bỏ).
   const sap = useMemo(
-    () => (th ? [...th.ketQuaNgay].sort((a, b) => a.ngay.localeCompare(b.ngay)) : []),
+    () =>
+      th
+        ? [...th.ketQuaNgay].sort((a, b) => {
+            if (a.mucDoCanhBao !== b.mucDoCanhBao) return a.mucDoCanhBao === 'vang' ? -1 : 1
+            return a.ngay.localeCompare(b.ngay)
+          })
+        : [],
     [th]
   )
 

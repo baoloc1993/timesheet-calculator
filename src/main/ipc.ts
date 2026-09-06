@@ -480,9 +480,15 @@ export function dangKyIpc(): void {
             loi: `Không tìm thấy file cũ (${nguon.duongDan}) — có thể đã bị xoá hoặc đổi chỗ.`
           }
         const file = await docFileMay(nguon.duongDan)
+        // Đọc file/mạng là bất đồng bộ — trong lúc chờ, người dùng có thể đã tự tay nạp
+        // kỳ khác qua S1 (thấy Dashboard vẫn dùng được, không biết auto-nap đang chạy nền).
+        // Re-check TRƯỚC khi ghi đè: kỳ tay luôn thắng, không để auto-nap đè lên sau
+        // (soi bug pha P vòng 7 — TOCTOU, cùng nguyên tắc "an toàn dữ liệu thắng tiện lợi").
+        if (kyHienTai) return { ok: false, loi: 'Đã có kỳ khác được nạp trong lúc chờ.' }
         const ky = xuLyKyCong(file, layNhanVien())
         kyHienTai = { nguon: { loai: 'file', duongDan: nguon.duongDan }, ky, suaTay: [] }
         ghiConfig({ kyXuLyGanNhat: file.thang })
+        ghiNguonGanNhat({ loai: 'file', duongDan: nguon.duongDan })
         log.info('tự động nạp lại file (mở app)', nguon.duongDan)
         return { ok: true, data: { ky, fileMay: nguon.duongDan } }
       }
@@ -494,12 +500,23 @@ export function dangKyIpc(): void {
         }
         logTho = await dongBoTuMay(nguon.ip, nguon.port)
       }
-      const { file } = gomMocCham(logTho, tu, den)
+      // Cùng re-check TOCTOU như nhánh 'file' ở trên — đồng bộ máy còn chờ lâu hơn (timeout
+      // 5s), càng nhiều thời gian để người dùng tự tay nạp cái khác trong lúc chờ.
+      if (kyHienTai) return { ok: false, loi: 'Đã có kỳ khác được nạp trong lúc chờ.' }
+      // canhBao (mốc dư bị bỏ, v.v.) không được nuốt im lặng — nhánh nạp tay (may-cham-cong:dong-bo)
+      // đã trả cho renderer hỏi xác nhận; nhánh tự động không thể hỏi (không chặn UI
+      // §7 bước 0), nhưng vẫn phải trả về để renderer hiện banner thông tin (soi bug pha P vòng 7).
+      const { file, canhBao } = gomMocCham(logTho, tu, den)
       const ky = xuLyKyCong(file, layNhanVien())
       kyHienTai = { nguon: { loai: 'may', ip: nguon.ip, port: nguon.port, tu, den }, ky, suaTay: [] }
       ghiConfig({ kyXuLyGanNhat: file.thang })
-      log.info('tự động đồng bộ từ máy (mở app)', nguon.ip)
-      return { ok: true, data: { ky, fileMay: `may-cham-cong://${nguon.ip}:${nguon.port}` } }
+      ghiNguonGanNhat({ loai: 'may', ip: nguon.ip, port: nguon.port })
+      log.info('tự động đồng bộ từ máy (mở app)', nguon.ip, canhBao.length ? `${canhBao.length} cảnh báo` : '')
+      return {
+        ok: true,
+        data: { ky, fileMay: `may-cham-cong://${nguon.ip}:${nguon.port}` },
+        canhBao: canhBao.length ? canhBao : undefined
+      }
     } catch (e) {
       if (e instanceof LoiKetNoiMayChamCong) return { ok: false, loi: e.message }
       return loi(e)

@@ -75,8 +75,17 @@ interface KyXem {
 }
 
 export function S9Dashboard() {
-  const { ky, di, xemChamCongGoc, danhSachKy, lamMoiDanhSachKy, thangDangXem, moKy, tuDongNapLoi } =
-    useApp()
+  const {
+    ky,
+    di,
+    xemChamCongGoc,
+    danhSachKy,
+    lamMoiDanhSachKy,
+    thangDangXem,
+    moKy,
+    tuDongNapLoi,
+    tuDongNapCanhBao
+  } = useApp()
   const [luuLoi, setLuuLoi] = useState<string | null>(null)
   const [dangLuu, setDangLuu] = useState(false)
 
@@ -202,6 +211,12 @@ export function S9Dashboard() {
           <button className="lien-ket" onClick={() => di('s1')}>
             Nạp/đồng bộ tay
           </button>
+        </p>
+      )}
+      {tuDongNapCanhBao && (
+        <p className="note" role="status">
+          Đã tự đồng bộ xong, nhưng có {tuDongNapCanhBao.length} cảnh báo khi gom dữ liệu:{' '}
+          {tuDongNapCanhBao.join('; ')}
         </p>
       )}
 

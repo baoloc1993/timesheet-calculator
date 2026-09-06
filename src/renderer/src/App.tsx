@@ -62,7 +62,7 @@ function Rail() {
             >
               {m.nhan}
               {m.id === 's8' && canXem > 0 && (
-                <span className="badge" title={`${canXem} nhân viên có dòng đã sửa, cần xem lại`}>
+                <span className="badge" title={`${canXem} dòng đã sửa, cần xem lại`}>
                   {canXem}
                 </span>
               )}

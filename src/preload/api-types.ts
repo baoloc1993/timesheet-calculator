@@ -153,5 +153,5 @@ export interface Api {
   /** Đọc `AppConfig.nguonGanNhat` (null nếu chưa từng nạp/đồng bộ lần nào). */
   layNguonGanNhat(): Promise<NguonGanNhat | null>
   /** Main tự chạy lại đúng nguồn gần nhất (file hoặc máy). Không có nguồn / đang có kỳ mở dở → ok:false. */
-  tuDongNapNguonGanNhat(): Promise<KetQua<NapFileKetQua>>
+  tuDongNapNguonGanNhat(): Promise<KetQua<NapFileKetQua> & { canhBao?: string[] }>
 }

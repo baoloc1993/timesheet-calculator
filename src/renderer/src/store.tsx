@@ -1,4 +1,4 @@
-import { createContext, useCallback, useContext, useEffect, useState } from 'react'
+import { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
 import type { NhanVien, KetQuaKyCong, KetQuaKy, TrangThaiApp, HienThi } from '../../preload/api-types'
 import { apDungHienThi } from './hienThi'
@@ -49,6 +49,9 @@ interface AppState {
   // Vòng 7 — tự động nạp/đồng bộ nguồn gần nhất khi mở app (AC-1)
   /** != null khi tự động nạp/đồng bộ lúc mở app thất bại — S9 hiện banner nhẹ. */
   tuDongNapLoi: string | null
+  /** != null khi tự động đồng bộ THÀNH CÔNG nhưng có cảnh báo dữ liệu (mốc dư bị bỏ…) —
+   *  cùng cảnh báo mà luồng tay (S1) đòi xác nhận, nhưng tự động thì không chặn để hỏi. */
+  tuDongNapCanhBao: string[] | null
 }
 
 const Ctx = createContext<AppState | null>(null)
@@ -71,6 +74,7 @@ export function AppStore({
   const [thangDangXem, setThangDangXem] = useState<string | null>(null)
   const [inPhieuMa, setInPhieuMa] = useState<string | null>(null)
   const [tuDongNapLoi, setTuDongNapLoi] = useState<string | null>(null)
+  const [tuDongNapCanhBao, setTuDongNapCanhBao] = useState<string[] | null>(null)
 
   const lamMoiTrangThai = useCallback(async () => {
     setTrangThai(await window.api.layTrangThai())
@@ -88,12 +92,20 @@ export function AppStore({
     lamMoiDanhSachKy()
   }, [lamMoiTrangThai, lamMoiNhanVien, lamMoiDanhSachKy])
 
+  // Đánh dấu "đã có một kỳ được nạp/đồng bộ (tay hoặc tự động)" — đọc được giá trị MỚI
+  // NHẤT bất kể closure cũ nào đang chạy dở (khác `ky` state, chỉ đúng tại thời điểm effect
+  // tạo ra). Dùng để chặn race TOCTOU giữa auto-nap (AC-1) và người dùng tự tay nạp trong
+  // lúc auto-nap còn đang chờ IPC (soi bug pha P vòng 7).
+  const daNapKyRef = useRef(false)
+
   const datKy = useCallback((k: KetQuaKyCong | null, fm?: string) => {
     setKy(k)
     if (fm !== undefined) {
+      daNapKyRef.current = true
       setFileMay(fm)
       setMa(null) // nạp file khác → thôi bám nhân viên đang xem ở S8 (BH-13)
       setThangDangXem(null) // nạp kỳ mới → dashboard hiện kỳ đang tính, không phải kỳ đã lưu đang chọn
+      setTuDongNapLoi(null) // nạp/đồng bộ thành công (tay hoặc tự động) → hết lý do còn banner lỗi cũ
     }
   }, [])
 
@@ -108,9 +120,15 @@ export function AppStore({
       if (!nguon || huy) return
       const r = await window.api.tuDongNapNguonGanNhat()
       if (huy) return
+      // Trong lúc chờ IPC ở trên, người dùng có thể đã tự tay nạp một kỳ khác qua S1 —
+      // kỳ tay luôn thắng, không để kết quả auto-nap đè lên (main đã re-check tương tự,
+      // đây là lớp chặn thứ hai phía renderer, phòng trường hợp main trả `ok:true` ngay
+      // trước khi renderer kịp gọi tay).
+      if (daNapKyRef.current) return
       if (r.ok && r.data) {
         datKy(r.data.ky, r.data.fileMay)
         lamMoiTrangThai()
+        if (r.canhBao?.length) setTuDongNapCanhBao(r.canhBao)
       } else {
         setTuDongNapLoi(r.loi ?? 'Không tự nạp/đồng bộ lại được.')
       }
@@ -158,7 +176,8 @@ export function AppStore({
       apDungHienThi(moi)
       setHienThi(moi)
     },
-    tuDongNapLoi
+    tuDongNapLoi,
+    tuDongNapCanhBao
   }
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>
