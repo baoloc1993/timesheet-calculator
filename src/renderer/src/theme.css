@@ -951,9 +951,13 @@ tr.rest td {
    cột riêng ở S3). Dùng token khoảng cách sẵn có, không token mới. */
 td > .inline-input {
   margin-right: var(--space-xs);
+  margin-bottom: var(--space-xs);
 }
 td > .inline-input:last-child {
   margin-right: 0;
+}
+td > .inline-input:nth-last-child(-n + 2) {
+  margin-bottom: 0;
 }
 .inline-input:focus {
   outline: none;

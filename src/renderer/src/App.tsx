@@ -61,7 +61,11 @@ function Rail() {
               onClick={() => (m.id === 's8' ? moGiaiTrinh() : di(m.id))}
             >
               {m.nhan}
-              {m.id === 's8' && canXem > 0 && <span className="badge">{canXem}</span>}
+              {m.id === 's8' && canXem > 0 && (
+                <span className="badge" title={`${canXem} nhân viên có dòng đã sửa, cần xem lại`}>
+                  {canXem}
+                </span>
+              )}
             </button>
           )
         })}
