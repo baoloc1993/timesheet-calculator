@@ -27,6 +27,9 @@ interface AppState {
   maNhanVienDangXem: string | null
   /** Bấm tên nhân viên (S2/S7/S9/S11) → S8 "Giải trình & sửa công" (vòng 7, gộp từ S3). */
   xemChamCongGoc(ma: string): void
+  /** Vào S8 từ mục nav-rail riêng (chưa có ngữ cảnh người) — quên người đang xem trước đó,
+   *  để S8 tự hiện danh sách bấm-tên. */
+  moGiaiTrinh(): void
   datKy(k: KetQuaKyCong | null, fileMay?: string): void
   lamMoiTrangThai(): Promise<void>
   lamMoiNhanVien(): Promise<void>
@@ -128,6 +131,10 @@ export function AppStore({
     maNhanVienDangXem,
     xemChamCongGoc: (ma) => {
       setMa(ma)
+      setManHinh('s8')
+    },
+    moGiaiTrinh: () => {
+      setMa(null)
       setManHinh('s8')
     },
     datKy,

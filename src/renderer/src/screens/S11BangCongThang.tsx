@@ -38,7 +38,7 @@ function ngayTrongKy(tu: string, den: string): string[] {
 }
 
 export function S11BangCongThang() {
-  const { ky, di, xemChamCongGoc } = useApp()
+  const { ky, di, xemChamCongGoc, moGiaiTrinh } = useApp()
   const [chuDayDu, setChuDayDu] = useState(false)
   const [hoverMa, setHoverMa] = useState<KyHieuNgay | null>(null)
 
@@ -235,7 +235,7 @@ export function S11BangCongThang() {
                   <b>Ô đã sửa</b>
                   <span>
                     Mốc giờ ngày đó bị lỗi, công cụ đã tự sửa. Mở{' '}
-                    <button className="lien-ket" onClick={() => di('s8')}>
+                    <button className="lien-ket" onClick={() => moGiaiTrinh()}>
                       Giải trình & sửa công
                     </button>{' '}
                     để soát lại.

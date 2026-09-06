@@ -32,7 +32,7 @@ const PHAT_LUONG_SUB: { id: ManHinh; nhan: string }[] = [
 ]
 
 function Rail() {
-  const { manHinh, di, ky, moInPhieu } = useApp()
+  const { manHinh, di, ky, moInPhieu, moGiaiTrinh } = useApp()
   const coKy = !!ky
   const thieu = ky?.thieuSetup.length ?? 0
   const canXem = ky?.tongDongCanXemLai ?? 0
@@ -58,7 +58,7 @@ function Rail() {
               className="rail-sub"
               aria-current={manHinh === m.id}
               disabled={khoa}
-              onClick={() => di(m.id)}
+              onClick={() => (m.id === 's8' ? moGiaiTrinh() : di(m.id))}
             >
               {m.nhan}
               {m.id === 's8' && canXem > 0 && <span className="badge">{canXem}</span>}
