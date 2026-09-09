@@ -150,7 +150,12 @@ export function S8XemChamCongGoc() {
               <tbody>
                 {sap.map((d) => (
                   <DongGiaiTrinh
-                    key={d.ngay}
+                    // Vòng 9 (soi bug pha P1): key CHỈ theo ngày khiến React tái dùng state
+                    // `cap` (bên trong DongGiaiTrinh, useState lúc mount) khi đổi nhân viên qua
+                    // dropdown "Chọn nhân viên khác" — ô đang gõ dở của người CŨ chưa blur thì
+                    // vẫn dính lại, blur sau đó ghi giờ của người cũ vào đúng ngày nhưng gán
+                    // cho người mới. Thêm mã nhân viên vào key để buộc remount đúng lúc đổi người.
+                    key={`${th.maNhanVien}-${d.ngay}`}
                     dong={d}
                     maNhanVien={th.maNhanVien}
                     onCapNhat={async () => datKy(await window.api.layKyHienTai())}

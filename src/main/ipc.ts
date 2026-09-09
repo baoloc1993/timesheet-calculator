@@ -246,6 +246,12 @@ export function dangKyIpc(): void {
       let dongMoi: KetQuaNgay
       let suaTayMoi: SuaTay
       if ('r' in p) {
+        // Validate ở tầng main — TypeScript chỉ chặn compile-time (renderer luôn gửi đúng
+        // 0/0.5/1 từ <select>), nhưng window.api gọi được trực tiếp qua DevTools console,
+        // bỏ qua type-check. Giá trị lạ chảy thẳng vào thanhTien mà không lỗi là sai lương
+        // im lặng — nặng nhất với app này (code review pha P1 vòng 9).
+        if (p.r !== 0 && p.r !== 0.5 && p.r !== 1)
+          return { ok: false, loi: 'Ngày công phải là 0, 0.5 hoặc 1.' }
         dongMoi = suaNgayCongTrucTiep(th.ketQuaNgay[idx], p.r)
         suaTayMoi = { loai: 'ngayCong', maNhanVien: p.maNhanVien, ngay: p.ngay, r: p.r }
       } else {
