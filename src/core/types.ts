@@ -83,14 +83,16 @@ export interface NhanVienThieuSetup {
 }
 
 /**
- * Một chỗ người dùng sửa tay mốc chấm công của một ngày (vòng 8 — persist để ghi nhớ qua
- * tự động nạp lại / tắt-mở app, thay vì chỉ giữ trong bộ nhớ tiến trình như trước).
+ * Một chỗ người dùng sửa tay công của một ngày (vòng 8 — persist để ghi nhớ qua tự động
+ * nạp lại / tắt-mở app, thay vì chỉ giữ trong bộ nhớ tiến trình như trước).
+ *
+ * Vòng 9 — union hai loại sửa: `gio` (sửa mốc vào/ra, có từ vòng 8) và `ngayCong` (sửa
+ * thẳng "Ngày công" 0/0.5/1, không đụng giờ). Bản ghi TRÊN ĐĨA từ trước vòng 9 không có
+ * `loai` — đọc như `gio` tại chỗ dùng (`apDungSuaTay`), không migrate dữ liệu.
  */
-export interface SuaTay {
-  maNhanVien: string
-  ngay: string
-  cap: { vao: string | null; ra: string | null }[]
-}
+export type SuaTay =
+  | { loai: 'gio'; maNhanVien: string; ngay: string; cap: { vao: string | null; ra: string | null }[] }
+  | { loai: 'ngayCong'; maNhanVien: string; ngay: string; r: 0 | 0.5 | 1 }
 
 /** Kết quả xử lý cả kỳ. */
 export interface KetQuaKyCong {

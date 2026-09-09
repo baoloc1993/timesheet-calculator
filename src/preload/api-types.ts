@@ -23,6 +23,7 @@ export type {
 }
 export { chonKyMacDinh } from '../core/chonKy'
 export type { KyMacDinh } from '../core/chonKy'
+export { khoangNgayMacDinh } from '../core/khoangNgayMacDinh'
 // Hàm thuần vòng 3 — renderer dùng để tính "thực nhận" / Σ mà không cần round-trip IPC.
 export { tinhThucNhan, tinhThucNhanDayDu, lamTronNghin, tongKetQuaKy } from '../core/ketQuaKy'
 export { dungKyHieuNgay, ngayLaChuNhat } from '../core/luoiCong'
@@ -93,11 +94,12 @@ export interface Api {
     KetQua<NhanVien[]> & { ky?: KetQuaKyCong | null; canhBaoLamMoi?: string }
   >
   layKyHienTai(): Promise<KetQuaKyCong | null>
-  tinhLaiNgay(payload: {
-    maNhanVien: string
-    ngay: string
-    cap: { vao: string | null; ra: string | null }[]
-  }): Promise<KetQua<{ dong: KetQuaNgay; tongHop: TongHopNhanVien }>>
+  /** Vòng 9: `cap` (sửa giờ, có từ vòng 1) HOẶC `r` (sửa thẳng "Ngày công", AC-2 vòng 9) — không cả hai. */
+  tinhLaiNgay(
+    payload:
+      | { maNhanVien: string; ngay: string; cap: { vao: string | null; ra: string | null }[] }
+      | { maNhanVien: string; ngay: string; r: 0 | 0.5 | 1 }
+  ): Promise<KetQua<{ dong: KetQuaNgay; tongHop: TongHopNhanVien }>>
   chonThuMucVaXuat(payload: { ghiDe: boolean }): Promise<
     KetQua<XuatKetQua> & { canXacNhanGhiDe?: string[] }
   >

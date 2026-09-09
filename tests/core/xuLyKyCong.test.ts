@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { xuLyKyCong, tinhLaiMotDong, tinhLaiTongHop } from '../../src/core/xuLyKyCong'
+import { xuLyKyCong, tinhLaiMotDong, suaNgayCongTrucTiep, tinhLaiTongHop } from '../../src/core/xuLyKyCong'
 import type { FileMayDaDoc, NhanVien, DongNgayMay, KetQuaNgay } from '../../src/core/types'
 
 // Luồng lõi bước 3-5: ghép nhân viên theo maNhanVien, chặn khi
@@ -150,6 +150,69 @@ describe('tinhLaiMotDong — sửa tay ở màn S3', () => {
     expect(r.gioLamQ).toBeCloseTo(10, 4)
     expect(r.gioOtS).toBeCloseTo(1.9, 4)
     expect(r.daSua).toBe(true)
+  })
+})
+
+describe('suaNgayCongTrucTiep — vòng 9 AC-2, sửa thẳng "Ngày công" không qua giờ', () => {
+  const dongDuMoc: KetQuaNgay = {
+    ngay: '2026-08-05',
+    thu: '',
+    capVaoRa: [{ vao: '06:53', ra: '11:30' }, { vao: '13:34', ra: '18:05' }],
+    nguonGoc: ['06:53', '11:30', '13:34', '18:05', null, null],
+    gioLamQ: 9.15,
+    ngayCongR: 1,
+    gioOtS: 1.05,
+    daSua: false,
+    ghiChuSua: '',
+    mucDoCanhBao: 'none'
+  }
+
+  it('đổi ngayCongR theo giá trị chọn, ép gioOtS về 0, giữ nguyên capVaoRa/nguonGoc/gioLamQ', () => {
+    const r = suaNgayCongTrucTiep(dongDuMoc, 0.5)
+    expect(r.ngayCongR).toBe(0.5)
+    expect(r.gioOtS).toBe(0)
+    expect(r.capVaoRa).toEqual(dongDuMoc.capVaoRa)
+    expect(r.nguonGoc).toEqual(dongDuMoc.nguonGoc)
+    expect(r.gioLamQ).toBe(dongDuMoc.gioLamQ)
+  })
+
+  it('ép otBiEp=true + daSua=true + ghiChuSua rõ ràng + mucDoCanhBao=vang', () => {
+    const r = suaNgayCongTrucTiep(dongDuMoc, 1)
+    expect(r.otBiEp).toBe(true)
+    expect(r.daSua).toBe(true)
+    expect(r.ghiChuSua).toBe('đã sửa Ngày công tay')
+    expect(r.mucDoCanhBao).toBe('vang')
+  })
+
+  it('cho phép sửa ngày nghỉ cả ngày (không mốc) thành có công', () => {
+    const nghi: KetQuaNgay = {
+      ...dongDuMoc,
+      capVaoRa: [],
+      nguonGoc: [null, null, null, null, null, null],
+      gioLamQ: 0,
+      ngayCongR: 0,
+      gioOtS: 0,
+      daSua: false,
+      ghiChuSua: '',
+      mucDoCanhBao: 'none'
+    }
+    const r = suaNgayCongTrucTiep(nghi, 1)
+    expect(r.ngayCongR).toBe(1)
+    expect(r.capVaoRa).toEqual([])
+    expect(r.nguonGoc).toEqual([null, null, null, null, null, null])
+  })
+
+  it('sửa giờ (tinhLaiMotDong) SAU KHI đã sửa Ngày công trực tiếp → ghi đè hoàn toàn kết quả trước đó', () => {
+    const daSuaR = suaNgayCongTrucTiep(dongDuMoc, 0)
+    expect(daSuaR.ghiChuSua).toBe('đã sửa Ngày công tay')
+    const suaGioSauDo = tinhLaiMotDong(
+      daSuaR,
+      [{ vao: '07:00', ra: '11:30' }, { vao: '13:30', ra: '17:30' }],
+      8.1
+    )
+    expect(suaGioSauDo.ghiChuSua).not.toBe('đã sửa Ngày công tay')
+    expect(suaGioSauDo.otBiEp).toBe(false)
+    expect(suaGioSauDo.ngayCongR).toBe(1)
   })
 })
 

@@ -155,6 +155,25 @@ export function tinhLaiMotDong(
   }
 }
 
+/**
+ * Vòng 9 — sửa thẳng "Ngày công" (R) một ngày, không qua giờ (AC-2). Ép giờ OT (S) về 0
+ * (tái dùng ý nghĩa cờ `otBiEp` đã có — "S đã bị ép về 0"), giữ nguyên `capVaoRa`/`nguonGoc`/
+ * `gioLamQ` để S8 tiếp tục hiển thị mốc giờ gốc cạnh số đã sửa (người dùng chốt qua chat
+ * 2026-09-09: không xoá/khoá mốc giờ). Sửa giờ sau đó (`tinhLaiMotDong`) tính lại đầy đủ,
+ * ghi đè hoàn toàn kết quả hàm này — ai sửa sau có hiệu lực.
+ */
+export function suaNgayCongTrucTiep(dong: KetQuaNgay, r: 0 | 0.5 | 1): KetQuaNgay {
+  return {
+    ...dong,
+    ngayCongR: r,
+    gioOtS: 0,
+    otBiEp: true,
+    daSua: true,
+    ghiChuSua: 'đã sửa Ngày công tay',
+    mucDoCanhBao: 'vang'
+  }
+}
+
 /** Tính lại tổng hợp một nhân viên sau khi sửa tay. */
 export function tinhLaiTongHop(
   th: TongHopNhanVien,

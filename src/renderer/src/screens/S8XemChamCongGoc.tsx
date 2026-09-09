@@ -209,6 +209,24 @@ function DongGiaiTrinh({
     }
   }
 
+  // Vòng 9 (AC-2) — sửa thẳng "Ngày công" không qua giờ: mốc giờ ở cột "Mốc hiện tại"
+  // giữ nguyên (không đụng `cap`), chỉ ép Giờ OT về 0 + đổi ghi chú (src/core/xuLyKyCong.ts
+  // suaNgayCongTrucTiep). Sửa giờ sau đó ghi đè lại bình thường qua guiSua().
+  async function guiSuaR(r: 0 | 0.5 | 1) {
+    setLuu(true)
+    setLoi(null)
+    try {
+      const res = await window.api.tinhLaiNgay({ maNhanVien, ngay: dong.ngay, r })
+      if (res.ok) {
+        onCapNhat()
+        setVuaLuu(true)
+        setTimeout(() => setVuaLuu(false), 1500)
+      } else setLoi(res.loi ?? 'Không sửa được Ngày công dòng này.')
+    } finally {
+      setLuu(false)
+    }
+  }
+
   const o = (ci: number, k: 'vao' | 'ra') => (
     <input
       className="inline-input"
@@ -238,7 +256,19 @@ function DongGiaiTrinh({
         {o(1, 'ra')}
       </td>
       <td className="num">{so2(dong.gioLamQ)}</td>
-      <td className="num">{dong.ngayCongR}</td>
+      <td className="num">
+        <select
+          className="inline-input"
+          aria-label={`Ngày công ${dmy(dong.ngay)}`}
+          value={dong.ngayCongR}
+          disabled={luu}
+          onChange={(e) => guiSuaR(Number(e.target.value) as 0 | 0.5 | 1)}
+        >
+          <option value={0}>0</option>
+          <option value={0.5}>0.5</option>
+          <option value={1}>1</option>
+        </select>
+      </td>
       <td className="num">{so2(dong.gioOtS)}</td>
       <td className="small muted ghichu">
         {loi ? (

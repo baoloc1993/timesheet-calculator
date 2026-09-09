@@ -3,8 +3,9 @@
 import { ipcMain, dialog, shell, BrowserWindow, app } from 'electron'
 import { basename, join, dirname } from 'path'
 import { existsSync, readFileSync } from 'fs'
-import type { KetQuaKyCong, NhanVien, SuaTay } from '../core/types'
-import { xuLyKyCong, tinhLaiMotDong, tinhLaiTongHop, tongToanKy } from '../core/xuLyKyCong'
+import type { KetQuaKyCong, KetQuaNgay, NhanVien, SuaTay } from '../core/types'
+import { xuLyKyCong, tinhLaiMotDong, suaNgayCongTrucTiep, tinhLaiTongHop, tongToanKy } from '../core/xuLyKyCong'
+import { khoangNgayMacDinh } from '../core/khoangNgayMacDinh'
 import { dongBangKetQuaKy, mergePhatLuongCu } from '../core/ketQuaKy'
 import type { KetQuaKy } from '../core/ketQuaKy'
 import { phutTrongNgay } from '../core/time'
@@ -81,15 +82,6 @@ function mocChamThoTest(): MocChamTho[] | null {
   } catch {
     return null
   }
-}
-
-// Vòng 7 — khoảng ngày mặc định khi tự động đồng bộ lại từ máy (đầu tháng hiện tại → hôm
-// nay). Không lưu `tu`/`den` trong `nguonGanNhat` — tính lại mỗi lần.
-function khoangNgayMacDinh(now: Date): { tu: string; den: string } {
-  const p2 = (n: number) => String(n).padStart(2, '0')
-  const tu = `${now.getFullYear()}-${p2(now.getMonth() + 1)}-01`
-  const den = `${now.getFullYear()}-${p2(now.getMonth() + 1)}-${p2(now.getDate())}`
-  return { tu, den }
 }
 
 function loi(e: unknown) {
@@ -233,33 +225,54 @@ export function dangKyIpc(): void {
     }
   })
 
-  ipcMain.handle('ky-cong:tinh-lai-ngay', (_e, p: { maNhanVien: string; ngay: string; cap: { vao: string | null; ra: string | null }[] }) => {
-    if (!kyHienTai) return { ok: false, loi: 'Chưa nạp kỳ công.' }
-    const th = kyHienTai.ky.tongHop.find((t) => t.maNhanVien === p.maNhanVien)
-    if (!th) return { ok: false, loi: 'Không tìm thấy nhân viên trong kỳ.' }
-    const idx = th.ketQuaNgay.findIndex((d) => d.ngay === p.ngay)
-    if (idx < 0) return { ok: false, loi: 'Không tìm thấy ngày.' }
-    // Validate định dạng giờ ở tầng main — ô rỗng thì cho qua, gõ sai thì chặn
-    //.
-    for (const c of p.cap) {
-      for (const g of [c.vao, c.ra]) {
-        if (g != null && g !== '' && phutTrongNgay(g) == null)
-          return { ok: false, loi: `Giờ "${g}" không đúng dạng. Nhập dạng HH:MM, ví dụ 08:30. Để trống nếu không có.` }
+  // Vòng 9 — payload là union: sửa giờ (`cap`, có từ vòng 1) HOẶC sửa thẳng "Ngày công"
+  // (`r`, AC-2 vòng 9). Discriminate bằng khoá `r` — renderer chỉ bao giờ gửi đúng một
+  // trong hai (S8: ô giờ onBlur → cap; select "Ngày công" onChange → r), không có ca
+  // "gửi cả hai"/"gửi không cái nào" vì kiểu TypeScript ở preload/api-types.ts đã chặn.
+  ipcMain.handle(
+    'ky-cong:tinh-lai-ngay',
+    (
+      _e,
+      p:
+        | { maNhanVien: string; ngay: string; cap: { vao: string | null; ra: string | null }[] }
+        | { maNhanVien: string; ngay: string; r: 0 | 0.5 | 1 }
+    ) => {
+      if (!kyHienTai) return { ok: false, loi: 'Chưa nạp kỳ công.' }
+      const th = kyHienTai.ky.tongHop.find((t) => t.maNhanVien === p.maNhanVien)
+      if (!th) return { ok: false, loi: 'Không tìm thấy nhân viên trong kỳ.' }
+      const idx = th.ketQuaNgay.findIndex((d) => d.ngay === p.ngay)
+      if (idx < 0) return { ok: false, loi: 'Không tìm thấy ngày.' }
+
+      let dongMoi: KetQuaNgay
+      let suaTayMoi: SuaTay
+      if ('r' in p) {
+        dongMoi = suaNgayCongTrucTiep(th.ketQuaNgay[idx], p.r)
+        suaTayMoi = { loai: 'ngayCong', maNhanVien: p.maNhanVien, ngay: p.ngay, r: p.r }
+      } else {
+        // Validate định dạng giờ ở tầng main — ô rỗng thì cho qua, gõ sai thì chặn
+        //.
+        for (const c of p.cap) {
+          for (const g of [c.vao, c.ra]) {
+            if (g != null && g !== '' && phutTrongNgay(g) == null)
+              return { ok: false, loi: `Giờ "${g}" không đúng dạng. Nhập dạng HH:MM, ví dụ 08:30. Để trống nếu không có.` }
+          }
+        }
+        dongMoi = tinhLaiMotDong(th.ketQuaNgay[idx], p.cap, th.nguongGioChuanNgay)
+        suaTayMoi = { loai: 'gio', maNhanVien: p.maNhanVien, ngay: p.ngay, cap: p.cap }
       }
+      th.ketQuaNgay[idx] = dongMoi
+      const thMoi = tinhLaiTongHop(th, th.ketQuaNgay)
+      Object.assign(th, thMoi)
+      capNhatTongKy()
+      // Ghi lại để phát lại sau khi dựng lại kỳ (Setup đổi) — không mất chỉnh tay (BH vòng 2).
+      kyHienTai.suaTay = kyHienTai.suaTay.filter(
+        (s) => !(s.maNhanVien === p.maNhanVien && s.ngay === p.ngay)
+      )
+      kyHienTai.suaTay.push(suaTayMoi)
+      luuTuDong()
+      return { ok: true, data: { dong: dongMoi, tongHop: th } }
     }
-    const dongMoi = tinhLaiMotDong(th.ketQuaNgay[idx], p.cap, th.nguongGioChuanNgay)
-    th.ketQuaNgay[idx] = dongMoi
-    const thMoi = tinhLaiTongHop(th, th.ketQuaNgay)
-    Object.assign(th, thMoi)
-    capNhatTongKy()
-    // Ghi lại để phát lại sau khi dựng lại kỳ (Setup đổi) — không mất chỉnh tay (BH vòng 2).
-    kyHienTai.suaTay = kyHienTai.suaTay.filter(
-      (s) => !(s.maNhanVien === p.maNhanVien && s.ngay === p.ngay)
-    )
-    kyHienTai.suaTay.push({ maNhanVien: p.maNhanVien, ngay: p.ngay, cap: p.cap })
-    luuTuDong()
-    return { ok: true, data: { dong: dongMoi, tongHop: th } }
-  })
+  )
 
   ipcMain.handle('ky-cong:xuat', async (_e, p: { ghiDe: boolean }) => {
     try {
@@ -628,14 +641,23 @@ function luuTuDong(): KetQuaKy | null {
  * không ném. Dùng chung cho `lamMoiKyHienTai` (Setup đổi, suaTay lấy từ bộ nhớ phiên) và
  * `nguon-gan-nhat:tu-dong-nap` (vòng 8: suaTay lấy từ đĩa, phiên trước đã đóng).
  */
+/** Shape của `SuaTay` trên đĩa TRƯỚC vòng 9 — không có `loai` (chỉ loại "sửa giờ" từng tồn tại). */
+type SuaTayCu = { maNhanVien: string; ngay: string; cap: { vao: string | null; ra: string | null }[] }
+
 function apDungSuaTay(ky: KetQuaKyCong, suaTay: SuaTay[]): SuaTay[] {
   const conHieuLuc: SuaTay[] = []
-  for (const s of suaTay) {
+  for (const s0 of suaTay) {
+    // Vòng 9: bản ghi trên đĩa TỪ TRƯỚC vòng 9 không có `loai` — coi như 'gio', không
+    // migrate dữ liệu.
+    const s: SuaTay = 'loai' in s0 ? s0 : { ...(s0 as SuaTayCu), loai: 'gio' }
     const th = ky.tongHop.find((t) => t.maNhanVien === s.maNhanVien)
     if (!th) continue
     const idx = th.ketQuaNgay.findIndex((d) => d.ngay === s.ngay)
     if (idx < 0) continue
-    th.ketQuaNgay[idx] = tinhLaiMotDong(th.ketQuaNgay[idx], s.cap, th.nguongGioChuanNgay)
+    th.ketQuaNgay[idx] =
+      s.loai === 'ngayCong'
+        ? suaNgayCongTrucTiep(th.ketQuaNgay[idx], s.r)
+        : tinhLaiMotDong(th.ketQuaNgay[idx], s.cap, th.nguongGioChuanNgay)
     Object.assign(th, tinhLaiTongHop(th, th.ketQuaNgay))
     conHieuLuc.push(s)
   }

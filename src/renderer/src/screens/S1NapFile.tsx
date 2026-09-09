@@ -3,20 +3,11 @@ import { useApp } from '../store'
 import { dmy } from '../App'
 import { PageHead } from '../components/PageHead'
 import type { NapFileKetQua } from '../../../preload/api-types'
+import { khoangNgayMacDinh } from '../../../preload/api-types'
 
 // Vòng 5 (AC-1/AC-3/AC-4): segment "Chọn file" / "Đồng bộ từ máy" thêm cạnh luồng cũ.
-
-function padDate(n: number) {
-  return String(n).padStart(2, '0')
-}
-function dauThangHienTai() {
-  const d = new Date()
-  return `${d.getFullYear()}-${padDate(d.getMonth() + 1)}-01`
-}
-function homNay() {
-  const d = new Date()
-  return `${d.getFullYear()}-${padDate(d.getMonth() + 1)}-${padDate(d.getDate())}`
-}
+// Vòng 9: khoảng ngày mặc định dùng chung `khoangNgayMacDinh` (core) — ngày≤5 tự lấy
+// tháng trước, thay vì luôn tháng hiện tại.
 
 export function S1NapFile() {
   const { trangThai, di, datKy, lamMoiTrangThai } = useApp()
@@ -26,8 +17,8 @@ export function S1NapFile() {
   const [nguon, setNguon] = useState<'file' | 'may'>('file')
   const [ip, setIp] = useState('')
   const [port, setPort] = useState('4370')
-  const [tu, setTu] = useState(dauThangHienTai())
-  const [den, setDen] = useState(homNay())
+  const [tu, setTu] = useState(() => khoangNgayMacDinh(new Date()).tu)
+  const [den, setDen] = useState(() => khoangNgayMacDinh(new Date()).den)
   const [dangDongBo, setDangDongBo] = useState(false)
   const [loiMay, setLoiMay] = useState<string | null>(null)
   const [choXacNhan, setChoXacNhan] = useState<{ data: NapFileKetQua; canhBao: string[] } | null>(null)
