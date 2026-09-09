@@ -16,8 +16,7 @@ const api: Api = {
   moGopY: () => ipcRenderer.invoke('mo-gop-y'),
   danhDauXemCong: () => ipcRenderer.invoke('ky-cong:danh-dau-xem-cong'),
 
-  // Vòng 3
-  luuKy: (payload) => ipcRenderer.invoke('ky-cong:luu-ky', payload),
+  // Vòng 3 (vòng 8: hết luuKy — mỗi lần tính/sửa tự ghi ngay, xem ipc.ts luuTuDong())
   danhSachKy: () => ipcRenderer.invoke('ky-luu:danh-sach'),
   docKy: (thang) => ipcRenderer.invoke('ky-luu:doc', thang),
   capNhatPhatLuong: (payload) => ipcRenderer.invoke('ky-luu:cap-nhat-phat-luong', payload),

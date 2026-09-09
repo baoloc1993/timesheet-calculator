@@ -3,7 +3,7 @@
 import { ipcMain, dialog, shell, BrowserWindow, app } from 'electron'
 import { basename, join, dirname } from 'path'
 import { existsSync, readFileSync } from 'fs'
-import type { KetQuaKyCong, NhanVien } from '../core/types'
+import type { KetQuaKyCong, NhanVien, SuaTay } from '../core/types'
 import { xuLyKyCong, tinhLaiMotDong, tinhLaiTongHop, tongToanKy } from '../core/xuLyKyCong'
 import { dongBangKetQuaKy, mergePhatLuongCu } from '../core/ketQuaKy'
 import type { KetQuaKy } from '../core/ketQuaKy'
@@ -37,12 +37,6 @@ import {
 import { themHoacSua, xoaNhanVien, tronTuFileKyTruoc, chuanTen } from './settings/nhanVien'
 import { chuanHoaMa } from '../core/ma'
 import { log } from './logger'
-
-interface SuaTay {
-  maNhanVien: string
-  ngay: string
-  cap: { vao: string | null; ra: string | null }[]
-}
 
 /** Kỳ đang tính lấy dữ liệu từ đâu — quyết định cách "làm mới sau khi Setup đổi" (§lamMoiKyHienTai)
  * và cách xuất file "chi tiết đã làm sạch" (chỉ nguồn 'file' có file gốc để nhân bản layout). */
@@ -155,6 +149,7 @@ export function dangKyIpc(): void {
       kyHienTai = { nguon: { loai: 'file', duongDan }, ky, suaTay: [] }
       ghiConfig({ kyXuLyGanNhat: file.thang })
       ghiNguonGanNhat({ loai: 'file', duongDan })
+      luuTuDong()
       log.info('nạp file máy', duongDan, `${file.khoi.length} khối`)
       log.event('nap-file-may', {
         thang: file.thang,
@@ -262,6 +257,7 @@ export function dangKyIpc(): void {
       (s) => !(s.maNhanVien === p.maNhanVien && s.ngay === p.ngay)
     )
     kyHienTai.suaTay.push({ maNhanVien: p.maNhanVien, ngay: p.ngay, cap: p.cap })
+    luuTuDong()
     return { ok: true, data: { dong: dongMoi, tongHop: th } }
   })
 
@@ -442,6 +438,7 @@ export function dangKyIpc(): void {
         kyHienTai = { nguon: { loai: 'may', ip, port, tu: p.tu, den: p.den }, ky, suaTay: [] }
         ghiConfig({ kyXuLyGanNhat: file.thang })
         ghiNguonGanNhat({ loai: 'may', ip, port })
+        luuTuDong()
         log.info('đồng bộ từ máy chấm công', ip, `${file.khoi.length} người, ${logTho.length} mốc`)
         log.event('dong-bo-may-cham-cong', {
           thang: file.thang,
@@ -486,9 +483,14 @@ export function dangKyIpc(): void {
         // (soi bug pha P vòng 7 — TOCTOU, cùng nguyên tắc "an toàn dữ liệu thắng tiện lợi").
         if (kyHienTai) return { ok: false, loi: 'Đã có kỳ khác được nạp trong lúc chờ.' }
         const ky = xuLyKyCong(file, layNhanVien())
-        kyHienTai = { nguon: { loai: 'file', duongDan: nguon.duongDan }, ky, suaTay: [] }
+        // Vòng 8 — tái áp dụng sửa tay đã lưu từ phiên trước (persist trong `KetQuaKy.suaTay`,
+        // phiên cũ đã đóng nên không còn gì ở bộ nhớ tiến trình để đọc như `lamMoiKyHienTai`).
+        const suaTayCu = layMotKy(file.thang)?.suaTay ?? []
+        const conHieuLuc = apDungSuaTay(ky, suaTayCu)
+        kyHienTai = { nguon: { loai: 'file', duongDan: nguon.duongDan }, ky, suaTay: conHieuLuc }
         ghiConfig({ kyXuLyGanNhat: file.thang })
         ghiNguonGanNhat({ loai: 'file', duongDan: nguon.duongDan })
+        luuTuDong()
         log.info('tự động nạp lại file (mở app)', nguon.duongDan)
         return { ok: true, data: { ky, fileMay: nguon.duongDan } }
       }
@@ -508,9 +510,16 @@ export function dangKyIpc(): void {
       // §7 bước 0), nhưng vẫn phải trả về để renderer hiện banner thông tin (soi bug pha P vòng 7).
       const { file, canhBao } = gomMocCham(logTho, tu, den)
       const ky = xuLyKyCong(file, layNhanVien())
-      kyHienTai = { nguon: { loai: 'may', ip: nguon.ip, port: nguon.port, tu, den }, ky, suaTay: [] }
+      const suaTayCu = layMotKy(file.thang)?.suaTay ?? []
+      const conHieuLuc = apDungSuaTay(ky, suaTayCu)
+      kyHienTai = {
+        nguon: { loai: 'may', ip: nguon.ip, port: nguon.port, tu, den },
+        ky,
+        suaTay: conHieuLuc
+      }
       ghiConfig({ kyXuLyGanNhat: file.thang })
       ghiNguonGanNhat({ loai: 'may', ip: nguon.ip, port: nguon.port })
+      luuTuDong()
       log.info('tự động đồng bộ từ máy (mở app)', nguon.ip, canhBao.length ? `${canhBao.length} cảnh báo` : '')
       return {
         ok: true,
@@ -523,36 +532,7 @@ export function dangKyIpc(): void {
     }
   })
 
-  // ---- Vòng 3 — lưu kỳ + dashboard + phát lương ----
-
-  // Lưu kỳ đang tính vào lịch sử (AC-1). Chặn khi còn nhân viên thiếu Setup —
-  // dongBang đóng băng mà thiếu người = kỳ sai vĩnh viễn.
-  ipcMain.handle('ky-cong:luu-ky', (_e, p: { ghiDe: boolean }) => {
-    if (!kyHienTai) return { ok: false, loi: 'Chưa nạp kỳ công nào để lưu.' }
-    if (kyHienTai.ky.thieuSetup.length > 0)
-      return {
-        ok: false,
-        loi: `Còn ${kyHienTai.ky.thieuSetup.length} nhân viên chưa khai Setup — khai đủ trước khi lưu kỳ (nếu không kỳ lưu sẽ thiếu người).`
-      }
-
-    const thang = kyHienTai.ky.thang
-    const cu = layMotKy(thang)
-    if (cu && !p.ghiDe) {
-      return {
-        ok: false,
-        canXacNhanGhiDe: `Kỳ ${thang} đã lưu ngày ${cu.ngayLuu.slice(0, 10)}. Lưu đè sẽ thay số công/OT/thành tiền bằng số vừa tính; khấu trừ + trạng thái "đã trả" đã nhập được giữ lại.`
-      }
-    }
-
-    const kq = mergePhatLuongCu(
-      dongBangKetQuaKy(kyHienTai.ky, kyHienTai.ky.tongHop, new Date().toISOString()),
-      cu
-    )
-    ghiMotKy(kq)
-    log.info('lưu kỳ', thang, `${kq.dongBang.length} dòng`)
-    log.event('luu-ky', { thang, soDong: kq.dongBang.length, ghiDe: !!cu })
-    return { ok: true, data: kq }
-  })
+  // ---- Vòng 3 — dashboard + phát lương (vòng 8: hết "Lưu kỳ này", auto-lưu qua luuTuDong()) ----
 
   ipcMain.handle('ky-luu:danh-sach', () => layDanhSachKy())
 
@@ -621,6 +601,49 @@ export function dangKyIpc(): void {
 }
 
 /**
+ * Vòng 8 — ghi kỳ đang mở (`kyHienTai`) vào lịch sử NGAY, mỗi khi tính (nạp file/đồng bộ/tự
+ * động nạp) hoặc sửa tay. Thay cho nút "Lưu kỳ này" (vòng 3–7) — người dùng chốt bỏ hẳn qua
+ * chat 2026-09-07. Đóng băng đơn giá
+ * (vòng 6) vẫn đúng — chỉ đổi THỜI ĐIỂM kích hoạt sang lúc tính/sửa thay vì lúc bấm lưu.
+ * Không hỏi xác nhận ghi đè: `mergePhatLuongCu` đã giữ khauTru/daTra/4 khoản cho mã còn khớp,
+ * số công/OT/thành tiền được thay bằng số vừa tính là đúng ý "nạp lại" (không phải mất mát).
+ */
+function luuTuDong(): KetQuaKy | null {
+  if (!kyHienTai) return null
+  const thang = kyHienTai.ky.thang
+  const cu = layMotKy(thang)
+  const kq = mergePhatLuongCu(
+    dongBangKetQuaKy(kyHienTai.ky, kyHienTai.ky.tongHop, new Date().toISOString()),
+    cu
+  )
+  kq.suaTay = kyHienTai.suaTay
+  kq.thieuSetup = kyHienTai.ky.thieuSetup
+  ghiMotKy(kq)
+  return kq
+}
+
+/**
+ * Phát lại các chỗ đã sửa tay lên một `KetQuaKyCong` vừa dựng lại từ nguồn thô (khớp
+ * maNhanVien + ngay). Bỏ entry nào không còn khớp (nhân viên bị xoá / ngày không còn) —
+ * không ném. Dùng chung cho `lamMoiKyHienTai` (Setup đổi, suaTay lấy từ bộ nhớ phiên) và
+ * `nguon-gan-nhat:tu-dong-nap` (vòng 8: suaTay lấy từ đĩa, phiên trước đã đóng).
+ */
+function apDungSuaTay(ky: KetQuaKyCong, suaTay: SuaTay[]): SuaTay[] {
+  const conHieuLuc: SuaTay[] = []
+  for (const s of suaTay) {
+    const th = ky.tongHop.find((t) => t.maNhanVien === s.maNhanVien)
+    if (!th) continue
+    const idx = th.ketQuaNgay.findIndex((d) => d.ngay === s.ngay)
+    if (idx < 0) continue
+    th.ketQuaNgay[idx] = tinhLaiMotDong(th.ketQuaNgay[idx], s.cap, th.nguongGioChuanNgay)
+    Object.assign(th, tinhLaiTongHop(th, th.ketQuaNgay))
+    conHieuLuc.push(s)
+  }
+  Object.assign(ky, tongToanKy(ky.tongHop))
+  return conHieuLuc
+}
+
+/**
  * Sau khi Setup đổi → tính lại kỳ đang mở (nếu có) để AC-6 phản ánh ngay.
  * Đọc lại file máy thất bại (file bị di chuyển/khoá) → KHÔNG nuốt lỗi: trả cảnh báo
  * để renderer báo người dùng nạp lại, thay vì hành động trên kỳ cũ.
@@ -638,21 +661,9 @@ async function lamMoiKyHienTai(): Promise<{ loi?: string }> {
             nguon.den
           ).file
     const ky = xuLyKyCong(file, layNhanVien())
-    const suaTay = kyHienTai.suaTay
-    // Phát lại các chỉnh tay ở S3 lên kỳ vừa dựng lại (khớp maNhanVien + ngay).
-    // Bỏ entry nào không còn khớp (nhân viên bị xoá / ngày không còn) — không ném.
-    const conHieuLuc: SuaTay[] = []
-    for (const s of suaTay) {
-      const th = ky.tongHop.find((t) => t.maNhanVien === s.maNhanVien)
-      if (!th) continue
-      const idx = th.ketQuaNgay.findIndex((d) => d.ngay === s.ngay)
-      if (idx < 0) continue
-      th.ketQuaNgay[idx] = tinhLaiMotDong(th.ketQuaNgay[idx], s.cap, th.nguongGioChuanNgay)
-      Object.assign(th, tinhLaiTongHop(th, th.ketQuaNgay))
-      conHieuLuc.push(s)
-    }
-    Object.assign(ky, tongToanKy(ky.tongHop))
+    const conHieuLuc = apDungSuaTay(ky, kyHienTai.suaTay)
     kyHienTai = { nguon, ky, suaTay: conHieuLuc }
+    luuTuDong()
     return {}
   } catch (e) {
     log.error('làm mới kỳ', (e as Error).message)

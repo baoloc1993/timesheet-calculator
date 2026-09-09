@@ -15,6 +15,15 @@ function parseSoNhap(raw: string): number | null {
   return Number.isFinite(n) && n >= 0 ? Math.round(n) : null
 }
 
+/** Chỉ giữ chữ số rồi chèn dấu chấm phân cách nghìn kiểu vi-VN — dùng cho ô nhập 5 khoản
+ * (người dùng phản hồi 2026-09-09: 5 ô này thiếu phân cách, khác các số hiển thị khác trên
+ * cùng màn đã có qua vnd()). Lưu trữ dạng đã format luôn — parseSoNhap strip dấu chấm nên
+ * không cần giữ 2 bản song song. */
+function formatSoNhap(raw: string): string {
+  const digits = raw.replace(/[^\d]/g, '')
+  return digits ? Number(digits).toLocaleString('vi-VN') : ''
+}
+
 // Vòng 6 — 5 khoản: 3 cộng (chuyenCan/buLuong/le) + 2 trừ (baoHiem, khauTru = "Vay").
 const KHOAN = [
   { truong: 'chuyenCan', nhan: 'Chuyên cần' },
@@ -29,11 +38,11 @@ type NhapKhoan = Record<Truong, string>
 
 function nhapRong(kq: KetQuaKy, ma: string): NhapKhoan {
   return {
-    chuyenCan: String(kq.chuyenCan?.[ma] ?? 0),
-    buLuong: String(kq.buLuong?.[ma] ?? 0),
-    le: String(kq.le?.[ma] ?? 0),
-    baoHiem: String(kq.baoHiem?.[ma] ?? 0),
-    khauTru: String(kq.khauTru[ma] ?? 0)
+    chuyenCan: formatSoNhap(String(kq.chuyenCan?.[ma] ?? 0)),
+    buLuong: formatSoNhap(String(kq.buLuong?.[ma] ?? 0)),
+    le: formatSoNhap(String(kq.le?.[ma] ?? 0)),
+    baoHiem: formatSoNhap(String(kq.baoHiem?.[ma] ?? 0)),
+    khauTru: formatSoNhap(String(kq.khauTru[ma] ?? 0))
   }
 }
 
@@ -269,7 +278,7 @@ export function S10PhatLuong() {
                             onChange={(e) =>
                               setNhap((m) => ({
                                 ...m,
-                                [d.maNhanVien]: { ...m[d.maNhanVien], [k.truong]: e.target.value }
+                                [d.maNhanVien]: { ...m[d.maNhanVien], [k.truong]: formatSoNhap(e.target.value) }
                               }))
                             }
                             onBlur={() => luuGiaTri(d.maNhanVien, k.truong, k.nhan)}

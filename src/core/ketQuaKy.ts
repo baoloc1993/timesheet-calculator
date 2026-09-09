@@ -1,6 +1,6 @@
 // Vòng 3 — lưu kết quả một kỳ + phát lương. Hàm thuần, không phụ thuộc Electron/fs/exceljs.
 
-import type { TongHopNhanVien, KetQuaKyCong } from './types'
+import type { TongHopNhanVien, KetQuaKyCong, NhanVienThieuSetup, SuaTay } from './types'
 
 /** Một dòng đóng băng khi lưu kỳ — KHÔNG tính lại sau đó. */
 export interface DongBang {
@@ -42,6 +42,18 @@ export interface KetQuaKy {
   le?: MapTien
   /** Vòng 6, optional — khoản TRỪ (cùng chiều `khauTru`). */
   baoHiem?: MapTien
+  /**
+   * Vòng 8, optional — các chỗ đã sửa tay ở "Giải trình & sửa công" tại thời điểm ghi.
+   * Persist để tự động nạp lại (vòng 7 AC-1) tái áp dụng đúng sau khi tắt/mở lại app —
+   * trước vòng 8, mảng này chỉ sống trong bộ nhớ tiến trình nên mất khi đóng app.
+   */
+  suaTay?: SuaTay[]
+  /**
+   * Vòng 8, optional — nhân viên còn thiếu Setup TẠI THỜI ĐIỂM GHI (không phải lúc xem lại).
+   * Khác `0` → "Phát lương kỳ này" bị khoá tới khi khai đủ Setup rồi nạp lại (thay cho việc
+   * chặn hẳn không cho lưu như trước vòng 8 — giờ mọi kỳ đều tự lưu, kể cả kỳ thiếu người).
+   */
+  thieuSetup?: NhanVienThieuSetup[]
 }
 
 /** Làm tròn thường đến 1.000đ — chỉ cho số tiền mặt cầm tay. */

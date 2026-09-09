@@ -82,6 +82,16 @@ export interface NhanVienThieuSetup {
   tenMay: string
 }
 
+/**
+ * Một chỗ người dùng sửa tay mốc chấm công của một ngày (vòng 8 — persist để ghi nhớ qua
+ * tự động nạp lại / tắt-mở app, thay vì chỉ giữ trong bộ nhớ tiến trình như trước).
+ */
+export interface SuaTay {
+  maNhanVien: string
+  ngay: string
+  cap: { vao: string | null; ra: string | null }[]
+}
+
 /** Kết quả xử lý cả kỳ. */
 export interface KetQuaKyCong {
   thang: string

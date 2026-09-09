@@ -107,7 +107,12 @@ export function AppStore({
       setThangDangXem(null) // nạp kỳ mới → dashboard hiện kỳ đang tính, không phải kỳ đã lưu đang chọn
       setTuDongNapLoi(null) // nạp/đồng bộ thành công (tay hoặc tự động) → hết lý do còn banner lỗi cũ
     }
-  }, [])
+    // Vòng 8 — MỌI lần `ky` đổi (nạp mới, sửa tay ở S8, Setup đổi làm dựng lại kỳ) main đều
+    // đã tự ghi xuống đĩa ngay (`luuTuDong()`, không còn "Lưu kỳ này" để đợi bấm). Nạp lại
+    // danh sách theo cùng nhịp — khác đi thì thẻ "đang mở" (đọc `ky` sống) và bản đã lưu
+    // (đọc `danhSachKy`) lệch số nhau, hiện trùng hai thẻ khác tổng cho cùng một thang.
+    if (k) lamMoiDanhSachKy()
+  }, [lamMoiDanhSachKy])
 
   // Vòng 7 (AC-1) — mở app: chưa có kỳ đang mở dở dang → tự chạy lại đúng nguồn nạp/đồng
   // bộ thành công gần nhất, một lần (nền, không chặn UI). An toàn dữ liệu thắng tiện lợi:

@@ -110,11 +110,7 @@ export interface Api {
    */
   danhDauXemCong(): Promise<void>
 
-  // ---- Vòng 3 — lưu kỳ + dashboard + phát lương ----
-  /** Lưu kỳ đang tính vào lịch sử. `ghiDe` = xác nhận ghi đè kỳ đã tồn tại. */
-  luuKy(payload: { ghiDe: boolean }): Promise<
-    KetQua<KetQuaKy> & { canXacNhanGhiDe?: string }
-  >
+  // ---- Vòng 3 — dashboard + phát lương (vòng 8: hết "Lưu kỳ này" — mỗi lần tính/sửa tự ghi ngay) ----
   /** Danh sách kỳ đã lưu, mới nhất trên đầu. */
   danhSachKy(): Promise<KetQuaKy[]>
   /** Một kỳ đã lưu theo `thang`. */

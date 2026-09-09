@@ -19,7 +19,7 @@ function homNay() {
 }
 
 export function S1NapFile() {
-  const { trangThai, ky, di, datKy, lamMoiTrangThai } = useApp()
+  const { trangThai, di, datKy, lamMoiTrangThai } = useApp()
   const [dangNap, setDangNap] = useState(false)
   const [loi, setLoi] = useState<string | null>(null)
 
@@ -63,12 +63,8 @@ export function S1NapFile() {
   }
 
   async function dongBoTuMay() {
-    // Ca biên vòng 5: đang có kỳ mở dở (đã lưu hay chưa) → hỏi trước khi thay bằng dữ liệu mới.
-    if (ky && !window.confirm(
-      'Đang có kỳ đang xử lý. Đồng bộ từ máy sẽ nạp dữ liệu mới và mất mọi chỉnh sửa tay chưa lưu ở kỳ hiện tại. Tiếp tục?'
-    )) {
-      return
-    }
+    // Vòng 8: hết cảnh báo "mất chỉnh sửa tay chưa lưu" — kỳ đang xử lý đã tự lưu liên tục
+    // (`luuTuDong()`), đổi nguồn không còn mất gì (khác vòng 5, khi sửa tay còn ở bộ nhớ).
     setLoiMay(null)
     setChoXacNhan(null)
     setDangDongBo(true)

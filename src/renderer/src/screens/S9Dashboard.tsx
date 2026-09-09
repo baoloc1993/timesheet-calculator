@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo } from 'react'
 import { useApp } from '../store'
 import { dmy } from '../App'
 import { PageHead } from '../components/PageHead'
@@ -80,22 +80,18 @@ export function S9Dashboard() {
     di,
     xemChamCongGoc,
     danhSachKy,
-    lamMoiDanhSachKy,
     thangDangXem,
     moKy,
     tuDongNapLoi,
     tuDongNapCanhBao
   } = useApp()
-  const [luuLoi, setLuuLoi] = useState<string | null>(null)
-  const [dangLuu, setDangLuu] = useState(false)
-
-  // Kỳ đang tính trong phiên LUÔN hiện như thẻ "chưa lưu" ở đầu — kể cả
-  // khi thang đó đã có bản lưu: người dùng "nạp lại + tính lại" rồi "Lưu kỳ này" để ghi đè
-  //. Nút "Lưu kỳ này" sẽ hỏi xác nhận ghi đè.
+  // Kỳ đang mở trong phiên LUÔN hiện như thẻ riêng ở đầu — vòng 8: mỗi
+  // lần tính/sửa tự ghi ngay vào lịch sử (không còn nút "Lưu kỳ này"), nên kỳ này LUÔN cũng
+  // có mặt trong `danhSachKy`; tách riêng chỉ để hiện số liệu SỐNG từ bộ nhớ (nhanh hơn, phản
+  // ánh sửa tay tức thì) thay vì đọc lại từ đĩa.
   const kyChuaLuu = !!ky
-  const daCoBanLuu = !!ky && danhSachKy.some((k) => k.thang === ky.thang)
 
-  // Kỳ đang chọn: null = kỳ chưa lưu (nếu có), else = kỳ đã lưu theo thang.
+  // Kỳ đang chọn: null = kỳ đang mở (nếu có), else = kỳ khác trong lịch sử theo thang.
   const chon: string | null = thangDangXem
   const kyDaLuu: KetQuaKy | undefined =
     chon != null ? danhSachKy.find((k) => k.thang === chon) : undefined
@@ -152,28 +148,13 @@ export function S9Dashboard() {
     return null
   }, [chon, kyChuaLuu, ky, kyDaLuu])
 
-  async function luuKy() {
-    setLuuLoi(null)
-    setDangLuu(true)
-    try {
-      let r = await window.api.luuKy({ ghiDe: false })
-      if (r.canXacNhanGhiDe) {
-        if (!window.confirm(r.canXacNhanGhiDe)) return
-        r = await window.api.luuKy({ ghiDe: true })
-      }
-      if (!r.ok || !r.data) {
-        setLuuLoi(r.loi ?? 'Không lưu được kỳ.')
-        return
-      }
-      await lamMoiDanhSachKy()
-      moKy(r.data.thang)
-      di('s10')
-    } finally {
-      setDangLuu(false)
-    }
-  }
-
   const trong = !kyChuaLuu && danhSachKy.length === 0
+
+  // Vòng 8 — thiếu Setup không còn chặn tự lưu (mọi kỳ đều tự ghi), chỉ khoá "Phát lương"
+  // tới khi khai đủ rồi nạp lại (`KetQuaKy.thieuSetup`, persist để còn biết khi quay lại sau
+  // khi tắt/mở app — trước vòng 8 việc chặn nằm ở chính bước "Lưu kỳ này").
+  const thieuSetupCount =
+    chon == null && kyChuaLuu && ky ? ky.thieuSetup.length : (kyDaLuu?.thieuSetup?.length ?? 0)
 
   // Quỹ lương 3 kỳ gần nhất (kỳ đang tính chưa lưu, nếu có, + tối đa 2 kỳ đã lưu gần nhất),
   // sắp xưa → nay. Thuần ngữ cảnh hình ảnh, không đọc lại dữ liệu mới.
@@ -228,7 +209,7 @@ export function S9Dashboard() {
 
           {trong ? (
             <div className="empty">
-              <p>Chưa lưu kỳ nào — nạp file kỳ mới rồi bấm “Lưu kỳ này”.</p>
+              <p>Chưa có kỳ nào — nạp file kỳ mới để bắt đầu, số tự lưu ngay.</p>
             </div>
           ) : (
             <div className="period-list">
@@ -238,8 +219,7 @@ export function S9Dashboard() {
                   onClick={() => moKy(null)}
                 >
                   <div className="pc-thang">
-                    {ky.thang}{' '}
-                    <span className="chip">{daCoBanLuu ? 'đang tính (có bản đã lưu)' : 'chưa lưu'}</span>
+                    {ky.thang} <span className="chip">đang mở</span>
                   </div>
                   <div className="pc-nums">
                     <span>{so2(ky.tongNgayCongCaKy)} công</span>
@@ -253,24 +233,26 @@ export function S9Dashboard() {
                   )}
                 </button>
               )}
-              {danhSachKy.map((k) => {
-                const tg = tongKetQuaKy(k)
-                return (
-                  <button
-                    key={k.thang}
-                    className={'period-card' + (chon === k.thang ? ' selected' : '')}
-                    onClick={() => moKy(k.thang)}
-                  >
-                    <div className="pc-thang">{k.thang}</div>
-                    <div className="pc-luu small muted">lưu {k.ngayLuu.slice(0, 10)}</div>
-                    <div className="pc-nums">
-                      <span>{so2(tg.tongNgayCong)} công</span>
-                      <span>{so2(tg.tongGioOT)} OT</span>
-                      <span>{vnd(tg.tongThanhTien)}₫</span>
-                    </div>
-                  </button>
-                )
-              })}
+              {danhSachKy
+                .filter((k) => !(kyChuaLuu && ky && k.thang === ky.thang))
+                .map((k) => {
+                  const tg = tongKetQuaKy(k)
+                  return (
+                    <button
+                      key={k.thang}
+                      className={'period-card' + (chon === k.thang ? ' selected' : '')}
+                      onClick={() => moKy(k.thang)}
+                    >
+                      <div className="pc-thang">{k.thang}</div>
+                      <div className="pc-luu small muted">lưu {k.ngayLuu.slice(0, 10)}</div>
+                      <div className="pc-nums">
+                        <span>{so2(tg.tongNgayCong)} công</span>
+                        <span>{so2(tg.tongGioOT)} OT</span>
+                        <span>{vnd(tg.tongThanhTien)}₫</span>
+                      </div>
+                    </button>
+                  )
+                })}
             </div>
           )}
         </div>
@@ -285,26 +267,23 @@ export function S9Dashboard() {
           ) : (
             <>
               <div className="toolbar">
-                {chon == null && kyChuaLuu ? (
-                  <>
-                    <button
-                      className="btn primary"
-                      disabled={dangLuu || (ky?.thieuSetup.length ?? 0) > 0}
-                      aria-busy={dangLuu}
-                      onClick={luuKy}
-                    >
-                      {dangLuu ? 'Đang lưu…' : 'Lưu kỳ này'}
-                    </button>
-                    {(ky?.thieuSetup.length ?? 0) > 0 && (
-                      <span className="muted small" style={{ alignSelf: 'center' }}>
-                        còn {ky?.thieuSetup.length} nhân viên chưa khai Setup — khai đủ trước khi lưu
-                      </span>
-                    )}
-                  </>
-                ) : (
-                  <button className="btn primary" onClick={() => di('s10')}>
-                    Phát lương kỳ này
-                  </button>
+                <button
+                  className="btn primary"
+                  disabled={thieuSetupCount > 0}
+                  onClick={() => {
+                    // S10 đọc theo `thangDangXem` (`docKy`) — kỳ đang mở (chon==null) chưa
+                    // từng đặt biến này (chỉ đặt khi bấm một thẻ trong danh sách), phải tự đặt
+                    // trước khi sang màn, dù đã tự lưu (`luuTuDong()`) ngay lúc tính/sửa.
+                    if (chon == null && ky) moKy(ky.thang)
+                    di('s10')
+                  }}
+                >
+                  Phát lương kỳ này
+                </button>
+                {thieuSetupCount > 0 && (
+                  <span className="muted small" style={{ alignSelf: 'center' }}>
+                    còn {thieuSetupCount} nhân viên chưa khai Setup — khai đủ rồi nạp lại
+                  </span>
                 )}
                 {chon == null && kyChuaLuu && ky && (
                   <button
@@ -316,13 +295,6 @@ export function S9Dashboard() {
                   </button>
                 )}
               </div>
-
-              {luuLoi && (
-                <div className="errorbox" style={{ marginBottom: 'var(--space-lg)' }}>
-                  <strong>Chưa lưu được kỳ.</strong>
-                  <p className="small">{luuLoi}</p>
-                </div>
-              )}
 
               <h2 style={{ margin: '0 0 var(--space-md)' }}>
                 Kỳ {xem.thang} <span className="sub">{xem.khoang}</span>

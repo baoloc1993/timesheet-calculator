@@ -186,6 +186,9 @@ function DongGiaiTrinh({
   ])
   const [luu, setLuu] = useState(false)
   const [loi, setLoi] = useState<string | null>(null)
+  // Vòng 8: sửa xong tự ghi ngay (không còn "Lưu kỳ này") — nháy "✓ đã lưu" 1.5s để người
+  // dùng thấy rõ, tránh lo lắng không biết có mất khi tắt app hay không (dogfood newbie).
+  const [vuaLuu, setVuaLuu] = useState(false)
 
   async function guiSua() {
     setLuu(true)
@@ -196,8 +199,11 @@ function DongGiaiTrinh({
         ngay: dong.ngay,
         cap: cap.map((c) => ({ vao: c.vao || null, ra: c.ra || null }))
       })
-      if (r.ok) onCapNhat()
-      else setLoi(r.loi ?? 'Không tính lại được dòng này.')
+      if (r.ok) {
+        onCapNhat()
+        setVuaLuu(true)
+        setTimeout(() => setVuaLuu(false), 1500)
+      } else setLoi(r.loi ?? 'Không tính lại được dòng này.')
     } finally {
       setLuu(false)
     }
@@ -239,7 +245,13 @@ function DongGiaiTrinh({
           <span className="err">{loi}</span>
         ) : (
           <>
-            {dong.daSua && <span className="chip">đã sửa</span>} {ghiChu(dong)}
+            {dong.daSua && <span className="chip">đã sửa</span>}{' '}
+            {vuaLuu && (
+              <span className="chip" style={{ color: 'var(--color-success)' }} role="status">
+                ✓ đã lưu
+              </span>
+            )}{' '}
+            {ghiChu(dong)}
           </>
         )}
       </td>
