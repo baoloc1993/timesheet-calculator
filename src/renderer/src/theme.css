@@ -1,4 +1,6 @@
 /* Token — chép nguyên từ context/DESIGN-SYSTEM.md §2 (không sửa giá trị ở đây).
+   Vòng 10: tổ hợp sáng/thường đổi sang bảng Microsoft To Do (xanh #2564CF, nền trung tính
+   Fluent) + 3 token mới (--color-icon-teal/-green, --shadow-card). Khối tối/cao giữ nguyên.
    Vòng 4: đổi giá trị 7 token + thêm token mới (§2.1b) + hai biến thể đầy đủ (nền tối,
    tương phản cao — §2.1c) + cỡ chữ/độ cao hàng tuỳ chỉnh (§2.5, --scale/--row-h).
    --color-warning-soft KHOÁ #FFF4CE cho tổ hợp sáng/thường (khớp mã fill Excel,
@@ -6,21 +8,21 @@
 :root {
   --scale: 1;
 
-  --color-bg: #edf0f5;
+  --color-bg: #f3f2f1;
   --color-surface: #ffffff;
-  --color-surface-sunken: #f4f6fa;
-  --color-text: #131822;
-  --color-text-muted: #48546a;
-  --color-text-faint: #66738a;
-  --color-primary: #004e92;
-  --color-primary-hover: #003c72;
-  --color-primary-soft: #e3edf9;
-  --color-primary-line: #a9c6e6;
+  --color-surface-sunken: #faf9f8;
+  --color-text: #201f1e;
+  --color-text-muted: #484644;
+  --color-text-faint: #6b6966;
+  --color-primary: #2564cf;
+  --color-primary-hover: #1b4fa8;
+  --color-primary-soft: #e8f0fc;
+  --color-primary-line: #b4caf0;
   --color-on-primary: #ffffff;
-  --color-border: #6c7686;
-  --color-divider: #d4dbe6;
-  --color-divider-strong: #b3bece;
-  --color-hover: #ebeff6;
+  --color-border: #6e6c69;
+  --color-divider: #d2d0ce;
+  --color-divider-strong: #b3b0ad;
+  --color-hover: #edebe9;
   --color-selected: var(--color-primary-soft);
   --color-danger: #a4262c;
   --color-danger-soft: #fceded;
@@ -31,9 +33,11 @@
   --color-success: #0b6a0b;
   --color-success-soft: #e4f4e4;
   --color-success-line: #a8d3a8;
-  --chart-bar: #1f6fb8;
-  --chart-bar-strong: #004e92;
-  --chart-axis: #c2cbd8;
+  --chart-bar: #7ea6e6;
+  --chart-bar-strong: #2564cf;
+  --chart-axis: #c8c6c4;
+  --color-icon-teal: #03787c;
+  --color-icon-green: #107c10;
   --focus: #b8471f;
 
   --font-sans: "Segoe UI Variable", "Segoe UI", system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif;
@@ -59,6 +63,7 @@
   --shadow-sm: 0 1px 2px rgba(19, 24, 34, 0.06);
   --shadow: 0 1px 3px rgba(19, 24, 34, 0.07), 0 6px 20px rgba(19, 24, 34, 0.06);
   --shadow-pop: 0 8px 30px rgba(19, 24, 34, 0.16);
+  --shadow-card: 0 0.3px 0.9px rgba(0, 0, 0, 0.1), 0 1.6px 3.6px rgba(0, 0, 0, 0.13);
   --control-min: 44px;
   --row-h: 52px;
   --leading: 1.6;
@@ -171,6 +176,7 @@
   --chart-axis: #000000;
   --shadow-sm: none;
   --shadow: none;
+  --shadow-card: none;
   --shadow-pop: 0 0 0 2px #000;
 }
 @media (prefers-color-scheme: dark) {
@@ -204,6 +210,7 @@
     --chart-axis: #ffffff;
     --shadow-sm: none;
     --shadow: none;
+  --shadow-card: none;
     --shadow-pop: 0 0 0 2px #fff;
   }
 }
@@ -237,6 +244,7 @@
   --chart-axis: #ffffff;
   --shadow-sm: none;
   --shadow: none;
+  --shadow-card: none;
   --shadow-pop: 0 0 0 2px #fff;
 }
 :root[data-contrast="high"] .card,
@@ -1977,5 +1985,151 @@ td.lgk {
   }
   .dash {
     grid-template-columns: 1fr;
+  }
+}
+
+/* ===== Vòng 10 — theme Microsoft To Do (DESIGN-SYSTEM.md C3 · C7 · C20) ===== */
+
+/* C20 — tiêu đề màn: to, đậm 600, màu nhấn như tên danh sách của To Do. Chữ trong h1 giữ
+   nguyên (dogfood dò h1:has-text). Đầu trang nền trùng --color-bg, bỏ kẻ dưới. */
+.page-head {
+  border-bottom: 0;
+}
+.page-head h1,
+.content > h1 {
+  font-weight: 600;
+  color: var(--color-primary);
+  letter-spacing: -0.01em;
+}
+
+/* C3 — bảng danh sách: mỗi hàng một thẻ trắng tách rời trên nền. Chỉ bảng trong .table-wrap
+   (loại lưới S11 .month, chú giải .lgtable); bảng in S10/S13 không nằm trong .table-wrap và
+   @media screen chặn thêm lần nữa. Thẻ .card bọc bảng đó thành phẳng. */
+@media screen {
+  .card:has(.table-wrap > table:not(.month):not(.lgtable)) {
+    background: transparent;
+    border: 0;
+    box-shadow: none;
+    padding: 0;
+  }
+  .stat,
+  .period-card {
+    border-color: transparent;
+    box-shadow: var(--shadow-card);
+  }
+  .table-wrap > table:not(.month):not(.lgtable) {
+    border-spacing: 0 var(--space-sm);
+  }
+  .table-wrap > table:not(.month):not(.lgtable) thead th {
+    background: var(--color-bg);
+    border-bottom: 0;
+    padding-bottom: 0;
+  }
+  /* :where giữ specificity thấp (0,1,2) để mọi trạng thái hàng/ô cũ vẫn đè được nền thẻ */
+  .table-wrap > table:where(:not(.month):not(.lgtable)) :where(tbody, tfoot) td {
+    background: var(--color-surface);
+    border-bottom: 0;
+  }
+  .table-wrap td.cell-fixed {
+    background: var(--color-warning-soft);
+  }
+  .table-wrap > table:not(.month):not(.lgtable) :is(tbody, tfoot) tr {
+    box-shadow: var(--shadow-card);
+    border-radius: var(--radius-sm);
+  }
+  .table-wrap > table:not(.month):not(.lgtable) :is(tbody, tfoot) td:first-child {
+    border-radius: var(--radius-sm) 0 0 var(--radius-sm);
+  }
+  .table-wrap > table:not(.month):not(.lgtable) :is(tbody, tfoot) td:last-child {
+    border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  }
+  /* trạng thái hàng giữ nguyên nghĩa — đè nền thẻ trắng */
+  .table-wrap > table tr.row:hover td {
+    background: var(--color-hover);
+  }
+  .table-wrap > table tr.row.selected td {
+    background: var(--color-selected);
+  }
+  .table-wrap > table tr.fixed td {
+    background: var(--color-warning-soft);
+  }
+  .table-wrap > table tr.da-tra td {
+    background: var(--color-success-soft);
+  }
+  .table-wrap > table tr.total td {
+    background: var(--color-surface-sunken);
+    border-top: 0;
+  }
+  /* Tương phản cao: không bóng → viền thay bóng (§2.1c). Thẻ số/thẻ kỳ lấy lại viền đen
+     mà rule border-color: transparent ở trên vừa xoá. */
+  :root[data-contrast="high"] .stat,
+  :root[data-contrast="high"] .period-card {
+    border-color: var(--color-divider);
+  }
+  :root[data-contrast="high"] .table-wrap > table:not(.month):not(.lgtable) :is(tbody, tfoot) td {
+    border-top: 2px solid var(--color-divider);
+    border-bottom: 2px solid var(--color-divider);
+  }
+  :root[data-contrast="high"] .table-wrap > table:not(.month):not(.lgtable) :is(tbody, tfoot) td:first-child {
+    border-left: 2px solid var(--color-divider);
+  }
+  :root[data-contrast="high"] .table-wrap > table:not(.month):not(.lgtable) :is(tbody, tfoot) td:last-child {
+    border-right: 2px solid var(--color-divider);
+  }
+}
+
+/* C7 — nav-rail có icon màu theo nhóm như danh sách To Do */
+nav.rail button {
+  gap: var(--space-md);
+}
+nav.rail .ic {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+  font-size: 20px;
+}
+nav.rail .ic-blue {
+  color: var(--color-primary);
+}
+nav.rail .ic-teal {
+  color: var(--color-icon-teal);
+}
+nav.rail .ic-green {
+  color: var(--color-icon-green);
+}
+nav.rail .ic-muted {
+  color: var(--color-text-muted);
+}
+nav.rail .lbl {
+  flex: 1;
+  min-width: 0;
+}
+nav.rail .badge {
+  margin-left: 0;
+}
+
+@media (max-width: 1024px) {
+  nav.rail {
+    width: 64px;
+    padding: var(--space-sm);
+  }
+  nav.rail .lbl,
+  nav.rail .rail-group-label {
+    display: none;
+  }
+  nav.rail button,
+  nav.rail button.rail-sub {
+    justify-content: center;
+    padding: var(--space-sm);
+  }
+  /* badge thu thành chấm ở góc trên-phải icon, số đọc qua title của nút */
+  nav.rail .badge {
+    position: absolute;
+    top: 6px;
+    right: 8px;
+    min-width: 10px;
+    height: 10px;
+    padding: 0;
+    font-size: 0;
   }
 }
