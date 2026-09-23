@@ -92,6 +92,9 @@ function MucNav({
       aria-current={dangChon}
       disabled={disabled}
       title={title}
+      // Rail thu cột icon (< 1024px) ẩn .lbl bằng display:none → tên truy cập chỉ còn số badge.
+      // aria-label giữ tên đúng ở mọi độ rộng (soi review pha P1 vòng 10).
+      aria-label={title}
       onClick={onClick}
     >
       <Icon className={`ic ic-${mau}`} filled={dangChon} aria-hidden />

@@ -75,6 +75,9 @@
 /* ---- "Theo Windows" (mặc định, không đặt data-theme) — theo prefers-color-scheme ---- */
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
+    --shadow-card: 0 0 0 1px var(--color-divider); /* vòng 10: bóng đen chìm trên nền tối → viền mảnh */
+    --color-icon-teal: #5cc8cc;
+    --color-icon-green: #6fd46f;
     --color-bg: #0f141b;
     --color-surface: #171e28;
     --color-surface-sunken: #131a23;
@@ -111,6 +114,9 @@
 }
 /* ---- Nền chọn tay: "Tối" ---- */
 :root[data-theme="dark"] {
+  --shadow-card: 0 0 0 1px var(--color-divider); /* vòng 10: bóng đen chìm trên nền tối → viền mảnh */
+  --color-icon-teal: #5cc8cc;
+  --color-icon-green: #6fd46f;
   --color-bg: #0f141b;
   --color-surface: #171e28;
   --color-surface-sunken: #131a23;
@@ -147,6 +153,8 @@
 
 /* ---- Tương phản cao: đen tuyền / trắng tuyền, viền dày gấp đôi ---- */
 :root[data-contrast="high"] {
+  --color-icon-teal: #000000;
+  --color-icon-green: #000000;
   --color-bg: #ffffff;
   --color-surface: #ffffff;
   --color-surface-sunken: #f0f0f0;
@@ -181,6 +189,8 @@
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"])[data-contrast="high"] {
+    --color-icon-teal: #ffffff;
+    --color-icon-green: #ffffff;
     --color-bg: #000000;
     --color-surface: #000000;
     --color-surface-sunken: #141414;
@@ -215,6 +225,8 @@
   }
 }
 :root[data-theme="dark"][data-contrast="high"] {
+  --color-icon-teal: #ffffff;
+  --color-icon-green: #ffffff;
   --color-bg: #000000;
   --color-surface: #000000;
   --color-surface-sunken: #141414;
@@ -2020,6 +2032,10 @@ td.lgk {
   .table-wrap > table:not(.month):not(.lgtable) {
     border-spacing: 0 var(--space-sm);
   }
+  /* .table-wrap cuộn ngang (overflow) cắt bóng thẻ ở mép trái/phải — chừa chỗ cho bóng */
+  .table-wrap:has(> table:not(.month):not(.lgtable)) {
+    padding: 0 var(--space-xs);
+  }
   .table-wrap > table:not(.month):not(.lgtable) thead th {
     background: var(--color-bg);
     border-bottom: 0;
@@ -2044,7 +2060,7 @@ td.lgk {
     border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
   }
   /* trạng thái hàng giữ nguyên nghĩa — đè nền thẻ trắng */
-  .table-wrap > table tr.row:hover td {
+  .table-wrap > table tr.row:not(.fixed):not(.selected):hover td {
     background: var(--color-hover);
   }
   .table-wrap > table tr.row.selected td {
@@ -2060,10 +2076,14 @@ td.lgk {
     background: var(--color-surface-sunken);
     border-top: 0;
   }
+  :root[data-contrast="high"] .table-wrap > table:not(.month):not(.lgtable) thead th {
+    border-bottom: 3px solid var(--color-divider-strong);
+    padding-bottom: var(--space-sm);
+  }
   /* Tương phản cao: không bóng → viền thay bóng (§2.1c). Thẻ số/thẻ kỳ lấy lại viền đen
      mà rule border-color: transparent ở trên vừa xoá. */
   :root[data-contrast="high"] .stat,
-  :root[data-contrast="high"] .period-card {
+  :root[data-contrast="high"] .period-card:not(.selected):not(.chua-luu) {
     border-color: var(--color-divider);
   }
   :root[data-contrast="high"] .table-wrap > table:not(.month):not(.lgtable) :is(tbody, tfoot) td {
@@ -2108,7 +2128,7 @@ nav.rail .badge {
   margin-left: 0;
 }
 
-@media (max-width: 1024px) {
+@media (max-width: 1023px) {
   nav.rail {
     width: 64px;
     padding: var(--space-sm);
