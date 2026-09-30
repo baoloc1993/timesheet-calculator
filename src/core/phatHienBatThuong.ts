@@ -11,13 +11,21 @@
 //     người dùng chốt 2026-09-01 (back-test pha E). Thay luật cũ "1 cặp > 6.5h phủ trưa →
 //     vàng + ép OT=0" (BH-1) và "S>4 trên 1 cặp → ép OT=0".
 //  5. Không chấm gì cả ngày → KHÔNG cảnh báo (nghỉ thật): Q=R=S=0, mức = none.
+//
+// Vòng 10 pha E:
+//  · Đọc mốc ở CẢ 6 cột máy — máy hay đẩy lần chấm ra về muộn sang cột cặp 3, ngày đủ 4 lần
+//    chấm từng bị coi là "thiếu 1 mốc". Tổng đúng 4 mốc → hai cặp bình thường, không ép OT.
+//  · Ngày 3 mốc: gán từng mốc vào khe (vào sáng / ra sáng / vào chiều / ra chiều) gần GIỜ QUEN
+//    của chính người đó nhất (trung vị các ngày đủ 4 mốc trong kỳ), thay luật cũ "khoảng hở dài
+//    nhất = nghỉ trưa" — ca sáng ~5 tiếng luôn dài hơn nghỉ trưa nên luật cũ đoán sai.
+//  · Mốc thiếu điền từ NGÀY GẦN NHẤT CÓ ĐỦ 4 MỐC THÔ (trước rồi sau), không lấy kết quả ngày
+//    trước — ngày trước chỉ một cặp phủ trưa thì "ra sáng" của nó thật ra là giờ ra chiều.
 
 import type { DongNgayMay, KetQuaNgay } from './types'
 import { phutTrongNgay, gioChuoi } from './time'
 import { tinhQ, tinhR, tinhS } from './tinhQRS'
 
 const MAC_DINH = [7 * 60, 11 * 60 + 30, 13 * 60 + 30, 17 * 60 + 30] // vào1 ra1 vào2 ra2
-const KHE_TRUA_TOI_THIEU = 40 // phút
 const CA_QUA_DAI = 14 // giờ
 
 interface Moc {
@@ -25,16 +33,40 @@ interface Moc {
   khe: number // 0..3
 }
 
-function mocTuKetQua(kq: KetQuaNgay | undefined, khe: number): number | null {
-  if (!kq) return null
-  const cap = kq.capVaoRa[khe < 2 ? 0 : 1]
-  if (!cap) return null
-  return phutTrongNgay(khe % 2 === 0 ? cap.vao : cap.ra)
+/** Mốc hợp lệ của một ngày theo THỨ TỰ CỘT (6 cột máy), bỏ mốc lạc (không lớn hơn mốc trước). */
+function mocHopLe(nguonGoc: (string | null)[]): { moc: Moc[]; coLon: boolean } {
+  const moc: Moc[] = []
+  let coLon = false
+  for (let k = 0; k < 6; k++) {
+    const p = phutTrongNgay(nguonGoc[k])
+    if (p == null) continue
+    if (moc.length && p <= moc[moc.length - 1].phut) coLon = true
+    else moc.push({ phut: p, khe: k })
+  }
+  return { moc, coLon }
 }
 
-function mocTuThoRaw(dong: DongNgayMay | undefined, khe: number): number | null {
-  if (!dong) return null
-  return phutTrongNgay(dong.moc[khe])
+function trungVi(xs: number[]): number {
+  const a = [...xs].sort((x, y) => x - y)
+  const m = Math.floor(a.length / 2)
+  return a.length % 2 ? a[m] : Math.round((a[m - 1] + a[m]) / 2)
+}
+
+/** Giờ quen của một người cho 4 khe = trung vị các ngày đủ đúng 4 mốc; thiếu dữ liệu → mặc định. */
+function gioQuen(ngayDu4: number[][]): number[] {
+  if (ngayDu4.length === 0) return MAC_DINH
+  return [0, 1, 2, 3].map((k) => trungVi(ngayDu4.map((m) => m[k])))
+}
+
+/** Ngày 3 mốc: bỏ trống khe nào thì tổng lệch so với giờ quen nhỏ nhất. */
+function khe3Moc(phut: number[], quen: number[]): { khe: number[]; thieu: number } {
+  let tot = { khe: [0, 1, 2], thieu: 3, lech: Infinity }
+  for (let thieu = 0; thieu < 4; thieu++) {
+    const khe = [0, 1, 2, 3].filter((k) => k !== thieu)
+    const lech = khe.reduce((t, k, j) => t + Math.abs(phut[j] - quen[k]), 0)
+    if (lech < tot.lech) tot = { khe, thieu, lech }
+  }
+  return { khe: tot.khe, thieu: tot.thieu }
 }
 
 export function tinhKetQuaNhanVien(
@@ -42,6 +74,9 @@ export function tinhKetQuaNhanVien(
   nguongGioChuanNgay: number
 ): KetQuaNgay[] {
   const ketQua: KetQuaNgay[] = []
+  // Mốc thô đã lọc của cả kỳ — dùng để điền mốc thiếu và tính giờ quen (vòng 10 pha E).
+  const mocKy = dongNgay.map((d) => mocHopLe(d.moc.slice(0, 6)).moc.map((m) => m.phut))
+  const quen = gioQuen(mocKy.filter((m) => m.length === 4))
 
   for (let i = 0; i < dongNgay.length; i++) {
     const dong = dongNgay[i]
@@ -49,38 +84,28 @@ export function tinhKetQuaNhanVien(
     const ghiChu: string[] = []
     let epOtVe0 = false
 
+    // Điền khe thiếu = giờ khe đó của ngày gần nhất có đủ 4 mốc thô (trước trước, rồi sau),
+    // không có thì giờ quen của người đó.
     const dienKhe = (khe: number): number => {
-      const truoc = mocTuKetQua(ketQua[i - 1], khe)
-      if (truoc != null) return truoc
-      const sau = mocTuThoRaw(dongNgay[i + 1], khe)
-      if (sau != null) return sau
-      return MAC_DINH[khe]
-    }
-
-    const co3 = phutTrongNgay(nguonGoc[4]) != null || phutTrongNgay(nguonGoc[5]) != null
-    let moc: Moc[] = []
-    for (let k = 0; k < 4; k++) {
-      const p = phutTrongNgay(nguonGoc[k])
-      if (p != null) moc.push({ phut: p, khe: k })
-    }
-
-    // 2. Bỏ mốc lạc: duyệt theo THỨ TỰ KHE, mốc nào không lớn hơn mốc hợp lệ gần nhất là lạc.
-    const giuLai: Moc[] = []
-    let maxHopLe = -1
-    let coLon = false
-    for (const m of moc) {
-      if (m.phut > maxHopLe) {
-        giuLai.push(m)
-        maxHopLe = m.phut
-      } else {
-        coLon = true
+      for (let d = 1; d < dongNgay.length; d++) {
+        for (const j of [i - d, i + d]) if (mocKy[j]?.length === 4) return mocKy[j][khe]
       }
+      return quen[khe]
     }
-    if (coLon) {
-      moc = giuLai
+
+    // 2. Bỏ mốc lạc (cả 6 cột, theo thứ tự cột) — mốc nào không lớn hơn mốc hợp lệ trước là lạc.
+    const hl = mocHopLe(nguonGoc)
+    let moc = hl.moc
+    if (hl.coLon) {
       epOtVe0 = true
       ghiChu.push('bỏ mốc giờ lộn qua ngày, ép OT = 0')
     }
+    // Lần chấm thứ 5–6 thật (cặp 3) → vẫn dựng 2 cặp từ 4 mốc đầu, nhắc kiểm tay như cũ.
+    const co3 = moc.length > 4
+    if (co3) moc = moc.slice(0, 4)
+    // Máy đẩy mốc sang cột cặp 3 nhưng tổng chỉ ≤ 4 → gộp vào, ghi rõ để người dùng hiểu.
+    const gopCot3 = !co3 && moc.some((m) => m.khe >= 4)
+    if (gopCot3) ghiChu.push('máy ghi một lần chấm ở cột cặp 3 — đã gộp vào giờ trong ngày')
 
     const n = moc.length
 
@@ -162,48 +187,18 @@ export function tinhKetQuaNhanVien(
       ]
       ghiChu.push('mốc chấm không dựng được cặp vào/ra, điền theo ngày kề, ép OT = 0')
     } else {
-      // n === 3 → coi như thiếu một mốc trong hai cặp
-      const m = moc
+      // n === 3 → thiếu đúng một khe; khe nào do giờ quen của người đó quyết (vòng 10 pha E).
       epOtVe0 = true
-      let kheMax = 1
-      let doMax = -1
-      for (let k = 1; k < 3; k++) {
-        const d = m[k].phut - m[k - 1].phut
-        if (d > doMax) {
-          doMax = d
-          kheMax = k
-        }
-      }
-      const sang = m.slice(0, kheMax)
-      const chieu = m.slice(kheMax)
-      if (doMax < KHE_TRUA_TOI_THIEU || sang.length === 0 || chieu.length === 0) {
-        cap = [
-          { vao: m[0].phut, ra: m[1].phut },
-          { vao: dienKhe(2), ra: m[2].phut }
-        ]
-        ghiChu.push('3 mốc không rõ nghỉ trưa, dựng lại theo ngày kề, ép OT = 0')
-      } else if (sang.length === 1) {
-        cap = [
-          { vao: sang[0].phut, ra: dienKhe(1) },
-          { vao: chieu[0].phut, ra: chieu.length > 1 ? chieu[1].phut : dienKhe(3) }
-        ]
-        ghiChu.push('thiếu giờ ra buổi sáng, điền theo ngày kề, ép OT = 0')
-      } else {
-        const a0 = chieu[0].phut
-        if (a0 < 15 * 60) {
-          cap = [
-            { vao: sang[0].phut, ra: sang[1].phut },
-            { vao: a0, ra: dienKhe(3) }
-          ]
-          ghiChu.push('thiếu giờ ra buổi chiều, điền theo ngày kề, ép OT = 0')
-        } else {
-          cap = [
-            { vao: sang[0].phut, ra: sang[1].phut },
-            { vao: dienKhe(2), ra: a0 }
-          ]
-          ghiChu.push('thiếu giờ vào buổi chiều, điền theo ngày kề, ép OT = 0')
-        }
-      }
+      const { khe, thieu } = khe3Moc(moc.map((m) => m.phut), quen)
+      const gio = [0, 0, 0, 0]
+      khe.forEach((k, j) => (gio[k] = moc[j].phut))
+      gio[thieu] = dienKhe(thieu)
+      cap = [
+        { vao: gio[0], ra: gio[1] },
+        { vao: gio[2], ra: gio[3] }
+      ]
+      const TEN = ['thiếu giờ vào buổi sáng', 'thiếu giờ ra buổi sáng', 'thiếu giờ vào buổi chiều', 'thiếu giờ ra buổi chiều']
+      ghiChu.push(`${TEN[thieu]}, điền theo ngày gần nhất chấm đủ, ép OT = 0`)
     }
 
     const capChuoi = cap.map((c) => ({ vao: gioChuoi(c.vao), ra: gioChuoi(c.ra) }))

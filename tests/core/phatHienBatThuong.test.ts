@@ -137,3 +137,69 @@ describe('phát hiện + tự sửa dòng bất thường', () => {
     }
   })
 })
+
+// Vòng 10 pha E — phản hồi dùng thật 2026-09-30 (người dùng, kỳ 09/2026): ngày 3 mốc bị đoán sai
+// khe thiếu (luật cũ "khoảng hở dài nhất = nghỉ trưa") + điền mốc lấy nhầm giờ ra chiều của ngày
+// chỉ một cặp. Ngày kề đủ 4 mốc để giờ quen/điền có căn cứ.
+describe('vòng 10 pha E — ngày 3 mốc đoán đúng khe thiếu theo giờ quen', () => {
+  const du4 = (ngay: string) => dong(ngay, ['07:00', '11:30', '13:30', '17:45'])
+  const tinh = (moc: (string | null)[], nguong = 10.6) =>
+    tinhKetQuaNhanVien([du4('2026-09-01'), dong('2026-09-02', moc), du4('2026-09-03')], nguong)[1]
+
+  it.each([
+    [['06:51', '11:39', '13:36'], 'thiếu giờ ra buổi chiều', [{ vao: '06:51', ra: '11:39' }, { vao: '13:36', ra: '17:45' }]],
+    [['06:58', '10:58', '13:41'], 'thiếu giờ ra buổi chiều', [{ vao: '06:58', ra: '10:58' }, { vao: '13:41', ra: '17:45' }]],
+    [['07:12', '12:47', '14:00'], 'thiếu giờ ra buổi chiều', [{ vao: '07:12', ra: '12:47' }, { vao: '14:00', ra: '17:45' }]],
+    [['07:02', '13:37', '17:32'], 'thiếu giờ ra buổi sáng', [{ vao: '07:02', ra: '11:30' }, { vao: '13:37', ra: '17:32' }]],
+    [['11:36', '13:29', '17:40'], 'thiếu giờ vào buổi sáng', [{ vao: '07:00', ra: '11:36' }, { vao: '13:29', ra: '17:40' }]]
+  ])('%j → %s', (moc, ghiChu, cap) => {
+    const r = tinh(moc as string[])
+    expect(r.ghiChuSua).toContain(ghiChu)
+    expect(r.capVaoRa).toEqual(cap)
+    expect(r.ngayCongR).toBe(1)
+    expect(r.gioOtS).toBe(0) // thiếu một lần chấm thật → vẫn ép OT = 0
+  })
+
+  it('điền mốc KHÔNG lấy giờ ra chiều của ngày trước chỉ chấm một cặp (ca 17:48)', () => {
+    const r = tinhKetQuaNhanVien(
+      [
+        du4('2026-09-01'),
+        dong('2026-09-02', ['07:05', '17:48']), // một cặp phủ trưa
+        dong('2026-09-03', ['07:02', '13:37', '17:32'])
+      ],
+      10.6
+    )[2]
+    expect(r.capVaoRa[0]).toEqual({ vao: '07:02', ra: '11:30' })
+    expect(r.ngayCongR).toBe(1)
+  })
+
+  it('Dũng 07/2026: hai ngày 3 mốc liền nhau không điền giờ vào chiều = giờ ra 18:02 của nhau', () => {
+    const r = tinhKetQuaNhanVien(
+      [
+        du4('2026-07-08'),
+        dong('2026-07-09', ['07:08', '11:32', '17:31']),
+        dong('2026-07-10', ['07:05', '11:34', '18:02'])
+      ],
+      10.6
+    )
+    expect(r[1].capVaoRa[1]).toEqual({ vao: '13:30', ra: '17:31' })
+    expect(r[2].capVaoRa[1]).toEqual({ vao: '13:30', ra: '18:02' })
+    expect(r[1].ngayCongR).toBe(1)
+    expect(r[2].ngayCongR).toBe(1)
+  })
+
+  it('máy đẩy giờ ra về sang cột cặp 3 (tổng 4 mốc) → 2 cặp bình thường, OT tính như thường', () => {
+    const r = tinhKetQuaNhanVien([dong('2026-09-02', ['06:51', '11:39', '13:36', null, null, '19:00'])], 8.1)[0]
+    expect(r.capVaoRa).toEqual([{ vao: '06:51', ra: '11:39' }, { vao: '13:36', ra: '19:00' }])
+    expect(r.otBiEp).toBe(false)
+    expect(r.gioOtS).toBeGreaterThan(0)
+    expect(r.ghiChuSua).toContain('cột cặp 3')
+    expect(r.ghiChuSua).not.toContain('kiểm tra tay')
+  })
+
+  it('lần chấm thứ 5 thật (cặp 3) → vẫn nhắc kiểm tay như cũ', () => {
+    const r = tinhKetQuaNhanVien([dong('2026-08-10', ['07:06', '10:49', '13:19', '15:13', null, '15:45'])], 8.6)[0]
+    expect(r.capVaoRa).toEqual([{ vao: '07:06', ra: '10:49' }, { vao: '13:19', ra: '15:13' }])
+    expect(r.ghiChuSua).toContain('có dữ liệu cặp 3 — kiểm tra tay')
+  })
+})

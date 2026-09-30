@@ -153,6 +153,35 @@ describe('tinhLaiMotDong — sửa tay ở màn S3', () => {
   })
 })
 
+describe('tinhLaiMotDong — vòng 10 pha E: dời giờ máy sang đúng khe vẫn gỡ được cờ ép OT', () => {
+  // Phản hồi dùng thật 2026-09-30: "đang ko sửa dc giờ OT nữa". Ngày 11:36 · 13:29 · 17:40 máy
+  // ghi ở cột 1–3; người dùng dời về đúng khe (thêm vào sáng 07:00) — 17:40 nằm ở ô "ra chiều"
+  // nhưng máy ghi ở cột 3, luật cũ so đúng vị trí nên coi là mốc công cụ → OT kẹt 0.
+  const dong3: KetQuaNgay = {
+    ngay: '2026-09-12',
+    thu: '',
+    capVaoRa: [{ vao: '11:36', ra: '13:29' }, { vao: '13:30', ra: '17:40' }],
+    nguonGoc: ['11:36', '13:29', '17:40', null, null, null],
+    gioLamQ: 6,
+    ngayCongR: 1,
+    gioOtS: 0,
+    daSua: true,
+    otBiEp: true,
+    ghiChuSua: 'thiếu giờ vào buổi chiều, điền theo ngày kề, ép OT = 0',
+    mucDoCanhBao: 'vang'
+  }
+  it('3 giờ máy + 1 giờ người dùng tự gõ → đủ 4 mốc thật, OT tính lại', () => {
+    const r = tinhLaiMotDong(dong3, [{ vao: '06:30', ra: '11:36' }, { vao: '13:29', ra: '17:40' }], 8.1)
+    expect(r.otBiEp).toBe(false)
+    expect(r.gioLamQ).toBeCloseTo(9.2833, 3)
+    expect(r.gioOtS).toBeGreaterThan(1)
+  })
+  it('để nguyên ô công cụ điền hộ (không phải giờ máy, không gõ lại) → vẫn ép OT = 0', () => {
+    const r = tinhLaiMotDong(dong3, [{ vao: '11:36', ra: '13:29' }, { vao: '13:30', ra: '17:40' }], 8.1)
+    expect(r.gioOtS).toBe(0)
+  })
+})
+
 describe('suaNgayCongTrucTiep — vòng 9 AC-2, sửa thẳng "Ngày công" không qua giờ', () => {
   const dongDuMoc: KetQuaNgay = {
     ngay: '2026-08-05',

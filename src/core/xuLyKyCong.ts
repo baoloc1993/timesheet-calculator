@@ -105,13 +105,16 @@ export function tinhLaiMotDong(
     dong.capVaoRa[1]?.ra ?? null
   ]
 
-  // Một mốc là "thật" (người dùng làm chủ) khi: có giá trị, VÀ (máy gốc từng có mốc đó,
-  // HOẶC người dùng vừa gõ khác giá trị công cụ điền hộ). Để trống ô công cụ điền = vẫn
-  // là mốc công cụ, chưa thật.
+  // Một mốc là "thật" (người dùng làm chủ) khi: có giá trị, VÀ (máy có ghi đúng giờ đó ở BẤT
+  // KỲ cột nào trong ngày, HOẶC người dùng vừa gõ khác giá trị công cụ điền hộ). Để trống ô
+  // công cụ điền = vẫn là mốc công cụ, chưa thật.
+  // Vòng 10 pha E: trước so theo ĐÚNG VỊ TRÍ cột — người dùng dời giờ máy sang khe đúng (VD
+  // 17:40 máy ghi ở cột 3 → ô "ra chiều") vẫn bị coi là mốc công cụ, OT kẹt 0 không gỡ được.
+  const mocMay = new Set(dong.nguonGoc.map(phutTrongNgay).filter((p): p is number => p != null))
   const mocThat = (k: number): boolean => {
     const moi = phutTrongNgay(phang[k])
     if (moi == null) return false
-    if (phutTrongNgay(dong.nguonGoc[k]) != null) return true
+    if (mocMay.has(moi)) return true
     return moi !== phutTrongNgay(toolPhang[k])
   }
   const du4MocThat = cap.length === 2 && [0, 1, 2, 3].every(mocThat)
