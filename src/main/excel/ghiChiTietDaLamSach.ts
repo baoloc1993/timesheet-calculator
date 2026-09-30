@@ -3,7 +3,7 @@
 
 import ExcelJS from 'exceljs'
 import type { TongHopNhanVien, KetQuaNgay } from '../../core/types'
-import { LoiDocFileMay } from './docFileMay'
+import { LoiDocFileMay, sheetKhuonMay } from './docFileMay'
 import { phutTrongNgay } from '../../core/time'
 import { chuanHoaMa } from '../../core/ma'
 import { ghiFileAtomic } from './ghiAtomic'
@@ -38,7 +38,7 @@ const so2 = (n: number): number => Math.round(n * 100) / 100
 
 /** Tên sheet hợp lệ Excel (bỏ ký tự cấm, ≤31 ký tự), không trùng tên đã dùng. */
 function tenSheet(goc: string, daDung: Set<string>): string {
-  const sach = (goc.replace(/[[\]:*?/\\]/g, ' ').replace(/\s+/g, ' ').trim() || 'Nhân viên').slice(0, 31)
+  const sach = (goc.replace(/[[\]:*?/\\']/g, ' ').replace(/\s+/g, ' ').trim() || 'Nhân viên').slice(0, 31)
   let ten = sach
   for (let i = 2; daDung.has(ten.toLowerCase()); i++) {
     const hau = ` (${i})`
@@ -72,6 +72,14 @@ function dongTieuDe(ws: ExcelJS.Worksheet, tieuDe: string, phu: string): void {
  * 2026-09-30). Số lấy nguyên từ `KetQuaNgay` đã tính → khớp màn S7/S8.
  */
 function themSheetDeDoc(wb: ExcelJS.Workbook, khuonMay: ExcelJS.Worksheet, tongHop: TongHopNhanVien[]): void {
+  // Nguồn là chính file chi tiết đã xuất (nạp lại bằng "Chọn file") → gỡ sheet vòng 11 cũ trước khi
+  // dựng lại, không thì exceljs ném "Worksheet name already exists" và xuất hỏng mãi (review P1).
+  // Chỉ gỡ sheet do vòng 11 sinh ra: tên "Tổng hợp" hoặc có liên kết "← Tổng hợp" ở H2.
+  for (const w of [...wb.worksheets]) {
+    if (w === khuonMay) continue
+    const laSheetCu = w.name === TEN_TONG_HOP || String(w.getCell(2, 8).text ?? '') === '← Tổng hợp'
+    if (laSheetCu) wb.removeWorksheet(w.id)
+  }
   const ngayAll = tongHop.flatMap((t) => t.ketQuaNgay.map((k) => k.ngay)).sort()
   const tu = ngayAll[0]
   const den = ngayAll[ngayAll.length - 1]
@@ -145,7 +153,7 @@ function themSheetDeDoc(wb: ExcelJS.Workbook, khuonMay: ExcelJS.Worksheet, tongH
       t.getCell(k).border = { top: { style: 'thin' } }
     }
     t.commit()
-    for (const k of [7, 9]) ws.getColumn(k).numFmt = '0.00'
+    for (const k of [7, 8, 9]) ws.getColumn(k).numFmt = '0.00'
   })
 
   // Thứ tự: Tổng hợp → từng người → khuôn máy (cuối). exceljs sắp sheet theo orderNo.
@@ -215,7 +223,7 @@ export async function ghiChiTietDaLamSach(
 ): Promise<{ duongDanRa: string; soDongToVang: number }> {
   const wb = new ExcelJS.Workbook()
   await wb.xlsx.readFile(fileMay)
-  const ws = wb.getWorksheet('Chi Tiet') || wb.worksheets[0]
+  const ws = sheetKhuonMay(wb)
   if (!ws) throw new LoiDocFileMay('KHONG_PHAI_FILE_MAY', 'File máy không đọc được.')
 
   const theoMa = new Map<string, Map<string, KetQuaNgay>>()

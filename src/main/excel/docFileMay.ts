@@ -86,6 +86,22 @@ function oSo(v: ExcelJS.CellValue): number | null {
   return null
 }
 
+/**
+ * Sheet dữ liệu khuôn máy của một workbook: tên "Chi Tiet", không có thì sheet đầu tiên có dòng
+ * "Mã nhân viên:", cuối cùng mới tới sheet đầu. Dùng chung cho đọc (`docFileMay`) và ghi
+ * (`ghiChiTietDaLamSach`) — hai đầu phải chọn cùng một sheet.
+ */
+export function sheetKhuonMay(wb: ExcelJS.Workbook): ExcelJS.Worksheet | undefined {
+  const coKhoi = (w: ExcelJS.Worksheet): boolean => {
+    let co = false
+    w.eachRow({ includeEmpty: false }, (row) => {
+      if (!co && /Mã nhân viên:/.test(String(row.getCell(1).text ?? ''))) co = true
+    })
+    return co
+  }
+  return wb.getWorksheet('Chi Tiet') || wb.worksheets.find(coKhoi) || wb.worksheets[0]
+}
+
 export async function docFileMay(duongDan: string): Promise<FileMayDaDoc> {
   const wb = new ExcelJS.Workbook()
   try {
@@ -100,14 +116,7 @@ export async function docFileMay(duongDan: string): Promise<FileMayDaDoc> {
 
   // Vòng 11: file chi tiết xuất ra có sheet "Tổng hợp" đứng đầu — không có sheet "Chi Tiet" thì
   // chọn sheet đầu tiên có dòng "Mã nhân viên:" (khuôn máy), không lấy mù sheet đầu.
-  const coKhoi = (w: ExcelJS.Worksheet): boolean => {
-    let co = false
-    w.eachRow({ includeEmpty: false }, (row) => {
-      if (!co && /Mã nhân viên:/.test(String(row.getCell(1).text ?? ''))) co = true
-    })
-    return co
-  }
-  const ws = wb.getWorksheet('Chi Tiet') || wb.worksheets.find(coKhoi) || wb.worksheets[0]
+  const ws = sheetKhuonMay(wb)
   if (!ws) {
     throw new LoiDocFileMay('KHONG_PHAI_FILE_MAY', 'Không tìm thấy dữ liệu chấm công trong file.')
   }

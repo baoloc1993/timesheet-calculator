@@ -80,6 +80,17 @@ suite('vòng 11 — file chi tiết công: Tổng hợp + mỗi nhân viên mộ
     })
   }
 
+  it('[file] xuất → nạp lại chính file đó → xuất LẦN NỮA vẫn được, không nhân đôi sheet (review P1)', async () => {
+    const nv: NhanVien[] = JSON.parse(readFileSync(CONFIG, 'utf8')).nhanVien
+    const lai = xuLyKyCong(await docFileMay(out.file), nv)
+    const lan2 = join(dir, 'lan-2.xlsx')
+    await ghiChiTietDaLamSach(out.file, lan2, lai.tongHop)
+    const ten = (await doc(lan2)).worksheets.map((w) => w.name)
+    expect(ten[0]).toBe('Tổng hợp')
+    expect(ten[ten.length - 1]).toBe('Chi Tiet')
+    expect(ten.length).toBe(kq.tongHop.length + 2)
+  })
+
   it('[file] sheet "Chi Tiet" giữ nguyên số ô/giá trị Q-R-S như bản trước vòng 11 (không đụng nội dung)', async () => {
     const goc = (await doc(FILE_MAY)).getWorksheet('Chi Tiet')!
     const moi = (await doc(out.file)).getWorksheet('Chi Tiet')!
