@@ -10,7 +10,7 @@ import type {
 } from './types'
 import { tinhKetQuaNhanVien } from './phatHienBatThuong'
 import { tinhQ, tinhR, tinhS } from './tinhQRS'
-import { phutTrongNgay } from './time'
+import { phutTrongNgay, gioChuoi } from './time'
 import { chuanHoaMa } from './ma'
 import { tinhThanhTien } from './tinhThanhTien'
 
@@ -123,7 +123,12 @@ export function tinhLaiMotDong(
   const capPhut = cap.map((c) => ({ v: phutTrongNgay(c.vao), r: phutTrongNgay(c.ra) }))
   const caVoLy = capPhut.some((c) => c.v != null && c.r != null && c.r <= c.v)
 
-  const co3 = phutTrongNgay(dong.nguonGoc[4]) != null || phutTrongNgay(dong.nguonGoc[5]) != null
+  // Vòng 10 pha E: máy ghi > 4 lần chấm thì luôn dư ít nhất 1 giờ ngoài 4 ô — chỉ nhắc khi người
+  // dùng CHƯA đổi ô nào so với công cụ dựng; đã sửa 4 ô ngày đó = đã kiểm, thôi nhắc.
+  const oChot = new Set(phang.map(phutTrongNgay).filter((p): p is number => p != null))
+  const conSot = [...mocMay].filter((p) => !oChot.has(p))
+  const chuaDoi = [0, 1, 2, 3].every((k) => phutTrongNgay(phang[k]) === phutTrongNgay(toolPhang[k]))
+  const co3 = mocMay.size > 4 && conSot.length > 0 && chuaDoi
   const otBiEp = (dong.otBiEp && !du4MocThat) || caVoLy
 
   const Q = tinhQ(cap)
@@ -143,7 +148,7 @@ export function tinhLaiMotDong(
   if (caVoLy) ghiChu.push('ca vô lý (ra ≤ vào), ép OT = 0 — kiểm lại giờ')
   else if (otBiEp) ghiChu.push('vẫn ép OT = 0 (chưa đủ 4 mốc thật)')
   else if (Q > 14) ghiChu.push(`ca dài bất thường (${Q.toFixed(1)}h), không tính OT`)
-  if (co3) ghiChu.push('có dữ liệu cặp 3 — kiểm tra tay')
+  if (co3) ghiChu.push(`máy còn lần chấm ${conSot.map(gioChuoi).join(', ')} chưa đưa vào giờ làm — kiểm lại`)
 
   return {
     ...dong,

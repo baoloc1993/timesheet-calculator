@@ -194,12 +194,12 @@ describe('vòng 10 pha E — ngày 3 mốc đoán đúng khe thiếu theo giờ 
     expect(r.otBiEp).toBe(false)
     expect(r.gioOtS).toBeGreaterThan(0)
     expect(r.ghiChuSua).toContain('cột cặp 3')
-    expect(r.ghiChuSua).not.toContain('kiểm tra tay')
+    expect(r.ghiChuSua).not.toContain('máy ghi thêm')
   })
 
   it('lần chấm thứ 5 thật (cặp 3) → vẫn nhắc kiểm tay như cũ', () => {
     const r = tinhKetQuaNhanVien([dong('2026-08-10', ['07:06', '10:49', '13:19', '15:13', null, '15:45'])], 8.6)[0]
     expect(r.capVaoRa).toEqual([{ vao: '07:06', ra: '10:49' }, { vao: '13:19', ra: '15:13' }])
-    expect(r.ghiChuSua).toContain('có dữ liệu cặp 3 — kiểm tra tay')
+    expect(r.ghiChuSua).toContain('máy ghi thêm lần chấm 15:45 (cặp 3)')
   })
 })

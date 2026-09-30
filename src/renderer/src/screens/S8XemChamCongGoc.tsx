@@ -8,7 +8,11 @@ const so2 = (n: number) => Math.round(n * 100) / 100
 
 /** 4 khe cố định "HH:MM"/"–" (vào1 · ra1 · vào2 · ra2) — căn theo khe để thấy khe nào lệch. */
 function khe4(moc: (string | null)[]): string {
-  return [0, 1, 2, 3].map((k) => moc[k] || '–').join('  ·  ')
+  const bon = [0, 1, 2, 3].map((k) => moc[k] || '–').join('  ·  ')
+  // Vòng 10 pha E: hiện luôn lần chấm thứ 5–6 (cột cặp 3 của máy) — trước chỉ hiện 4 cột đầu,
+  // ghi chú bảo "kiểm tra tay" mà người dùng không thấy giờ nào để kiểm.
+  const cap3 = [moc[4], moc[5]].filter(Boolean)
+  return cap3.length ? `${bon}  ·  cặp 3: ${cap3.join(' · ')}` : bon
 }
 
 function ghiChu(kq: KetQuaNgay): string {

@@ -176,6 +176,18 @@ describe('tinhLaiMotDong — vòng 10 pha E: dời giờ máy sang đúng khe v�
     expect(r.gioLamQ).toBeCloseTo(9.2833, 3)
     expect(r.gioOtS).toBeGreaterThan(1)
   })
+  it('máy chấm 5 lần: còn giờ cặp 3 chưa đưa vào ô → nhắc; đưa vào ô ra chiều → thôi nhắc', () => {
+    const d5: KetQuaNgay = {
+      ...dong3,
+      capVaoRa: [{ vao: '07:06', ra: '10:49' }, { vao: '13:19', ra: '15:13' }],
+      nguonGoc: ['07:06', '10:49', '13:19', '15:13', null, '15:45'],
+      otBiEp: false
+    }
+    const giuNguyen = tinhLaiMotDong(d5, [{ vao: '07:06', ra: '10:49' }, { vao: '13:19', ra: '15:13' }], 8.6)
+    expect(giuNguyen.ghiChuSua).toContain('máy còn lần chấm 15:45')
+    const daDua = tinhLaiMotDong(d5, [{ vao: '07:06', ra: '10:49' }, { vao: '13:19', ra: '15:45' }], 8.6)
+    expect(daDua.ghiChuSua).not.toContain('máy còn lần chấm')
+  })
   it('để nguyên ô công cụ điền hộ (không phải giờ máy, không gõ lại) → vẫn ép OT = 0', () => {
     const r = tinhLaiMotDong(dong3, [{ vao: '11:36', ra: '13:29' }, { vao: '13:30', ra: '17:40' }], 8.1)
     expect(r.gioOtS).toBe(0)

@@ -213,7 +213,11 @@ export function tinhKetQuaNhanVien(
     // (Luật cũ 4a "một cặp liền > 6.5h phủ trưa → vàng" và 4b "S>4 trên một cặp → ép OT=0"
     //  đã bỏ — dòng chỉ một cặp vào/ra nay xử ở nhánh n===2 phía trên: nửa công, không cảnh báo.)
 
-    if (co3) ghiChu.push('có dữ liệu cặp 3 — kiểm tra tay')
+    if (co3)
+      ghiChu.push(
+        `máy ghi thêm lần chấm ${hl.moc.slice(4).map((m) => gioChuoi(m.phut)).join(', ')} (cặp 3) — chưa tính vào giờ làm; ` +
+          'nếu là giờ ra/vào thật thì sửa lại 4 ô giờ cho đúng'
+      )
 
     // đối chiếu mốc đã dựng với gốc
     const dungPhang = [
