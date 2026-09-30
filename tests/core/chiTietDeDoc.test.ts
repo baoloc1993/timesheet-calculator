@@ -91,6 +91,16 @@ suite('vòng 11 — file chi tiết công: Tổng hợp + mỗi nhân viên mộ
     expect(ten.length).toBe(kq.tongHop.length + 2)
   })
 
+  it('[may] tự SUM cột Giờ OT của sheet một người = dòng Tổng (không lệch do làm tròn từng ngày)', async () => {
+    const wb = await doc(out.may)
+    for (const th of kq.tongHop) {
+      const ws = wb.worksheets.find((w) => String(w.getCell(1, 1).value) === (th.tenBangLuong || th.tenMay))!
+      let sum = 0
+      for (let r = 5; r < 5 + th.ketQuaNgay.length; r++) sum += Number(ws.getCell(r, 9).value) || 0
+      expect(Math.round(sum * 100) / 100).toBeCloseTo(Number(ws.getCell(5 + th.ketQuaNgay.length, 9).value), 2)
+    }
+  })
+
   it('[file] sheet "Chi Tiet" giữ nguyên số ô/giá trị Q-R-S như bản trước vòng 11 (không đụng nội dung)', async () => {
     const goc = (await doc(FILE_MAY)).getWorksheet('Chi Tiet')!
     const moi = (await doc(out.file)).getWorksheet('Chi Tiet')!
@@ -109,15 +119,16 @@ describe('vòng 11 — tên sheet nhân viên hợp lệ Excel (ký tự cấm, 
     const f = join(mkdtempSync(join(tmpdir(), 'tsc-v11-ten-')), 'x.xlsx')
     await ghiChiTietTuMocCham(f, [
       mk('1', 'Cô A/B [tổ 1]'), mk('2', 'Cô A/B [tổ 1]'), mk('3', 'Tổng hợp'), mk('4', 'Chi Tiet'),
-      mk('5', 'Một cái tên rất rất dài vượt quá ba mươi mốt ký tự')
+      mk('5', 'Một cái tên rất rất dài vượt quá ba mươi mốt ký tự'), mk('6', 'History'), mk('7', 'tổng hợp')
     ] as never)
     const wb = new ExcelJS.Workbook()
     await wb.xlsx.readFile(f)
     const ten = wb.worksheets.map((w) => w.name)
     expect(ten[0]).toBe('Tổng hợp')
     expect(ten[ten.length - 1]).toBe('Chi Tiet')
-    expect(ten.length).toBe(7)
-    expect(new Set(ten.map((t) => t.toLowerCase())).size).toBe(7)
+    expect(ten.length).toBe(9)
+    expect(new Set(ten.map((t) => t.toLowerCase())).size).toBe(9)
+    expect(ten).not.toContain('History')
     for (const t of ten) {
       expect(t.length).toBeLessThanOrEqual(31)
       expect(t).not.toMatch(/[[\]:*?/\\]/)

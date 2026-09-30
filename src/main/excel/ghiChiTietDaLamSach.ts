@@ -40,7 +40,7 @@ const so2 = (n: number): number => Math.round(n * 100) / 100
 function tenSheet(goc: string, daDung: Set<string>): string {
   const sach = (goc.replace(/[[\]:*?/\\']/g, ' ').replace(/\s+/g, ' ').trim() || 'Nhân viên').slice(0, 31)
   let ten = sach
-  for (let i = 2; daDung.has(ten.toLowerCase()); i++) {
+  for (let i = 2; daDung.has(ten.toLowerCase()) || ten.toLowerCase() === 'history'; i++) {
     const hau = ` (${i})`
     ten = sach.slice(0, 31 - hau.length) + hau
   }
@@ -77,7 +77,8 @@ function themSheetDeDoc(wb: ExcelJS.Workbook, khuonMay: ExcelJS.Worksheet, tongH
   // Chỉ gỡ sheet do vòng 11 sinh ra: tên "Tổng hợp" hoặc có liên kết "← Tổng hợp" ở H2.
   for (const w of [...wb.worksheets]) {
     if (w === khuonMay) continue
-    const laSheetCu = w.name === TEN_TONG_HOP || String(w.getCell(2, 8).text ?? '') === '← Tổng hợp'
+    const laSheetCu =
+      w.name.toLowerCase() === TEN_TONG_HOP.toLowerCase() || String(w.getCell(2, 8).text ?? '') === '← Tổng hợp'
     if (laSheetCu) wb.removeWorksheet(w.id)
   }
   const ngayAll = tongHop.flatMap((t) => t.ketQuaNgay.map((k) => k.ngay)).sort()
@@ -85,10 +86,12 @@ function themSheetDeDoc(wb: ExcelJS.Workbook, khuonMay: ExcelJS.Worksheet, tongH
   const den = ngayAll[ngayAll.length - 1]
   const ky = tu ? `kỳ ${tu.slice(5, 7)}/${tu.slice(0, 4)} · ${dmy(tu)} – ${dmy(den)}` : 'kỳ công'
 
-  const daDung = new Set([TEN_TONG_HOP.toLowerCase(), khuonMay.name.toLowerCase()])
+  // exceljs kiểm trùng tên KHÔNG phân biệt hoa thường — tính cả mọi sheet còn lại của file nguồn
+  const daDung = new Set([TEN_TONG_HOP, ...wb.worksheets.map((w) => w.name)].map((t) => t.toLowerCase()))
   const ten = tongHop.map((th) => tenSheet(th.tenBangLuong || th.tenMay || th.maNhanVien, daDung))
 
   // Tổng hợp
+  const sheetThua = wb.worksheets.filter((w) => w !== khuonMay)
   const tong = wb.addWorksheet(TEN_TONG_HOP, { views: [{ state: 'frozen', ySplit: 4 }] })
   dongTieuDe(tong, 'BẢNG CHI TIẾT CÔNG', `${ky} · ${tongHop.length} nhân viên · bấm tên để xem từng ngày`)
   dongNhan(tong, 4, ['STT', 'Mã', 'Tên', 'Ngày công', 'Giờ OT', 'Số ngày đã sửa'])
@@ -134,9 +137,11 @@ function themSheetDeDoc(wb: ExcelJS.Workbook, khuonMay: ExcelJS.Worksheet, tongH
       moc.forEach((m, k) => (row.getCell(3 + k).value = m ?? ''))
       // Ngày nghỉ cả ngày (không chấm, không sửa) để trống số — cột toàn số 0 khó nhìn (vòng 11)
       const nghi = kq.capVaoRa.length === 0 && !kq.daSua
-      row.getCell(7).value = nghi ? '' : so2(kq.gioLamQ)
+      row.getCell(7).value = nghi ? '' : kq.gioLamQ
       row.getCell(8).value = nghi ? '' : kq.ngayCongR
-      row.getCell(9).value = nghi ? '' : so2(kq.gioOtS)
+      // số gốc, KHÔNG làm tròn từng ô — numFmt '0.00' lo hiển thị; làm tròn từng ngày rồi cộng lệch
+      // dòng Tổng 0,01–0,02 giờ khi người dùng tự SUM cột (bug-hunter P1 vòng 11)
+      row.getCell(9).value = nghi ? '' : kq.gioOtS
       row.getCell(10).value = ghiChuNgay(kq)
       if (kq.daSua) for (const k of [3, 4, 5, 6, 10]) row.getCell(k).fill = vang()
       else if (kq.capVaoRa.length === 0)
@@ -159,7 +164,10 @@ function themSheetDeDoc(wb: ExcelJS.Workbook, khuonMay: ExcelJS.Worksheet, tongH
   // Thứ tự: Tổng hợp → từng người → khuôn máy (cuối). exceljs sắp sheet theo orderNo.
   // (types của exceljs không khai `orderNo` dù runtime có — `workbook.worksheets` sắp theo nó)
   type CoThuTu = ExcelJS.Worksheet & { orderNo: number }
-  const conLai = wb.worksheets.filter((w) => w !== tong && w !== khuonMay) as CoThuTu[]
+  const conLai = [
+    ...wb.worksheets.filter((w) => w !== tong && w !== khuonMay && !sheetThua.includes(w)),
+    ...sheetThua
+  ] as CoThuTu[]
   ;(tong as CoThuTu).orderNo = 0
   conLai.forEach((w, i) => (w.orderNo = i + 1))
   ;(khuonMay as CoThuTu).orderNo = conLai.length + 1
