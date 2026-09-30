@@ -98,7 +98,16 @@ export async function docFileMay(duongDan: string): Promise<FileMayDaDoc> {
     throw new LoiDocFileMay('FILE_HONG', 'Không mở được file. File có thể hỏng hoặc không phải .xlsx.')
   }
 
-  const ws = wb.getWorksheet('Chi Tiet') || wb.worksheets[0]
+  // Vòng 11: file chi tiết xuất ra có sheet "Tổng hợp" đứng đầu — không có sheet "Chi Tiet" thì
+  // chọn sheet đầu tiên có dòng "Mã nhân viên:" (khuôn máy), không lấy mù sheet đầu.
+  const coKhoi = (w: ExcelJS.Worksheet): boolean => {
+    let co = false
+    w.eachRow({ includeEmpty: false }, (row) => {
+      if (!co && /Mã nhân viên:/.test(String(row.getCell(1).text ?? ''))) co = true
+    })
+    return co
+  }
+  const ws = wb.getWorksheet('Chi Tiet') || wb.worksheets.find(coKhoi) || wb.worksheets[0]
   if (!ws) {
     throw new LoiDocFileMay('KHONG_PHAI_FILE_MAY', 'Không tìm thấy dữ liệu chấm công trong file.')
   }

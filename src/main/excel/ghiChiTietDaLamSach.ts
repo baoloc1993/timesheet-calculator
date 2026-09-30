@@ -7,6 +7,7 @@ import { LoiDocFileMay } from './docFileMay'
 import { phutTrongNgay } from '../../core/time'
 import { chuanHoaMa } from '../../core/ma'
 import { ghiFileAtomic } from './ghiAtomic'
+import { ghiChuNgay } from '../../core/ghiChuNgay'
 
 // Fresh object mỗi lần — exceljs chia sẻ style theo tham chiếu, dùng chung 1 const
 // làm nền vàng lan sang cả hàng (cells cùng xf). Nguồn: dogfood 2026-09-01.
@@ -22,6 +23,139 @@ function toVang(cell: ExcelJS.Cell): void {
 }
 
 const RE_HEADER = /Mã nhân viên:\s*(\S+)\s+Tên nhân viên:/
+
+// ---- Vòng 11 — sheet "Tổng hợp" + mỗi nhân viên một sheet (phương án C) ----
+// Màu lấy cố định từ token sáng/thường (DESIGN-SYSTEM.md C21) — Excel không có nền tối.
+const MAU_NHAN = 'FFF3F2F1' // --color-bg
+const MAU_TIEU_DE = 'FF2564CF' // --color-primary
+const MAU_MO = 'FF6B6966' // --color-text-faint
+const TEN_TONG_HOP = 'Tổng hợp'
+const TEN_KHUON_MAY = 'Chi Tiet'
+
+const nen = (argb: string): ExcelJS.Fill => ({ type: 'pattern', pattern: 'solid', fgColor: { argb } })
+const dmy = (iso: string): string => `${iso.slice(8, 10)}/${iso.slice(5, 7)}`
+const so2 = (n: number): number => Math.round(n * 100) / 100
+
+/** Tên sheet hợp lệ Excel (bỏ ký tự cấm, ≤31 ký tự), không trùng tên đã dùng. */
+function tenSheet(goc: string, daDung: Set<string>): string {
+  const sach = (goc.replace(/[[\]:*?/\\]/g, ' ').replace(/\s+/g, ' ').trim() || 'Nhân viên').slice(0, 31)
+  let ten = sach
+  for (let i = 2; daDung.has(ten.toLowerCase()); i++) {
+    const hau = ` (${i})`
+    ten = sach.slice(0, 31 - hau.length) + hau
+  }
+  daDung.add(ten.toLowerCase())
+  return ten
+}
+
+function dongNhan(ws: ExcelJS.Worksheet, r: number, nhan: string[]): void {
+  const row = ws.getRow(r)
+  nhan.forEach((t, i) => {
+    const c = row.getCell(i + 1)
+    c.value = t
+    c.font = { bold: true }
+    c.fill = nen(MAU_NHAN)
+    c.alignment = { vertical: 'middle', wrapText: true }
+  })
+  row.commit()
+}
+
+function dongTieuDe(ws: ExcelJS.Worksheet, tieuDe: string, phu: string): void {
+  ws.getCell(1, 1).value = tieuDe
+  ws.getCell(1, 1).font = { bold: true, size: 14, color: { argb: MAU_TIEU_DE } }
+  ws.getCell(2, 1).value = phu
+}
+
+/**
+ * Thêm sheet "Tổng hợp" (đầu) + mỗi nhân viên một sheet; sheet khuôn máy dời cuối, KHÔNG đổi
+ * nội dung (`docFileMay` đọc lại theo tên "Chi Tiet"). Chỉ công/OT — không tiền (người dùng chốt
+ * 2026-09-30). Số lấy nguyên từ `KetQuaNgay` đã tính → khớp màn S7/S8.
+ */
+function themSheetDeDoc(wb: ExcelJS.Workbook, khuonMay: ExcelJS.Worksheet, tongHop: TongHopNhanVien[]): void {
+  const ngayAll = tongHop.flatMap((t) => t.ketQuaNgay.map((k) => k.ngay)).sort()
+  const tu = ngayAll[0]
+  const den = ngayAll[ngayAll.length - 1]
+  const ky = tu ? `kỳ ${tu.slice(5, 7)}/${tu.slice(0, 4)} · ${dmy(tu)} – ${dmy(den)}` : 'kỳ công'
+
+  const daDung = new Set([TEN_TONG_HOP.toLowerCase(), khuonMay.name.toLowerCase()])
+  const ten = tongHop.map((th) => tenSheet(th.tenBangLuong || th.tenMay || th.maNhanVien, daDung))
+
+  // Tổng hợp
+  const tong = wb.addWorksheet(TEN_TONG_HOP, { views: [{ state: 'frozen', ySplit: 4 }] })
+  dongTieuDe(tong, 'BẢNG CHI TIẾT CÔNG', `${ky} · ${tongHop.length} nhân viên · bấm tên để xem từng ngày`)
+  dongNhan(tong, 4, ['STT', 'Mã', 'Tên', 'Ngày công', 'Giờ OT', 'Số ngày đã sửa'])
+  ;[6, 10, 28, 12, 10, 16].forEach((w, k) => (tong.getColumn(k + 1).width = w))
+  let r = 5
+  tongHop.forEach((th, i) => {
+    const row = tong.getRow(r++)
+    row.getCell(1).value = i + 1
+    row.getCell(2).value = th.maNhanVien
+    row.getCell(3).value = { text: th.tenBangLuong || th.tenMay, hyperlink: `#'${ten[i]}'!A1` }
+    row.getCell(3).font = { color: { argb: MAU_TIEU_DE }, underline: true }
+    row.getCell(4).value = so2(th.tongNgayCong)
+    row.getCell(5).value = so2(th.tongGioOT)
+    row.getCell(6).value = th.soDongCanXemLai
+    row.commit()
+  })
+  const rt = tong.getRow(r)
+  rt.getCell(3).value = 'Tổng cộng'
+  rt.getCell(4).value = so2(tongHop.reduce((a, t) => a + t.tongNgayCong, 0))
+  rt.getCell(5).value = so2(tongHop.reduce((a, t) => a + t.tongGioOT, 0))
+  rt.getCell(6).value = tongHop.reduce((a, t) => a + t.soDongCanXemLai, 0)
+  for (let k = 1; k <= 6; k++) {
+    rt.getCell(k).font = { bold: true }
+    rt.getCell(k).border = { top: { style: 'thin' } }
+  }
+  rt.commit()
+  for (const k of [4, 5]) tong.getColumn(k).numFmt = '0.00'
+
+  // Mỗi nhân viên một sheet
+  tongHop.forEach((th, i) => {
+    const ws = wb.addWorksheet(ten[i], { views: [{ state: 'frozen', ySplit: 4 }] })
+    dongTieuDe(ws, th.tenBangLuong || th.tenMay, `mã ${th.maNhanVien} · ${ky}`)
+    ws.getCell(2, 8).value = { text: '← Tổng hợp', hyperlink: `#'${TEN_TONG_HOP}'!A1` }
+    ws.getCell(2, 8).font = { color: { argb: MAU_TIEU_DE }, underline: true }
+    dongNhan(ws, 4, ['Ngày', 'Thứ', 'Vào sáng', 'Ra sáng', 'Vào chiều', 'Ra chiều', 'Giờ làm', 'Ngày công', 'Giờ OT', 'Ghi chú'])
+    ;[8, 8, 10, 10, 10, 10, 9, 11, 9, 60].forEach((w, k) => (ws.getColumn(k + 1).width = w))
+    let rr = 5
+    for (const kq of th.ketQuaNgay) {
+      const row = ws.getRow(rr++)
+      const moc = [kq.capVaoRa[0]?.vao, kq.capVaoRa[0]?.ra, kq.capVaoRa[1]?.vao, kq.capVaoRa[1]?.ra]
+      row.getCell(1).value = dmy(kq.ngay)
+      row.getCell(2).value = kq.thu
+      moc.forEach((m, k) => (row.getCell(3 + k).value = m ?? ''))
+      // Ngày nghỉ cả ngày (không chấm, không sửa) để trống số — cột toàn số 0 khó nhìn (vòng 11)
+      const nghi = kq.capVaoRa.length === 0 && !kq.daSua
+      row.getCell(7).value = nghi ? '' : so2(kq.gioLamQ)
+      row.getCell(8).value = nghi ? '' : kq.ngayCongR
+      row.getCell(9).value = nghi ? '' : so2(kq.gioOtS)
+      row.getCell(10).value = ghiChuNgay(kq)
+      if (kq.daSua) for (const k of [3, 4, 5, 6, 10]) row.getCell(k).fill = vang()
+      else if (kq.capVaoRa.length === 0)
+        for (let k = 1; k <= 10; k++) row.getCell(k).font = { color: { argb: MAU_MO } }
+      row.commit()
+    }
+    const t = ws.getRow(rr)
+    t.getCell(1).value = 'Tổng'
+    t.getCell(7).value = so2(th.ketQuaNgay.reduce((a, k) => a + k.gioLamQ, 0))
+    t.getCell(8).value = so2(th.tongNgayCong)
+    t.getCell(9).value = so2(th.tongGioOT)
+    for (let k = 1; k <= 10; k++) {
+      t.getCell(k).font = { bold: true }
+      t.getCell(k).border = { top: { style: 'thin' } }
+    }
+    t.commit()
+    for (const k of [7, 9]) ws.getColumn(k).numFmt = '0.00'
+  })
+
+  // Thứ tự: Tổng hợp → từng người → khuôn máy (cuối). exceljs sắp sheet theo orderNo.
+  // (types của exceljs không khai `orderNo` dù runtime có — `workbook.worksheets` sắp theo nó)
+  type CoThuTu = ExcelJS.Worksheet & { orderNo: number }
+  const conLai = wb.worksheets.filter((w) => w !== tong && w !== khuonMay) as CoThuTu[]
+  ;(tong as CoThuTu).orderNo = 0
+  conLai.forEach((w, i) => (w.orderNo = i + 1))
+  ;(khuonMay as CoThuTu).orderNo = conLai.length + 1
+}
 
 function chuoi(v: ExcelJS.CellValue): string {
   if (typeof v === 'string') return v.trim()
@@ -116,6 +250,7 @@ export async function ghiChiTietDaLamSach(
     }
   }
 
+  themSheetDeDoc(wb, ws, tongHop)
   await ghiFileAtomic(wb, duongDanRa)
 
   return { duongDanRa, soDongToVang }
@@ -132,7 +267,7 @@ export async function ghiChiTietTuMocCham(
   tongHop: TongHopNhanVien[]
 ): Promise<{ duongDanRa: string; soDongToVang: number }> {
   const wb = new ExcelJS.Workbook()
-  const ws = wb.addWorksheet('Chi Tiet')
+  const ws = wb.addWorksheet(TEN_KHUON_MAY)
   let soDongToVang = 0
   let r = 1
 
@@ -168,6 +303,7 @@ export async function ghiChiTietTuMocCham(
     r++ // dòng trống giữa hai khối nhân viên
   }
 
+  themSheetDeDoc(wb, ws, tongHop)
   await ghiFileAtomic(wb, duongDanRa)
   return { duongDanRa, soDongToVang }
 }

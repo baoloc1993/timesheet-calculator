@@ -3,6 +3,7 @@ import { useApp } from '../store'
 import { dmy } from '../App'
 import { PageHead } from '../components/PageHead'
 import type { KetQuaNgay } from '../../../preload/api-types'
+import { ghiChuNgay as ghiChu } from '../../../preload/api-types'
 
 const so2 = (n: number) => Math.round(n * 100) / 100
 
@@ -13,16 +14,6 @@ function khe4(moc: (string | null)[]): string {
   // ghi chú bảo "kiểm tra tay" mà người dùng không thấy giờ nào để kiểm.
   const cap3 = [moc[4], moc[5]].filter(Boolean)
   return cap3.length ? `${bon}  ·  cặp 3: ${cap3.join(' · ')}` : bon
-}
-
-function ghiChu(kq: KetQuaNgay): string {
-  if (kq.ghiChuSua) return kq.ghiChuSua
-  if (kq.capVaoRa.length === 0) return 'nghỉ cả ngày'
-  if (kq.capVaoRa.length === 1)
-    return kq.ngayCongR === 1
-      ? 'chấm một cặp vào/ra — tính cả ngày (phủ trưa), không tính OT'
-      : 'chấm một cặp vào/ra — nửa công, không tính OT'
-  return 'khớp gốc — công cụ không đụng vào'
 }
 
 export function S8XemChamCongGoc() {
