@@ -54,6 +54,42 @@ export interface KetQuaKy {
    * chặn hẳn không cho lưu như trước vòng 8 — giờ mọi kỳ đều tự lưu, kể cả kỳ thiếu người).
    */
   thieuSetup?: NhanVienThieuSetup[]
+  /**
+   * Vòng 11 (E) — true = ô Chuyên cần của mã CHƯA nhập tay tự tính từ ngày công
+   * (`tinhChuyenCan`). Thiếu field (kỳ lưu trước bản này) → xem `coChuyenCanTuDong`.
+   */
+  chuyenCanTuDong?: boolean
+}
+
+/**
+ * Chuyên cần theo ngày công (người dùng chốt qua chat 2026-10-01): dưới 27 công → 0;
+ * đủ 27 công → 100.000đ; mỗi nửa công thêm → +50.000đ (28 công = 200.000đ). Phần lẻ dưới
+ * nửa công không tính.
+ */
+export function tinhChuyenCan(ngayCong: number): number {
+  if (!Number.isFinite(ngayCong) || ngayCong < 27) return 0
+  const nuaCongThem = Math.floor((ngayCong - 27) * 2 + 1e-9)
+  return 100000 + nuaCongThem * 50000
+}
+
+/**
+ * Kỳ có tự tính chuyên cần không. Kỳ lưu trước bản này (thiếu field): chỉ tự tính khi chưa
+ * phát cho ai — kỳ đã phát (dù một người) giữ nguyên số cũ, không tự đổi thực nhận lịch sử.
+ */
+export function coChuyenCanTuDong(kq: Pick<KetQuaKy, 'chuyenCanTuDong' | 'daTra'>): boolean {
+  return kq.chuyenCanTuDong ?? !Object.values(kq.daTra).some((v) => v === true)
+}
+
+/** Chuyên cần hiệu lực của một người: số nhập tay nếu có, else tự tính (nếu kỳ bật). */
+export function chuyenCanCua(kq: KetQuaKy, d: Pick<DongBang, 'maNhanVien' | 'ngayCong'>): number {
+  const tay = kq.chuyenCan?.[d.maNhanVien]
+  if (tay !== undefined) return tay
+  return coChuyenCanTuDong(kq) ? tinhChuyenCan(d.ngayCong) : 0
+}
+
+/** Map chuyên cần hiệu lực cho cả kỳ (xuất bảng lương). */
+export function mapChuyenCan(kq: KetQuaKy): Record<string, number> {
+  return Object.fromEntries(kq.dongBang.map((d) => [d.maNhanVien, chuyenCanCua(kq, d)]))
 }
 
 /** Làm tròn thường đến 1.000đ — chỉ cho số tiền mặt cầm tay. */
@@ -114,7 +150,8 @@ export function dongBangKetQuaKy(
     chuyenCan: {},
     buLuong: {},
     le: {},
-    baoHiem: {}
+    baoHiem: {},
+    chuyenCanTuDong: true
   }
 }
 
@@ -124,6 +161,7 @@ export function dongBangKetQuaKy(
  */
 export function mergePhatLuongCu(kqMoi: KetQuaKy, kqCu: KetQuaKy | null | undefined): KetQuaKy {
   if (!kqCu) return kqMoi
+  kqMoi.chuyenCanTuDong = coChuyenCanTuDong(kqCu)
   const maTrongKyMoi = new Set(kqMoi.dongBang.map((d) => d.maNhanVien))
   for (const [ma, v] of Object.entries(kqCu.khauTru)) {
     if (maTrongKyMoi.has(ma)) kqMoi.khauTru[ma] = v
@@ -161,7 +199,7 @@ export function tongKetQuaKy(kq: KetQuaKy): {
     tongGioOT += d.gioOT
     tongThanhTien += d.thanhTien
     tongThucNhan += tinhThucNhanDayDu(d.thanhTien, kq.khauTru[d.maNhanVien] ?? 0, {
-      chuyenCan: kq.chuyenCan?.[d.maNhanVien],
+      chuyenCan: chuyenCanCua(kq, d),
       buLuong: kq.buLuong?.[d.maNhanVien],
       le: kq.le?.[d.maNhanVien],
       baoHiem: kq.baoHiem?.[d.maNhanVien]

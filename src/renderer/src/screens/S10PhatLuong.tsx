@@ -1,11 +1,12 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useApp } from '../store'
 import { dmy } from '../App'
 import { PageHead } from '../components/PageHead'
 import type { KetQuaKy } from '../../../preload/api-types'
-import { tinhThucNhanDayDu } from '../../../preload/api-types'
+import { tinhThucNhanDayDu, chuyenCanCua, tinhChuyenCan } from '../../../preload/api-types'
 
 const vnd = (n: number) => n.toLocaleString('vi-VN')
+const so1 = (n: number) => n.toLocaleString('vi-VN', { minimumFractionDigits: 1, maximumFractionDigits: 1 })
 
 /** "1.234" / " 500 " → 1234 / 500; rỗng → 0; không phải số/âm → null (báo lỗi). Dùng chung cho
  * cả lưu (onBlur) lẫn hiển thị tạm khi đang gõ — một chỗ đổi luật, không lệch nhau. */
@@ -36,9 +37,10 @@ type Truong = (typeof KHOAN)[number]['truong']
 
 type NhapKhoan = Record<Truong, string>
 
-function nhapRong(kq: KetQuaKy, ma: string): NhapKhoan {
+function nhapRong(kq: KetQuaKy, d: KetQuaKy['dongBang'][number]): NhapKhoan {
+  const ma = d.maNhanVien
   return {
-    chuyenCan: formatSoNhap(String(kq.chuyenCan?.[ma] ?? 0)),
+    chuyenCan: formatSoNhap(String(chuyenCanCua(kq, d))),
     buLuong: formatSoNhap(String(kq.buLuong?.[ma] ?? 0)),
     le: formatSoNhap(String(kq.le?.[ma] ?? 0)),
     baoHiem: formatSoNhap(String(kq.baoHiem?.[ma] ?? 0)),
@@ -52,6 +54,9 @@ export function S10PhatLuong() {
   const [dangTai, setDangTai] = useState(true)
   const [nhap, setNhap] = useState<Record<string, NhapKhoan>>({})
   const [loiO, setLoiO] = useState<Record<string, string>>({})
+  // Thực nhận lúc mở màn — để đánh dấu ô Thực nhận nào đã đổi trong phiên (người dùng phản hồi
+  // 2026-10-01: sửa 5 khoản mà cột Thực nhận không có dấu hiệu gì).
+  const thucNhanGoc = useRef<Record<string, number>>({})
 
   const nap = useCallback(async () => {
     if (!thangDangXem) {
@@ -62,7 +67,22 @@ export function S10PhatLuong() {
     setDangTai(true)
     const k = await window.api.docKy(thangDangXem)
     setKq(k)
-    setNhap(Object.fromEntries((k?.dongBang ?? []).map((d) => [d.maNhanVien, nhapRong(k!, d.maNhanVien)])))
+    setNhap(Object.fromEntries((k?.dongBang ?? []).map((d) => [d.maNhanVien, nhapRong(k!, d)])))
+    thucNhanGoc.current = Object.fromEntries(
+      (k?.dongBang ?? []).map((d) => {
+        const n = nhapRong(k!, d)
+        const so = (t: Truong) => parseSoNhap(n[t]) ?? 0
+        return [
+          d.maNhanVien,
+          tinhThucNhanDayDu(d.thanhTien, so('khauTru'), {
+            chuyenCan: so('chuyenCan'),
+            buLuong: so('buLuong'),
+            le: so('le'),
+            baoHiem: so('baoHiem')
+          })
+        ]
+      })
+    )
     setDangTai(false)
   }, [thangDangXem])
 
@@ -73,12 +93,38 @@ export function S10PhatLuong() {
   async function luuGiaTri(ma: string, truong: Truong, nhanHienThi: string) {
     if (!kq) return
     const khoa = `${ma}:${truong}`
-    const so = parseSoNhap(nhap[ma]?.[truong] ?? '')
+    const raw = nhap[ma]?.[truong] ?? ''
+    const d = kq.dongBang.find((x) => x.maNhanVien === ma)
+    // Chuyên cần: xoá trắng ô = bỏ số nhập tay, quay về tự tính theo ngày công.
+    if (truong === 'chuyenCan' && raw.trim() === '' && d) {
+      setLoiO((m) => ({ ...m, [khoa]: '' }))
+      setNhap((m) => ({ ...m, [ma]: { ...m[ma], chuyenCan: formatSoNhap(String(tinhChuyenCan(d.ngayCong))) } }))
+      if (kq.chuyenCan?.[ma] === undefined) return
+      const r = await window.api.capNhatPhatLuong({ thang: kq.thang, maNhanVien: ma, chuyenCan: null })
+      if (r.ok && r.data) {
+        const moi = r.data
+        setKq(moi)
+        setNhap((m) => ({ ...m, [ma]: { ...m[ma], chuyenCan: formatSoNhap(String(chuyenCanCua(moi, d))) } }))
+        await lamMoiDanhSachKy()
+      } else {
+        setLoiO((m) => ({ ...m, [khoa]: r.loi ?? 'Không lưu được.' }))
+      }
+      return
+    }
+    const so = parseSoNhap(raw)
     if (so === null) {
       setLoiO((m) => ({ ...m, [khoa]: `${nhanHienThi} phải là số không âm.` }))
       return
     }
     setLoiO((m) => ({ ...m, [khoa]: '' }))
+    // Không đổi gì → không ghi (tránh "đóng băng" số chuyên cần tự tính chỉ vì bấm qua ô).
+    const daLuu =
+      truong === 'khauTru'
+        ? kq.khauTru[ma] ?? 0
+        : truong === 'chuyenCan' && d
+          ? chuyenCanCua(kq, d)
+          : kq[truong]?.[ma] ?? 0
+    if (so === daLuu) return
     const r = await window.api.capNhatPhatLuong({
       thang: kq.thang,
       maNhanVien: ma,
@@ -111,11 +157,14 @@ export function S10PhatLuong() {
   const giaTriHt = useCallback(
     (ma: string, truong: Truong): number => {
       const raw = nhap[ma]?.[truong]
+      const d = kq?.dongBang.find((x) => x.maNhanVien === ma)
       if (raw !== undefined) {
+        if (truong === 'chuyenCan' && raw.trim() === '' && d) return tinhChuyenCan(d.ngayCong)
         const so = parseSoNhap(raw)
         if (so !== null) return so
       }
       if (!kq) return 0
+      if (truong === 'chuyenCan' && d) return chuyenCanCua(kq, d)
       return truong === 'khauTru' ? kq.khauTru[ma] ?? 0 : kq[truong]?.[ma] ?? 0
     },
     [nhap, kq]
@@ -248,6 +297,7 @@ export function S10PhatLuong() {
             <thead>
               <tr>
                 <th>Nhân viên</th>
+                <th className="num">Ngày công</th>
                 <th className="num">Thành tiền</th>
                 {KHOAN.map((k) => (
                   <th key={k.truong} className="num">
@@ -261,13 +311,18 @@ export function S10PhatLuong() {
             <tbody>
               {kq.dongBang.map((d) => {
                 const tn = thucNhanHt(d.maNhanVien, d.thanhTien)
+                const goc = thucNhanGoc.current[d.maNhanVien]
+                const lech = goc === undefined ? 0 : tn - goc
                 const daTra = kq.daTra[d.maNhanVien] === true
                 return (
                   <tr key={d.maNhanVien} className={daTra ? 'da-tra' : ''}>
                     <td>{d.tenBangLuong}</td>
+                    <td className="num">{so1(d.ngayCong)}</td>
                     <td className="num">{vnd(d.thanhTien)}</td>
                     {KHOAN.map((k) => {
                       const khoa = `${d.maNhanVien}:${k.truong}`
+                      const ccTuTinh = tinhChuyenCan(d.ngayCong)
+                      const ccTay = k.truong === 'chuyenCan' ? kq.chuyenCan?.[d.maNhanVien] : undefined
                       return (
                         <td className="num" key={k.truong}>
                           <input
@@ -283,12 +338,31 @@ export function S10PhatLuong() {
                             }
                             onBlur={() => luuGiaTri(d.maNhanVien, k.truong, k.nhan)}
                             aria-label={`${k.nhan} của ${d.tenBangLuong}`}
+                            title={
+                              k.truong === 'chuyenCan'
+                                ? `Tự tính theo ${so1(d.ngayCong)} công: ${vnd(ccTuTinh)}. Xoá trắng ô để quay về số tự tính.`
+                                : undefined
+                            }
                           />
+                          {ccTay !== undefined && ccTay !== ccTuTinh && (
+                            <div className="muted goi-y-tu-tinh">tự tính {vnd(ccTuTinh)}</div>
+                          )}
                           {loiO[khoa] && <div className="err small">{loiO[khoa]}</div>}
                         </td>
                       )
                     })}
-                    <td className={'num tiennhan' + (tn < 0 ? ' am' : '')}>{vnd(tn)}</td>
+                    <td
+                      className={'num tiennhan' + (tn < 0 ? ' am' : '') + (lech !== 0 ? ' da-doi' : '')}
+                      title={lech !== 0 ? `Trước khi sửa: ${vnd(goc!)}` : undefined}
+                    >
+                      {vnd(tn)}
+                      {lech !== 0 && (
+                        <div className="lech">
+                          {lech > 0 ? '▲ +' : '▼ −'}
+                          {vnd(Math.abs(lech))}
+                        </div>
+                      )}
+                    </td>
                     <td>
                       <label className="checkwrap">
                         <input
@@ -307,6 +381,7 @@ export function S10PhatLuong() {
             <tfoot>
               <tr className="total">
                 <td>Tổng cộng</td>
+                <td></td>
                 <td className="num">
                   {vnd(kq.dongBang.reduce((s, d) => s + d.thanhTien, 0))}
                 </td>
@@ -331,7 +406,8 @@ export function S10PhatLuong() {
         )}
         <p className="note">
           Thực nhận = thành tiền + Chuyên cần + Bù lương + Lễ − Bảo hiểm − Vay, làm tròn 1.000đ. 5 khoản nhập lại
-          mỗi kỳ. Số công / OT / thành tiền của kỳ đã lưu không sửa được ở đây.
+          mỗi kỳ. Chuyên cần tự tính theo ngày công (từ 27 công: 100.000đ, mỗi nửa công thêm 50.000đ) — sửa tay
+          được, xoá trắng ô để quay về số tự tính. Ô Thực nhận tô vàng = đã đổi so với lúc mở màn. Số công / OT / thành tiền của kỳ đã lưu không sửa được ở đây.
         </p>
       </div>
 

@@ -2,7 +2,7 @@
 // cùng công thức giải trình 5 khoản. Hàm thuần ( — logic nghiệp vụ chỉ ở
 // src/core/, không nằm trong component renderer — soi bug pha P vòng 6).
 import type { KetQuaKy, DongBang } from './ketQuaKy'
-import { tinhThucNhanDayDu } from './ketQuaKy'
+import { tinhThucNhanDayDu, chuyenCanCua } from './ketQuaKy'
 
 export interface NguoiPhat {
   d: DongBang
@@ -35,7 +35,7 @@ export function dungNguoiPhat(kq: KetQuaKy, d: DongBang): NguoiPhat {
   const luongCong = (d.donGiaNgay ?? 0) * d.ngayCong
   const tienOt = (d.donGiaGioOT ?? 0) * d.gioOT
   const khauTru = kq.khauTru[d.maNhanVien] ?? 0
-  const chuyenCan = kq.chuyenCan?.[d.maNhanVien] ?? 0
+  const chuyenCan = chuyenCanCua(kq, d)
   const buLuong = kq.buLuong?.[d.maNhanVien] ?? 0
   const le = kq.le?.[d.maNhanVien] ?? 0
   const baoHiem = kq.baoHiem?.[d.maNhanVien] ?? 0

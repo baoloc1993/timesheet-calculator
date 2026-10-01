@@ -2153,3 +2153,19 @@ nav.rail .badge {
     font-size: 0;
   }
 }
+
+/* Phát lương — ô Thực nhận đã đổi so với lúc mở màn (người dùng phản hồi 2026-10-01). */
+tr td.tiennhan.da-doi {
+  background: var(--color-warning-soft);
+  box-shadow: inset 0 0 0 2px var(--color-warning-line);
+}
+.goi-y-tu-tinh {
+  font-size: var(--text-xs);
+  white-space: nowrap;
+  margin-top: var(--space-xs);
+}
+td.tiennhan .lech {
+  font-size: var(--text-xs);
+  font-weight: 600;
+  color: var(--color-warning);
+}

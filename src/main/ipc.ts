@@ -6,7 +6,7 @@ import { existsSync, readFileSync } from 'fs'
 import type { KetQuaKyCong, KetQuaNgay, NhanVien, SuaTay } from '../core/types'
 import { xuLyKyCong, tinhLaiMotDong, suaNgayCongTrucTiep, tinhLaiTongHop, tongToanKy } from '../core/xuLyKyCong'
 import { khoangNgayMacDinh } from '../core/khoangNgayMacDinh'
-import { dongBangKetQuaKy, mergePhatLuongCu } from '../core/ketQuaKy'
+import { dongBangKetQuaKy, mergePhatLuongCu, mapChuyenCan, coChuyenCanTuDong } from '../core/ketQuaKy'
 import type { KetQuaKy } from '../core/ketQuaKy'
 import { phutTrongNgay } from '../core/time'
 import { docFileMay, LoiDocFileMay } from './excel/docFileMay'
@@ -331,7 +331,7 @@ export function dangKyIpc(): void {
         { ngayBatDau: kyHienTai.ky.ngayBatDau, ngayKetThuc: kyHienTai.ky.ngayKetThuc },
         kqDaLuu
           ? {
-              chuyenCan: kqDaLuu.chuyenCan,
+              chuyenCan: mapChuyenCan(kqDaLuu),
               buLuong: kqDaLuu.buLuong,
               le: kqDaLuu.le,
               baoHiem: kqDaLuu.baoHiem,
@@ -579,7 +579,8 @@ export function dangKyIpc(): void {
         maNhanVien: string
         khauTru?: number
         daTra?: boolean
-        chuyenCan?: number
+        /** null = bỏ số nhập tay, quay về tự tính theo ngày công. */
+        chuyenCan?: number | null
         buLuong?: number
         le?: number
         baoHiem?: number
@@ -589,6 +590,14 @@ export function dangKyIpc(): void {
       if (!kq) return { ok: false, loi: 'Không tìm thấy kỳ đã lưu.' }
       if (!kq.dongBang.some((d) => d.maNhanVien === p.maNhanVien))
         return { ok: false, loi: 'Nhân viên không có trong kỳ này.' }
+      // Chốt cờ tự tính trước khi đổi daTra — kỳ cũ thiếu cờ không bị tắt tự tính giữa chừng
+      // chỉ vì vừa tick người đầu tiên.
+      kq.chuyenCanTuDong = coChuyenCanTuDong(kq)
+      if (p.chuyenCan === null) {
+        const cc = { ...(kq.chuyenCan ?? {}) }
+        delete cc[p.maNhanVien]
+        kq.chuyenCan = cc
+      }
 
       if (p.khauTru !== undefined) {
         const k = Number(p.khauTru)
@@ -608,7 +617,7 @@ export function dangKyIpc(): void {
       ] as const
       for (const [truong, nhan] of KHOAN_MOI) {
         const v = p[truong]
-        if (v === undefined) continue
+        if (v === undefined || v === null) continue
         const n = Number(v)
         if (!Number.isFinite(n) || n < 0) return { ok: false, loi: `${nhan} phải là số không âm.` }
         kq[truong] = { ...(kq[truong] ?? {}), [p.maNhanVien]: Math.round(n) }
