@@ -55,6 +55,7 @@ test-results/
 deployment/local/mau/
 deployment/local/out/
 deployment/local/dogfood-shots/
+deployment/local/video/
 # Import Setup thật cho máy người dùng (tên + đơn giá 15 nhân viên) — không commit
 deployment/local/config-import-15.json
 deployment/local/nhan-vien-full-15.json
@@ -73,3 +74,5 @@ resources/mau-bang-luong.xlsx
 *.swp
 .vscode/*
 !.vscode/extensions.json
+# Bản chép config.json từ PC văn phòng (dữ liệu lương thật) để thử ở máy dev — không commit
+deployment/local/prod/
