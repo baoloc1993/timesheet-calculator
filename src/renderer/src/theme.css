@@ -2169,10 +2169,3 @@ td.tiennhan .lech {
   font-weight: 600;
   color: var(--color-warning);
 }
-/* Phát lương — dòng "+x chuyên cần" dưới Thực nhận (người dùng 2026-10-01). */
-td.tiennhan .cc-cong {
-  font-size: var(--text-xs);
-  font-weight: 600;
-  color: var(--color-success);
-  white-space: nowrap;
-}

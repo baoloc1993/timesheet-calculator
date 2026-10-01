@@ -54,8 +54,8 @@ export function S10PhatLuong() {
   const [dangTai, setDangTai] = useState(true)
   const [nhap, setNhap] = useState<Record<string, NhapKhoan>>({})
   const [loiO, setLoiO] = useState<Record<string, string>>({})
-  // Thực nhận lúc mở màn — để đánh dấu ô Thực nhận nào đã đổi trong phiên (người dùng phản hồi
-  // 2026-10-01: sửa 5 khoản mà cột Thực nhận không có dấu hiệu gì).
+  // Mốc ▲/▼ dưới Thực nhận = thực nhận lúc mở màn CHƯA cộng chuyên cần (người dùng 2026-10-01):
+  // chuyên cần (tự tính hoặc gõ tay) hiện gộp trong ▲ ngay khi mở màn, cộng dồn với các khoản sửa sau.
   const thucNhanGoc = useRef<Record<string, number>>({})
 
   const nap = useCallback(async () => {
@@ -75,7 +75,7 @@ export function S10PhatLuong() {
         return [
           d.maNhanVien,
           tinhThucNhanDayDu(d.thanhTien, so('khauTru'), {
-            chuyenCan: so('chuyenCan'),
+            chuyenCan: 0,
             buLuong: so('buLuong'),
             le: so('le'),
             baoHiem: so('baoHiem')
@@ -356,13 +356,9 @@ export function S10PhatLuong() {
                     })}
                     <td
                       className={'num tiennhan' + (tn < 0 ? ' am' : '') + (lech !== 0 ? ' da-doi' : '')}
-                      title={lech !== 0 ? `Trước khi sửa: ${vnd(goc!)}` : undefined}
+                      title={lech !== 0 ? `Gồm chuyên cần + khoản đã sửa. Chưa cộng chuyên cần, lúc mở màn: ${vnd(goc!)}` : undefined}
                     >
                       {vnd(tn)}
-                      {giaTriHt(d.maNhanVien, 'chuyenCan') > 0 && (
-                        // người dùng 2026-10-01: thấy ngay chuyên cần đã cộng vào thực nhận, không cần sửa ô.
-                        <div className="cc-cong">+{vnd(giaTriHt(d.maNhanVien, 'chuyenCan'))} chuyên cần</div>
-                      )}
                       {lech !== 0 && (
                         <div className="lech">
                           {lech > 0 ? '▲ +' : '▼ −'}
@@ -414,7 +410,7 @@ export function S10PhatLuong() {
         <p className="note">
           Thực nhận = thành tiền + Chuyên cần + Bù lương + Lễ − Bảo hiểm − Vay, làm tròn 1.000đ. 5 khoản nhập lại
           mỗi kỳ. Chuyên cần tự tính theo ngày công (từ 27 công: 100.000đ, mỗi nửa công thêm 50.000đ) — sửa tay
-          được, xoá trắng ô để quay về số tự tính. Ô Thực nhận tô vàng = đã đổi so với lúc mở màn. Số công / OT / thành tiền của kỳ đã lưu không sửa được ở đây.
+          được, xoá trắng ô để quay về số tự tính. Ô Thực nhận tô vàng ▲/▼ = số đã cộng/trừ so với lúc mở màn, gồm cả chuyên cần. Số công / OT / thành tiền của kỳ đã lưu không sửa được ở đây.
         </p>
       </div>
 
