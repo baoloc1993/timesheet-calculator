@@ -597,6 +597,11 @@ export function dangKyIpc(): void {
         const cc = { ...(kq.chuyenCan ?? {}) }
         delete cc[p.maNhanVien]
         kq.chuyenCan = cc
+        const tay = { ...(kq.chuyenCanSuaTay ?? {}) }
+        delete tay[p.maNhanVien]
+        kq.chuyenCanSuaTay = tay
+      } else if (p.chuyenCan !== undefined) {
+        kq.chuyenCanSuaTay = { ...(kq.chuyenCanSuaTay ?? {}), [p.maNhanVien]: true }
       }
 
       if (p.khauTru !== undefined) {

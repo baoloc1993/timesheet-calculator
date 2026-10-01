@@ -5,6 +5,7 @@ import {
   chuyenCanCua,
   coChuyenCanTuDong,
   mergePhatLuongCu,
+  chuyenCanLaSoTay,
   mapChuyenCan,
   tongKetQuaKy
 } from '../../src/core/ketQuaKy'
@@ -39,12 +40,26 @@ describe('tinhChuyenCan', () => {
 })
 
 describe('chuyenCanCua', () => {
-  it('chưa nhập tay → tự tính; nhập tay (kể cả 0) → giữ số tay', () => {
+  it('chưa nhập tay → tự tính; gõ tay (kể cả 0, có cờ) → giữ số tay', () => {
     const kq = ky({ chuyenCanTuDong: true, chuyenCan: { B: 0 } })
     expect(chuyenCanCua(kq, kq.dongBang[0])).toBe(200000)
-    const kq2 = ky({ chuyenCanTuDong: true, chuyenCan: { A: 0 } })
+    const kq2 = ky({ chuyenCanTuDong: true, chuyenCan: { A: 0 }, chuyenCanSuaTay: { A: true } })
     expect(chuyenCanCua(kq2, kq2.dongBang[0])).toBe(0)
     expect(mapChuyenCan(kq)).toEqual({ A: 200000, B: 0 })
+  })
+
+  it('số 0 do bản cũ tự ghi khi bấm qua ô (không cờ) → vẫn tự tính; số > 0 cũ → giữ', () => {
+    const kq = ky({ chuyenCan: { A: 0 } })
+    expect(chuyenCanLaSoTay(kq, 'A')).toBe(false)
+    expect(chuyenCanCua(kq, kq.dongBang[0])).toBe(200000)
+    const kq2 = ky({ chuyenCan: { A: 150000 } })
+    expect(chuyenCanCua(kq2, kq2.dongBang[0])).toBe(150000)
+  })
+
+  it('lưu lại kỳ giữ cờ sửa tay của mã còn trong kỳ', () => {
+    const moi = mergePhatLuongCu(ky({ chuyenCanTuDong: true }), ky({ chuyenCan: { A: 0 }, chuyenCanSuaTay: { A: true, X: true } }))
+    expect(moi.chuyenCanSuaTay).toEqual({ A: true })
+    expect(chuyenCanCua(moi, moi.dongBang[0])).toBe(0)
   })
 
   it('kỳ cũ (thiếu cờ) đã phát cho ai đó → không tự tính, giữ thực nhận lịch sử', () => {

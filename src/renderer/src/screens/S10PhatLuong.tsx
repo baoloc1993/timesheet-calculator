@@ -3,7 +3,7 @@ import { useApp } from '../store'
 import { dmy } from '../App'
 import { PageHead } from '../components/PageHead'
 import type { KetQuaKy } from '../../../preload/api-types'
-import { tinhThucNhanDayDu, chuyenCanCua, tinhChuyenCan } from '../../../preload/api-types'
+import { tinhThucNhanDayDu, chuyenCanCua, tinhChuyenCan, chuyenCanLaSoTay } from '../../../preload/api-types'
 
 const vnd = (n: number) => n.toLocaleString('vi-VN')
 const so1 = (n: number) => n.toLocaleString('vi-VN', { minimumFractionDigits: 1, maximumFractionDigits: 1 })
@@ -99,7 +99,7 @@ export function S10PhatLuong() {
     if (truong === 'chuyenCan' && raw.trim() === '' && d) {
       setLoiO((m) => ({ ...m, [khoa]: '' }))
       setNhap((m) => ({ ...m, [ma]: { ...m[ma], chuyenCan: formatSoNhap(String(tinhChuyenCan(d.ngayCong))) } }))
-      if (kq.chuyenCan?.[ma] === undefined) return
+      if (!chuyenCanLaSoTay(kq, ma)) return
       const r = await window.api.capNhatPhatLuong({ thang: kq.thang, maNhanVien: ma, chuyenCan: null })
       if (r.ok && r.data) {
         const moi = r.data
@@ -322,7 +322,10 @@ export function S10PhatLuong() {
                     {KHOAN.map((k) => {
                       const khoa = `${d.maNhanVien}:${k.truong}`
                       const ccTuTinh = tinhChuyenCan(d.ngayCong)
-                      const ccTay = k.truong === 'chuyenCan' ? kq.chuyenCan?.[d.maNhanVien] : undefined
+                      const ccTay =
+                        k.truong === 'chuyenCan' && chuyenCanLaSoTay(kq, d.maNhanVien)
+                          ? kq.chuyenCan?.[d.maNhanVien] ?? 0
+                          : undefined
                       return (
                         <td className="num" key={k.truong}>
                           <input

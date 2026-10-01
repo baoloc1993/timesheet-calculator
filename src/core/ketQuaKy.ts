@@ -59,6 +59,11 @@ export interface KetQuaKy {
    * (`tinhChuyenCan`). Thiếu field (kỳ lưu trước bản này) → xem `coChuyenCanTuDong`.
    */
   chuyenCanTuDong?: boolean
+  /**
+   * Mã đã SỬA TAY ô Chuyên cần (bản 0.11.3). Trước đó S10 ghi số 0 mỗi lần bấm qua ô (onBlur),
+   * nên `chuyenCan[ma] = 0` không có cờ này = chưa ai gõ → vẫn tự tính.
+   */
+  chuyenCanSuaTay?: Record<string, boolean>
 }
 
 /**
@@ -80,11 +85,21 @@ export function coChuyenCanTuDong(kq: Pick<KetQuaKy, 'chuyenCanTuDong' | 'daTra'
   return kq.chuyenCanTuDong ?? !Object.values(kq.daTra).some((v) => v === true)
 }
 
-/** Chuyên cần hiệu lực của một người: số nhập tay nếu có, else tự tính (nếu kỳ bật). */
+/**
+ * Ô Chuyên cần của mã này có phải số gõ tay không (kỳ đang tự tính). Có cờ `chuyenCanSuaTay`
+ * → tay. Không cờ: số > 0 lưu từ bản trước = người dùng đã gõ; số 0 không cờ = bản cũ tự ghi
+ * khi bấm qua ô, KHÔNG tính là sửa tay.
+ */
+export function chuyenCanLaSoTay(kq: KetQuaKy, ma: string): boolean {
+  if (kq.chuyenCanSuaTay?.[ma] === true) return true
+  return (kq.chuyenCan?.[ma] ?? 0) > 0
+}
+
+/** Chuyên cần hiệu lực của một người: số gõ tay nếu có, else tự tính (nếu kỳ bật). */
 export function chuyenCanCua(kq: KetQuaKy, d: Pick<DongBang, 'maNhanVien' | 'ngayCong'>): number {
-  const tay = kq.chuyenCan?.[d.maNhanVien]
-  if (tay !== undefined) return tay
-  return coChuyenCanTuDong(kq) ? tinhChuyenCan(d.ngayCong) : 0
+  if (!coChuyenCanTuDong(kq)) return kq.chuyenCan?.[d.maNhanVien] ?? 0
+  if (chuyenCanLaSoTay(kq, d.maNhanVien)) return kq.chuyenCan?.[d.maNhanVien] ?? 0
+  return tinhChuyenCan(d.ngayCong)
 }
 
 /** Map chuyên cần hiệu lực cho cả kỳ (xuất bảng lương). */
@@ -163,6 +178,9 @@ export function mergePhatLuongCu(kqMoi: KetQuaKy, kqCu: KetQuaKy | null | undefi
   if (!kqCu) return kqMoi
   kqMoi.chuyenCanTuDong = coChuyenCanTuDong(kqCu)
   const maTrongKyMoi = new Set(kqMoi.dongBang.map((d) => d.maNhanVien))
+  for (const [ma, v] of Object.entries(kqCu.chuyenCanSuaTay ?? {})) {
+    if (v && maTrongKyMoi.has(ma)) kqMoi.chuyenCanSuaTay = { ...(kqMoi.chuyenCanSuaTay ?? {}), [ma]: true }
+  }
   for (const [ma, v] of Object.entries(kqCu.khauTru)) {
     if (maTrongKyMoi.has(ma)) kqMoi.khauTru[ma] = v
   }

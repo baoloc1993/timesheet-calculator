@@ -25,7 +25,7 @@ export { chonKyMacDinh } from '../core/chonKy'
 export type { KyMacDinh } from '../core/chonKy'
 export { khoangNgayMacDinh } from '../core/khoangNgayMacDinh'
 // Hàm thuần vòng 3 — renderer dùng để tính "thực nhận" / Σ mà không cần round-trip IPC.
-export { tinhThucNhan, tinhThucNhanDayDu, lamTronNghin, tongKetQuaKy, tinhChuyenCan, chuyenCanCua }  from '../core/ketQuaKy'
+export { tinhThucNhan, tinhThucNhanDayDu, lamTronNghin, tongKetQuaKy, tinhChuyenCan, chuyenCanCua, chuyenCanLaSoTay } from '../core/ketQuaKy'
 export { dungKyHieuNgay, ngayLaChuNhat } from '../core/luoiCong'
 export type { KyHieuNgay } from '../core/luoiCong'
 export { docSoTienBangChu } from '../core/soTienBangChu'
