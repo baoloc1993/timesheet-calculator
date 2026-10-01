@@ -359,6 +359,10 @@ export function S10PhatLuong() {
                       title={lech !== 0 ? `Trước khi sửa: ${vnd(goc!)}` : undefined}
                     >
                       {vnd(tn)}
+                      {giaTriHt(d.maNhanVien, 'chuyenCan') > 0 && (
+                        // người dùng 2026-10-01: thấy ngay chuyên cần đã cộng vào thực nhận, không cần sửa ô.
+                        <div className="cc-cong">+{vnd(giaTriHt(d.maNhanVien, 'chuyenCan'))} chuyên cần</div>
+                      )}
                       {lech !== 0 && (
                         <div className="lech">
                           {lech > 0 ? '▲ +' : '▼ −'}
