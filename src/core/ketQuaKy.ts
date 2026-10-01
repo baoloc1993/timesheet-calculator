@@ -56,7 +56,8 @@ export interface KetQuaKy {
   thieuSetup?: NhanVienThieuSetup[]
   /**
    * Vòng 11 (E) — true = ô Chuyên cần của mã CHƯA nhập tay tự tính từ ngày công
-   * (`tinhChuyenCan`). Thiếu field (kỳ lưu trước bản này) → xem `coChuyenCanTuDong`.
+   * (`tinhChuyenCan`). Khác `true` (kỳ lưu trước 0.11.2, hoặc `false` do 0.11.2/0.11.3 ghi)
+   * → người ĐÃ TRẢ giữ số cũ, người chưa trả vẫn tự tính (`chuyenCanCua`); `chotChuyenCan` chốt cứng.
    */
   chuyenCanTuDong?: boolean
   /**
@@ -78,11 +79,23 @@ export function tinhChuyenCan(ngayCong: number): number {
 }
 
 /**
- * Kỳ có tự tính chuyên cần không. Kỳ lưu trước bản này (thiếu field): chỉ tự tính khi chưa
- * phát cho ai — kỳ đã phát (dù một người) giữ nguyên số cũ, không tự đổi thực nhận lịch sử.
+ * Kỳ cũ (cờ `chuyenCanTuDong` khác true): đóng băng chuyên cần của người ĐÃ TRẢ thành số tay
+ * (số đã lưu, thiếu = 0) rồi bật cờ — gọi trước khi đổi `daTra` hoặc ghi đè kỳ, để tick "đã trả"
+ * sau đó không làm số của người đã phát nhảy. Mutate tại chỗ + trả lại.
  */
-export function coChuyenCanTuDong(kq: Pick<KetQuaKy, 'chuyenCanTuDong' | 'daTra'>): boolean {
-  return kq.chuyenCanTuDong ?? !Object.values(kq.daTra).some((v) => v === true)
+export function chotChuyenCan(kq: KetQuaKy): KetQuaKy {
+  if (kq.chuyenCanTuDong === true) return kq
+  const cc = { ...(kq.chuyenCan ?? {}) }
+  const tay = { ...(kq.chuyenCanSuaTay ?? {}) }
+  for (const d of kq.dongBang) {
+    if (kq.daTra[d.maNhanVien] !== true) continue
+    cc[d.maNhanVien] = cc[d.maNhanVien] ?? 0
+    tay[d.maNhanVien] = true
+  }
+  kq.chuyenCan = cc
+  kq.chuyenCanSuaTay = tay
+  kq.chuyenCanTuDong = true
+  return kq
 }
 
 /**
@@ -95,9 +108,12 @@ export function chuyenCanLaSoTay(kq: KetQuaKy, ma: string): boolean {
   return (kq.chuyenCan?.[ma] ?? 0) > 0
 }
 
-/** Chuyên cần hiệu lực của một người: số gõ tay nếu có, else tự tính (nếu kỳ bật). */
+/**
+ * Chuyên cần hiệu lực của một người: số gõ tay nếu có, else tự tính. Kỳ cũ chưa chốt: người
+ * đã trả giữ số đã lưu (không đổi tiền đã phát), người chưa trả tự tính.
+ */
 export function chuyenCanCua(kq: KetQuaKy, d: Pick<DongBang, 'maNhanVien' | 'ngayCong'>): number {
-  if (!coChuyenCanTuDong(kq)) return kq.chuyenCan?.[d.maNhanVien] ?? 0
+  if (kq.chuyenCanTuDong !== true && kq.daTra[d.maNhanVien] === true) return kq.chuyenCan?.[d.maNhanVien] ?? 0
   if (chuyenCanLaSoTay(kq, d.maNhanVien)) return kq.chuyenCan?.[d.maNhanVien] ?? 0
   return tinhChuyenCan(d.ngayCong)
 }
@@ -176,7 +192,8 @@ export function dongBangKetQuaKy(
  */
 export function mergePhatLuongCu(kqMoi: KetQuaKy, kqCu: KetQuaKy | null | undefined): KetQuaKy {
   if (!kqCu) return kqMoi
-  kqMoi.chuyenCanTuDong = coChuyenCanTuDong(kqCu)
+  // Chốt trên bản sao — không mutate kỳ cũ của bên gọi (người đã trả đóng băng số cũ).
+  kqCu = chotChuyenCan({ ...kqCu })
   const maTrongKyMoi = new Set(kqMoi.dongBang.map((d) => d.maNhanVien))
   for (const [ma, v] of Object.entries(kqCu.chuyenCanSuaTay ?? {})) {
     if (v && maTrongKyMoi.has(ma)) kqMoi.chuyenCanSuaTay = { ...(kqMoi.chuyenCanSuaTay ?? {}), [ma]: true }
@@ -192,7 +209,7 @@ export function mergePhatLuongCu(kqMoi: KetQuaKy, kqCu: KetQuaKy | null | undefi
     const cu = kqCu[truong]
     if (!cu) continue
     for (const [ma, v] of Object.entries(cu)) {
-      if (maTrongKyMoi.has(ma)) kqMoi[truong]![ma] = v
+      if (maTrongKyMoi.has(ma)) kqMoi[truong] = { ...(kqMoi[truong] ?? {}), [ma]: v }
     }
   }
   return kqMoi

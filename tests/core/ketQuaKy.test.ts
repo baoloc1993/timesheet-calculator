@@ -408,7 +408,9 @@ describe('mergePhatLuongCu — 4 khoản vòng 6 (chuyenCan/buLuong/le/baoHiem)'
     expect(() => mergePhatLuongCu(moi, cuTruocVong6)).not.toThrow()
     expect(moi.khauTru).toEqual({ a: 500_000 })
     expect(moi.daTra).toEqual({ a: true })
-    expect(moi.chuyenCan).toEqual({})
+    // 0.11.4: a đã trả → chuyên cần đóng băng 0 (sửa tay), không bị tự tính khi ghi đè.
+    expect(moi.chuyenCan).toEqual({ a: 0 })
+    expect(moi.chuyenCanSuaTay).toEqual({ a: true })
     expect(moi.buLuong).toEqual({})
     expect(moi.le).toEqual({})
     expect(moi.baoHiem).toEqual({})

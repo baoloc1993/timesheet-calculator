@@ -3,7 +3,7 @@ import { describe, it, expect } from 'vitest'
 import {
   tinhChuyenCan,
   chuyenCanCua,
-  coChuyenCanTuDong,
+  chotChuyenCan,
   mergePhatLuongCu,
   chuyenCanLaSoTay,
   mapChuyenCan,
@@ -62,22 +62,35 @@ describe('chuyenCanCua', () => {
     expect(chuyenCanCua(moi, moi.dongBang[0])).toBe(0)
   })
 
-  it('kỳ cũ (thiếu cờ) đã phát cho ai đó → không tự tính, giữ thực nhận lịch sử', () => {
-    const kq = ky({ daTra: { B: true } })
-    expect(coChuyenCanTuDong(kq)).toBe(false)
-    expect(chuyenCanCua(kq, kq.dongBang[0])).toBe(0)
+  it('kỳ cũ (thiếu cờ / cờ false): người đã trả giữ số cũ, người chưa trả tự tính', () => {
+    for (const co of [undefined, false]) {
+      const kq = ky({ chuyenCanTuDong: co, daTra: { B: true }, dongBang: [
+        { maNhanVien: 'A', tenBangLuong: 'A', ngayCong: 28, gioOT: 0, thanhTien: 1000000, soDongDaSua: 0 },
+        { maNhanVien: 'B', tenBangLuong: 'B', ngayCong: 29, gioOT: 0, thanhTien: 1000000, soDongDaSua: 0 }
+      ] })
+      expect(chuyenCanCua(kq, kq.dongBang[0])).toBe(200000)
+      expect(chuyenCanCua(kq, kq.dongBang[1])).toBe(0)
+      expect(tongKetQuaKy(kq).tongThucNhan).toBe(2200000)
+    }
+  })
+
+  it('kỳ đã phát hết (lịch sử) → không đổi thực nhận', () => {
+    const kq = ky({ daTra: { A: true, B: true } })
     expect(tongKetQuaKy(kq).tongThucNhan).toBe(2000000)
   })
 
-  it('kỳ cũ chưa phát ai → tự tính', () => {
-    const kq = ky()
-    expect(coChuyenCanTuDong(kq)).toBe(true)
-    expect(tongKetQuaKy(kq).tongThucNhan).toBe(2200000)
+  it('chốt kỳ cũ rồi tick đã trả người chưa trả → số không nhảy; người đã trả giữ 0', () => {
+    const kq = chotChuyenCan(ky({ daTra: { B: true } }))
+    expect(kq.chuyenCanTuDong).toBe(true)
+    kq.daTra.A = true
+    expect(chuyenCanCua(kq, kq.dongBang[0])).toBe(200000)
+    const b = { maNhanVien: 'B', ngayCong: 29 }
+    expect(chuyenCanCua(kq, b)).toBe(0)
   })
 
-  it('lưu lại kỳ giữ cờ của kỳ cũ', () => {
-    const moi = ky({ chuyenCanTuDong: true })
-    expect(mergePhatLuongCu(moi, ky({ daTra: { A: true } })).chuyenCanTuDong).toBe(false)
-    expect(mergePhatLuongCu(ky({ chuyenCanTuDong: true }), ky({ chuyenCanTuDong: true, daTra: { A: true } })).chuyenCanTuDong).toBe(true)
+  it('ghi đè kỳ cũ: người đã trả đóng băng, người chưa trả tự tính', () => {
+    const moi = mergePhatLuongCu(ky({ chuyenCanTuDong: true }), ky({ daTra: { A: true } }))
+    expect(moi.chuyenCanTuDong).toBe(true)
+    expect(chuyenCanCua(moi, moi.dongBang[0])).toBe(0)
   })
 })

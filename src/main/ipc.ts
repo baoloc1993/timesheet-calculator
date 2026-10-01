@@ -6,7 +6,7 @@ import { existsSync, readFileSync } from 'fs'
 import type { KetQuaKyCong, KetQuaNgay, NhanVien, SuaTay } from '../core/types'
 import { xuLyKyCong, tinhLaiMotDong, suaNgayCongTrucTiep, tinhLaiTongHop, tongToanKy } from '../core/xuLyKyCong'
 import { khoangNgayMacDinh } from '../core/khoangNgayMacDinh'
-import { dongBangKetQuaKy, mergePhatLuongCu, mapChuyenCan, coChuyenCanTuDong } from '../core/ketQuaKy'
+import { dongBangKetQuaKy, mergePhatLuongCu, mapChuyenCan, chotChuyenCan } from '../core/ketQuaKy'
 import type { KetQuaKy } from '../core/ketQuaKy'
 import { phutTrongNgay } from '../core/time'
 import { docFileMay, LoiDocFileMay } from './excel/docFileMay'
@@ -590,9 +590,9 @@ export function dangKyIpc(): void {
       if (!kq) return { ok: false, loi: 'Không tìm thấy kỳ đã lưu.' }
       if (!kq.dongBang.some((d) => d.maNhanVien === p.maNhanVien))
         return { ok: false, loi: 'Nhân viên không có trong kỳ này.' }
-      // Chốt cờ tự tính trước khi đổi daTra — kỳ cũ thiếu cờ không bị tắt tự tính giữa chừng
-      // chỉ vì vừa tick người đầu tiên.
-      kq.chuyenCanTuDong = coChuyenCanTuDong(kq)
+      // Chốt chuyên cần kỳ cũ TRƯỚC khi đổi daTra — người đã trả đóng băng số cũ, người
+      // chưa trả giữ tự tính; tick "đã trả" sau đó không làm số nhảy.
+      chotChuyenCan(kq)
       if (p.chuyenCan === null) {
         const cc = { ...(kq.chuyenCan ?? {}) }
         delete cc[p.maNhanVien]

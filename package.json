@@ -1,6 +1,6 @@
 {
   "name": "timesheet-calculator",
-  "version": "0.11.3",
+  "version": "0.11.4",
   "description": "Timesheet calculator for ZKTeco attendance machines",
   "main": "./out/main/index.js",
   "author": "Bao Loc <baoloc1993@gmail.com>",
