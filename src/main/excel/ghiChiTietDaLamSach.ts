@@ -25,7 +25,7 @@ function toVang(cell: ExcelJS.Cell): void {
 const RE_HEADER = /Mã nhân viên:\s*(\S+)\s+Tên nhân viên:/
 
 // ---- sheet "Tổng hợp" + mỗi nhân viên một sheet (phương án C) ----
-// Màu lấy cố định từ token sáng/thường (DESIGN-SYSTEM.md C21) — Excel không có nền tối.
+// Màu lấy cố định từ token sáng/thường — Excel không có nền tối.
 const MAU_NHAN = 'FFF3F2F1' // --color-bg
 const MAU_TIEU_DE = 'FF2564CF' // --color-primary
 const MAU_MO = 'FF6B6966' // --color-text-faint

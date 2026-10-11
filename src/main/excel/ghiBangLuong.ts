@@ -1,7 +1,6 @@
 // Ghi file *bảng lương* — chép khuôn mẫu,
 // ghi đè Số lượng ngày / Số lượng giờ OT / Đơn giá. Nhân viên trong kỳ chưa có thẻ → thêm
 // thẻ mới theo khuôn thẻ chuẩn.
-// Nguồn: + BACKWARD-COMPATIBILITY §1f (bộ ô KHÔNG đổi).
 
 import { existsSync } from 'fs'
 import type { TongHopNhanVien } from '../../core/types'

@@ -39,7 +39,7 @@ import { themHoacSua, xoaNhanVien, tronTuFileKyTruoc, chuanTen } from './setting
 import { chuanHoaMa } from '../core/ma'
 import { log } from './logger'
 
-/** Kỳ đang tính lấy dữ liệu từ đâu — quyết định cách "làm mới sau khi Setup đổi" (§lamMoiKyHienTai)
+/** Kỳ đang tính lấy dữ liệu từ đâu — quyết định cách "làm mới sau khi Setup đổi"
  * và cách xuất file "chi tiết đã làm sạch" (chỉ nguồn 'file' có file gốc để nhân bản layout). */
 type NguonKy =
   | { loai: 'file'; duongDan: string }
@@ -88,7 +88,7 @@ function loi(e: unknown) {
   if (e instanceof LoiDocFileMay) return { ok: false, loi: e.message, maLoi: e.ma }
   const raw = (e as Error)?.message || ''
   log.error('IPC', raw || 'lỗi không xác định', (e as Error)?.stack || '')
-  // Map lỗi Node thô sang câu tiếng Việt nói được phải làm gì (CONVENTIONS §5)
+  // Map lỗi Node thô sang câu tiếng Việt nói được phải làm gì
   // không đẩy đường dẫn nội bộ / message hệ thống ra UI.
   let than = 'Có lỗi khi xử lý. Thử lại; nếu vẫn lỗi, gửi file log qua nút "Góp ý / báo lỗi".'
   if (/EBUSY|EPERM|resource busy|being used by another process/i.test(raw))
@@ -526,7 +526,7 @@ export function dangKyIpc(): void {
       if (kyHienTai) return { ok: false, loi: 'Đã có kỳ khác được nạp trong lúc chờ.' }
       // canhBao (mốc dư bị bỏ, v.v.) không được nuốt im lặng — nhánh nạp tay (may-cham-cong:dong-bo)
       // đã trả cho renderer hỏi xác nhận; nhánh tự động không thể hỏi (không chặn UI
-      // §7 bước 0), nhưng vẫn phải trả về để renderer hiện banner thông tin.
+      // nhưng vẫn phải trả về để renderer hiện banner thông tin.
       const { file, canhBao } = gomMocCham(logTho, tu, den)
       const ky = xuLyKyCong(file, layNhanVien())
       const suaTayCu = layMotKy(file.thang)?.suaTay ?? []

@@ -45,7 +45,7 @@ import { S12PhatLuongTungNguoi } from './screens/S12PhatLuongTungNguoi'
 import { S13InPhieuLuong } from './screens/S13InPhieuLuong'
 
 
-// (C7): icon kiểu danh sách Microsoft To Do — bundleIcon hiện nét Filled khi mục đang
+// icon kiểu danh sách — bundleIcon hiện nét Filled khi mục đang
 // chọn (aria-current), Regular khi không. Màu theo nhóm qua class .ic-* (theme.css).
 const Ic = {
   s9: bundleIcon(HomeFilled, HomeRegular),

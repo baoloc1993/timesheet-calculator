@@ -129,7 +129,7 @@ export interface Api {
     le?: number
     baoHiem?: number
   }): Promise<KetQua<KetQuaKy>>
-  /** Ghi mốc "đã in danh sách phát lương" vào log cục bộ (§Nhóm 4). Fire-and-forget. */
+  /** Ghi mốc "đã in danh sách phát lương" vào log cục bộ. Fire-and-forget. */
   danhDauInDanhSach(payload: { thang: string; soNguoi: number }): Promise<void>
 
   // ---- thiết lập Hiển thị ----

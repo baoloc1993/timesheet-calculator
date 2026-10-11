@@ -1,4 +1,4 @@
-// Log file cục bộ — không gửi đi đâu (TECHSTACK §2: app offline, error tracking = log file).
+// Log file cục bộ — không gửi đi đâu (app offline: error tracking = log file).
 // Định dạng: một dòng JSON / bản ghi (timestamp + mức độ + ngữ cảnh) — lần lại một
 // lỗi tính công mà không phải đoán.
 import { app } from 'electron'

@@ -9,7 +9,7 @@ import type { TongHopNhanVien } from '../../src/core/types'
 
 // mẫu bảng lương nhúng thiếu thẻ cho nhân viên trong kỳ → ghiBangLuong
 // tự thêm thẻ theo khuôn thẻ chuẩn, ĐÚNG bộ ô (Số lượng ngày / giờ OT / Đơn giá),
-// để trống Chuyên cần/bù lương/Lễ/BH/vay (hợp đồng BACKWARD-COMPATIBILITY §1f).
+// để trống Chuyên cần/bù lương/Lễ/BH/vay.
 // Sai ở đây = bỏ sót người khi phát lương hoặc phá bộ ô người khác đang dùng.
 
 function th(

@@ -1,4 +1,4 @@
-// `make migrate` — di trú config.json ngoài Electron (dùng cùng module electron-store).
+// `npm run migrate` — di trú config.json ngoài Electron (dùng cùng module electron-store).
 // Mặc định nâng tới version hiện tại. Truyền version đích để HẠ chủ động:
 //   npm run migrate -- 1     (hạ config.json về schemaVersion 1)
 import Store from 'electron-store'

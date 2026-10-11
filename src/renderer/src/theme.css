@@ -1,10 +1,8 @@
-/* Token — chép nguyên từ context/DESIGN-SYSTEM.md §2 (không sửa giá trị ở đây).
-   Vòng 10: tổ hợp sáng/thường đổi sang bảng Microsoft To Do (xanh #2564CF, nền trung tính
-   Fluent) + 3 token mới (--color-icon-teal/-green, --shadow-card). Khối tối/cao giữ nguyên.
-   Vòng 4: đổi giá trị 7 token + thêm token mới (§2.1b) + hai biến thể đầy đủ (nền tối,
-   tương phản cao — §2.1c) + cỡ chữ/độ cao hàng tuỳ chỉnh (§2.5, --scale/--row-h).
-   --color-warning-soft KHOÁ #FFF4CE cho tổ hợp sáng/thường (khớp mã fill Excel,
-) — ba tổ hợp còn lại không khoá, dùng giá trị v4 đề xuất. */
+/* Design tokens (colors, type scale, spacing, radii, shadows).
+   Light/dark themes and a high-contrast variant are driven by data attributes on <html>
+   (data-theme, data-contrast); font scale and row height by --scale / --row-h.
+   --color-warning-soft is locked to #FFF4CE for the light theme: it matches the fill colour
+   of highlighted cells in the exported Excel files. */
 :root {
   --scale: 1;
 
@@ -1120,7 +1118,7 @@ td.tiennhan.am {
   margin-top: var(--space-xs);
 }
 
-/* ---- Bản in (C14 / khuôn "Bản in" DESIGN-SYSTEM §5) — LUÔN in ở giao diện sáng ---- */
+/* ---- Bản in (print layout) — LUÔN in ở giao diện sáng ---- */
 .printsheet {
   display: none;
 }
@@ -1934,7 +1932,7 @@ td.lgk {
   @page phieu {
     size: A4 portrait;
     /* 4mm (không phải 6mm) — 297 − 2×4 = 289mm chừa dư 4mm so với đúng 3×95mm=285mm cần,
-       tránh việc engine in làm tròn đẩy phiếu thứ 3 sang tờ sau (soi bug pha P vòng 6). */
+       tránh việc engine in làm tròn đẩy phiếu thứ 3 sang tờ sau. */
     margin: 4mm;
   }
   .phieusheet,
@@ -2000,7 +1998,7 @@ td.lgk {
   }
 }
 
-/* ===== — theme Microsoft To Do (DESIGN-SYSTEM.md C3 · C7 · C20) ===== */
+/* ===== card-style theme ===== */
 
 /* C20 — tiêu đề màn: to, đậm 600, màu nhấn như tên danh sách của To Do. Chữ trong h1 giữ
    nguyên (dogfood dò h1:has-text). Đầu trang nền trùng --color-bg, bỏ kẻ dưới. */
@@ -2080,7 +2078,7 @@ td.lgk {
     border-bottom: 3px solid var(--color-divider-strong);
     padding-bottom: var(--space-sm);
   }
-  /* Tương phản cao: không bóng → viền thay bóng (§2.1c). Thẻ số/thẻ kỳ lấy lại viền đen
+  /* Tương phản cao: không bóng → viền thay bóng. Thẻ số/thẻ kỳ lấy lại viền đen
      mà rule border-color: transparent ở trên vừa xoá. */
   :root[data-contrast="high"] .stat,
   :root[data-contrast="high"] .period-card:not(.selected):not(.chua-luu) {

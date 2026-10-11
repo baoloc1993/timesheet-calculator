@@ -120,7 +120,7 @@ describe('thành tiền tính lại sau khi sửa thẳng "Ngày công"', () => 
     expect(th.tongGioOT).toBeCloseTo(1.9, 4)
     expect(th.thanhTien).toBe(tinhThanhTien(2, 1.9, 300000, 70000))
 
-    // Giám đốc sửa thẳng "Ngày công" ngày 02 thành nửa công (0.5) — không qua giờ.
+    // Người dùng sửa thẳng "Ngày công" ngày 02 thành nửa công (0.5) — không qua giờ.
     const kqNgay = [...th.ketQuaNgay]
     kqNgay[1] = suaNgayCongTrucTiep(kqNgay[1], 0.5)
     const thMoi = tinhLaiTongHop(th, kqNgay)

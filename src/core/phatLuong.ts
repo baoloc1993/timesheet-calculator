@@ -1,6 +1,6 @@
 // dùng chung cho S12 (phát từng người) + S13 (in phiếu) — cùng đọc một KetQuaKy,
-// cùng công thức giải trình 5 khoản. Hàm thuần ( — logic nghiệp vụ chỉ
-// src/core/, không nằm trong component renderer — soi bug).
+// cùng công thức giải trình 5 khoản. Hàm thuần: logic nghiệp vụ chỉ nằm trong
+// src/core/, không nằm trong component renderer.
 import type { KetQuaKy, DongBang } from './ketQuaKy'
 import { tinhThucNhanDayDu, chuyenCanCua } from './ketQuaKy'
 

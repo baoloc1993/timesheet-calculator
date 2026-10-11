@@ -1,5 +1,4 @@
-# CI: chạy `make check` + `make test` mỗi push/PR vào main. Đỏ thì chặn merge.
-# Nguồn: 3 ("make check chạy trong CI").
+# CI: typecheck, lint, test and build on every push/PR to main.
 name: check
 
 on:

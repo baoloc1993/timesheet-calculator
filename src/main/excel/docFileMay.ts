@@ -175,7 +175,6 @@ export async function docFileMay(duongDan: string): Promise<FileMayDaDoc> {
     const trung = khoi.find((k) => k.maNhanVien === ma)
     if (trung) {
       // Khối trùng mã trong cùng file (máy lỗi / sửa tay) → gộp ngày, không cộng đôi.
-      // Nguồn: soi bug.
       for (const d of dongNgay) {
         if (!trung.dongNgay.some((x) => x.ngay === d.ngay)) trung.dongNgay.push(d)
       }

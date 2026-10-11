@@ -1,5 +1,5 @@
-// Di trú schema config.json. Mỗi bước có `up` và `down` (BACKWARD-COMPATIBILITY §2
-// migration nào cũng phải có đường xuống). `make migrate` chạy tuần tự tới version đích.
+// Di trú schema config.json. Mỗi bước có `up` và `down` (migration nào cũng
+// phải có đường xuống). `npm run migrate` chạy tuần tự tới version đích.
 
 import type { NhanVien } from '../../core/types'
 import type { KetQuaKy } from '../../core/ketQuaKy'
