@@ -52,7 +52,7 @@ export interface KetQuaNgay {
   gioOtS: number
   daSua: boolean
   /**
-   * Dòng bị ép OT = 0 vì thiếu/lộn mốc. Cờ này BÁM theo dòng —
+   * Dòng bị ép OT = 0 vì thiếu/lộn mốc. Cờ này BÁM theo dòng
    * chỉ gỡ khi người dùng sửa tay để đủ 4 mốc thật. Thay cho
    * việc suy từ chuỗi ghiChuSua.
    */
@@ -72,7 +72,7 @@ export interface TongHopNhanVien {
   tongNgayCong: number
   tongGioOT: number
   soDongCanXemLai: number
-  /** Dẫn xuất (vòng 2): Σ ngày công × đơn giá ngày + Σ giờ OT × đơn giá giờ OT. Chỉ hiển thị S7. */
+  /** Dẫn xuất: Σ ngày công × đơn giá ngày + Σ giờ OT × đơn giá giờ OT. Chỉ hiển thị S7. */
   thanhTien: number
   ketQuaNgay: KetQuaNgay[]
 }
@@ -83,11 +83,11 @@ export interface NhanVienThieuSetup {
 }
 
 /**
- * Một chỗ người dùng sửa tay công của một ngày (vòng 8 — persist để ghi nhớ qua tự động
+ * Một chỗ người dùng sửa tay công của một ngày ( — persist để ghi nhớ qua tự động
  * nạp lại / tắt-mở app, thay vì chỉ giữ trong bộ nhớ tiến trình như trước).
  *
- * Vòng 9 — union hai loại sửa: `gio` (sửa mốc vào/ra, có từ vòng 8) và `ngayCong` (sửa
- * thẳng "Ngày công" 0/0.5/1, không đụng giờ). Bản ghi TRÊN ĐĨA từ trước vòng 9 không có
+ * union hai loại sửa: `gio` và `ngayCong` (sửa
+ * thẳng "Ngày công" 0/0.5/1, không đụng giờ). Bản ghi TRÊN ĐĨA từ trước không có
  * `loai` — đọc như `gio` tại chỗ dùng (`apDungSuaTay`), không migrate dữ liệu.
  */
 export type SuaTay =
@@ -104,6 +104,6 @@ export interface KetQuaKyCong {
   tongNgayCongCaKy: number
   tongGioOTCaKy: number
   tongDongCanXemLai: number
-  /** Dẫn xuất (vòng 2): Σ thành tiền mọi nhân viên trong kỳ. */
+  /** Dẫn xuất: Σ thành tiền mọi nhân viên trong kỳ. */
   tongThanhTienCaKy: number
 }

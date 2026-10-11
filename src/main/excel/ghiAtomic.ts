@@ -1,6 +1,6 @@
 // Ghi workbook ra đĩa an toàn: ghi file tạm rồi đổi tên đè lên đích.
 // Ghi hỏng giữa chừng (hết đĩa, mất điện, file đích đang mở) → file đích cũ còn
-// nguyên, không bị cụt (BH-12). Chỗ duy nhất chạm fs khi ghi .xlsx.
+// nguyên, không bị cụt. Chỗ duy nhất chạm fs khi ghi .xlsx.
 
 import { renameSync, rmSync } from 'fs'
 import type ExcelJS from 'exceljs'

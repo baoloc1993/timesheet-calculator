@@ -59,7 +59,7 @@ export function tongToanKy(tongHop: TongHopNhanVien[]): {
 
 /**
  * Xử lý cả kỳ. Nhân viên trong file máy chưa khai Setup → đưa vào `thieuSetup`
- * và KHÔNG tính (AC-6). Ghép theo maNhanVien.
+ * và KHÔNG tính. Ghép theo maNhanVien.
  */
 export function xuLyKyCong(file: FileMayDaDoc, nhanVienList: NhanVien[]): KetQuaKyCong {
   const theoMa = new Map(nhanVienList.map((n) => [chuanHoaMa(n.maNhanVien), n]))
@@ -108,7 +108,7 @@ export function tinhLaiMotDong(
   // Một mốc là "thật" (người dùng làm chủ) khi: có giá trị, VÀ (máy có ghi đúng giờ đó ở BẤT
   // KỲ cột nào trong ngày, HOẶC người dùng vừa gõ khác giá trị công cụ điền hộ). Để trống ô
   // công cụ điền = vẫn là mốc công cụ, chưa thật.
-  // Vòng 10 pha E: trước so theo ĐÚNG VỊ TRÍ cột — người dùng dời giờ máy sang khe đúng (VD
+  // trước so theo ĐÚNG VỊ TRÍ cột — người dùng dời giờ máy sang khe đúng (VD
   // 17:40 máy ghi ở cột 3 → ô "ra chiều") vẫn bị coi là mốc công cụ, OT kẹt 0 không gỡ được.
   const mocMay = new Set(dong.nguonGoc.map(phutTrongNgay).filter((p): p is number => p != null))
   const mocThat = (k: number): boolean => {
@@ -123,7 +123,7 @@ export function tinhLaiMotDong(
   const capPhut = cap.map((c) => ({ v: phutTrongNgay(c.vao), r: phutTrongNgay(c.ra) }))
   const caVoLy = capPhut.some((c) => c.v != null && c.r != null && c.r <= c.v)
 
-  // Vòng 10 pha E: máy ghi > 4 lần chấm thì luôn dư ít nhất 1 giờ ngoài 4 ô — chỉ nhắc khi người
+  // máy ghi > 4 lần chấm thì luôn dư ít nhất 1 giờ ngoài 4 ô — chỉ nhắc khi người
   // dùng CHƯA đổi ô nào so với công cụ dựng; đã sửa 4 ô ngày đó = đã kiểm, thôi nhắc.
   const oChot = new Set(phang.map(phutTrongNgay).filter((p): p is number => p != null))
   const conSot = [...mocMay].filter((p) => !oChot.has(p))
@@ -164,7 +164,7 @@ export function tinhLaiMotDong(
 }
 
 /**
- * Vòng 9 — sửa thẳng "Ngày công" (R) một ngày, không qua giờ (AC-2). Ép giờ OT (S) về 0
+ * sửa thẳng "Ngày công" (R) một ngày, không qua giờ. Ép giờ OT (S) về 0
  * (tái dùng ý nghĩa cờ `otBiEp` đã có — "S đã bị ép về 0"), giữ nguyên `capVaoRa`/`nguonGoc`/
  * `gioLamQ` để S8 tiếp tục hiển thị mốc giờ gốc cạnh số đã sửa (người dùng chốt qua chat
  * 2026-09-09: không xoá/khoá mốc giờ). Sửa giờ sau đó (`tinhLaiMotDong`) tính lại đầy đủ,

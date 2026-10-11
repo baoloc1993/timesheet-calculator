@@ -272,7 +272,7 @@ export function S12PhatLuongTungNguoi() {
                         </div>
                       </>
                     )}
-                    {/* 5 khoản (AC-2) — chỉ hiện dòng có giá trị khác 0, */}
+                    {/* 5 khoản — chỉ hiện dòng có giá trị khác 0, */}
                     {nguoiXem.chuyenCan > 0 && (
                       <div>
                         <span className="k">Chuyên cần</span>

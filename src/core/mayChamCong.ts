@@ -1,4 +1,4 @@
-// Cấu hình kết nối máy chấm công (vòng 5) — hàm thuần, không phụ thuộc Electron.
+// Cấu hình kết nối máy chấm công — hàm thuần, không phụ thuộc Electron.
 
 export interface CauHinhMayChamCong {
   ip: string
@@ -6,7 +6,7 @@ export interface CauHinhMayChamCong {
 }
 
 // Cổng 4370 — mặc định thật của node-zklib (test.js chính chủ) và của máy ZKTeco-compatible
-// người dùng cung cấp — sửa từ giả định sai "4970" ở pha V.
+// người dùng cung cấp — sửa từ giả định sai "4970".
 export const MAC_DINH_CAU_HINH_MAY: CauHinhMayChamCong = { ip: '', port: 4370 }
 
 const RE_IPV4 = /^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/
@@ -21,7 +21,7 @@ export function congHopLe(port: number): boolean {
   return Number.isInteger(port) && port >= 1 && port <= 65535
 }
 
-/** Field lạ/thiếu/hỏng → về mặc định từng field, không throw (cùng cơ chế HienThi vòng 4). */
+/** Field lạ/thiếu/hỏng → về mặc định từng field, không throw. */
 export function chuanHoaCauHinhMay(x: Partial<CauHinhMayChamCong> | undefined | null): CauHinhMayChamCong {
   return {
     ip: typeof x?.ip === 'string' ? x.ip.trim() : MAC_DINH_CAU_HINH_MAY.ip,

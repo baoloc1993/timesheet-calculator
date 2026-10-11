@@ -1,4 +1,4 @@
-// Vòng 4 — toàn vẹn dữ liệu config.json khi ghi/đọc AppConfig.hienThi qua src/main/settings/store.ts.
+// toàn vẹn dữ liệu config.json khi ghi/đọc AppConfig.hienThi qua src/main/settings/store.ts.
 // dòng "đổi thiết lập Hiển thị ... không mất dữ liệu".
 // Cô lập store qua TSC_CONFIG_DIR + vi.resetModules() (mẫu tronTuFileKyTruoc.test.ts) — mỗi
 // test cần một `config.json` khởi tạo khác nhau, mà store.ts giữ singleton module-level.

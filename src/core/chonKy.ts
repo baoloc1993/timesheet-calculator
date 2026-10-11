@@ -1,4 +1,4 @@
-// Vòng 7 — chọn kỳ mặc định để mở khi vào S7/S9, theo ngày-trong-tháng (AC-4).
+// chọn kỳ mặc định để mở khi vào S7/S9, theo ngày-trong-tháng.
 // Hàm thuần: không đổi thứ tự danh sách kỳ, chỉ trả về kỳ nào nên MỞ SẴN lúc vừa vào màn.
 
 export type KyMacDinh = { loai: 'dang-mo' } | { loai: 'da-luu'; thang: string } | { loai: 'khong-co' }

@@ -4,7 +4,7 @@ import { tmpdir } from 'os'
 import { join } from 'path'
 import type { NhanVien } from '../../src/core/types'
 
-// Vòng 2 (AC-4): "Nạp từ file kỳ trước" trộn danh sách rút từ bảng lương vào Setup.
+// "Nạp từ file kỳ trước" trộn danh sách rút từ bảng lương vào Setup.
 // Chỗ mất dữ liệu nếu sai: đè lên đơn giá / tên bảng lương người dùng đã khai tay, hoặc
 // đẻ ra nhân viên trùng. Cô lập store qua TSC_CONFIG_DIR (như saoLuu.test.ts).
 

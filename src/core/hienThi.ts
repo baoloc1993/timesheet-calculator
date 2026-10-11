@@ -1,4 +1,4 @@
-// Thiết lập cá nhân hoá hiển thị (vòng 4) — hàm thuần, không phụ thuộc Electron.
+// Thiết lập cá nhân hoá hiển thị — hàm thuần, không phụ thuộc Electron.
 
 export interface HienThi {
   scale: 1 | 1.15 | 1.3

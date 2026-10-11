@@ -1,4 +1,4 @@
-// Vòng 3 — lưu kỳ + phát lương. Luồng tiền/dữ liệu: đóng băng dongBang, thực nhận, làm tròn.
+// lưu kỳ + phát lương. Luồng tiền/dữ liệu: đóng băng dongBang, thực nhận, làm tròn.
 import { describe, it, expect } from 'vitest'
 import {
   lamTronNghin,
@@ -86,7 +86,7 @@ describe('tinhThucNhan', () => {
   })
 })
 
-describe('tinhThucNhanDayDu — thực nhận đủ 5 khoản (vòng 6)', () => {
+describe('tinhThucNhanDayDu — thực nhận đủ 5 khoản', () => {
   it('cộng đúng 3 khoản cộng (Chuyên cần/Bù lương/Lễ) + trừ đúng 2 khoản trừ (Bảo hiểm/Vay), làm tròn nghìn', () => {
     // 7.000.000 + 200.000 + 100.000 + 50.000 − 300.000 − 500.000 = 6.550.000
     const r = tinhThucNhanDayDu(7_000_000, 500_000, {
@@ -137,7 +137,7 @@ describe('dongBangKetQuaKy', () => {
       gioOT: 10,
       thanhTien: 7_000_000,
       soDongDaSua: 2,
-      // Vòng 6 — đơn giá đóng băng cùng lúc (để S12/S13 giải trình công×giá).
+      // đơn giá đóng băng cùng lúc (để S12/S13 giải trình công×giá).
       donGiaNgay: 0,
       donGiaGioOT: 0
     })
@@ -383,7 +383,7 @@ describe('mergePhatLuongCu — 4 khoản vòng 6 (chuyenCan/buLuong/le/baoHiem)'
     expect(moi.baoHiem).toEqual({ a: 20_000 })
   })
 
-  it('kỳ CŨ thiếu hẳn 4 field mới (dữ liệu lưu trước vòng 6, chỉ có khauTru+daTra) → không throw, không tạo field rác', () => {
+  it('kỳ CŨ thiếu hẳn 4 field mới → không throw, không tạo field rác', () => {
     const cuTruocVong6 = {
       thang: '2026-07',
       ngayLuu: 'x',
@@ -391,7 +391,7 @@ describe('mergePhatLuongCu — 4 khoản vòng 6 (chuyenCan/buLuong/le/baoHiem)'
       dongBang: [dong('a')],
       khauTru: { a: 500_000 },
       daTra: { a: true }
-      // KHÔNG có chuyenCan/buLuong/le/baoHiem — mô phỏng KetQuaKy lưu trước vòng 6.
+      // KHÔNG có chuyenCan/buLuong/le/baoHiem — mô phỏng KetQuaKy lưu trước.
     } as KetQuaKy
     const moi: KetQuaKy = {
       thang: '2026-07',

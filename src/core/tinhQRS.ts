@@ -42,8 +42,8 @@ export function tinhR(Q: number): number {
  *
  * Cận Q so ở 2 chữ số thập phân (làm tròn phút): Q đúng bằng ngưỡng+0.1 (vd 8.20 với
  * ngưỡng 8.1) → KHÔNG tính OT, khớp luật "Q > ngưỡng+0.1". Không làm tròn thì bụi số
- * `8.1 + 0.1 = 8.200000000000001` và Q phù du làm kết quả nhảy ±0.1h ở đúng cận đó —
- * back-test pha E 2026-09-01 thấy 5 dòng lệch kiểu này (bảng tay Excel ra 0.10, luật ra 0).
+ * `8.1 + 0.1 = 8.200000000000001` và Q phù du làm kết quả nhảy ±0.1h ở đúng cận đó
+ * back-test 2026-09-01 thấy 5 dòng lệch kiểu này (bảng tay Excel ra 0.10, luật ra 0).
  */
 export function tinhS(Q: number, nguongGioChuanNgay: number, epOtVe0 = false): number {
   if (epOtVe0) return 0

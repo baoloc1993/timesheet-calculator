@@ -1,8 +1,8 @@
 import type { ReactNode } from 'react'
 
-// Đầu trang chung cho mọi màn (vòng 4, AC-1): breadcrumb + tiêu đề + nút hành động chính
-// dính bên phải, dính đầu khi cuộn. Giữ nguyên cấu trúc <h1>{title}<span class="sub"> — dogfood
-// (`scripts/dogfood/*.ts`) tìm màn bằng `h1:has-text(...)`, không được đổi text bên trong h1.
+// Đầu trang chung cho mọi màn: breadcrumb + tiêu đề + nút hành động chính
+// dính bên phải, dính đầu khi cuộn. Giữ nguyên cấu trúc <h1>{title}<span class="sub"> — e2e
+// tìm màn bằng `h1:has-text(...)`, không được đổi text bên trong h1.
 export function PageHead({
   crumb,
   title,

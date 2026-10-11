@@ -3,7 +3,7 @@ import { tinhThanhTien } from '../../src/core/tinhThanhTien'
 import { xuLyKyCong } from '../../src/core/xuLyKyCong'
 import type { FileMayDaDoc, NhanVien, DongNgayMay } from '../../src/core/types'
 
-// Vòng 2 (AC-2): thành tiền hiển thị ở S7 = Σ ngày công × đơn giá ngày + Σ giờ OT × đơn giá giờ OT.
+// thành tiền hiển thị ở S7 = Σ ngày công × đơn giá ngày + Σ giờ OT × đơn giá giờ OT.
 
 describe('tinhThanhTien — hàm thuần', () => {
   it('ngày công × đơn giá ngày + giờ OT × đơn giá giờ OT', () => {

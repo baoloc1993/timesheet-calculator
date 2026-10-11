@@ -1,5 +1,5 @@
 // Ghi chú hiển thị cho một ngày công — dùng chung màn S8 "Giải trình & sửa công" và file chi
-// tiết công xuất ra (vòng 11), để hai nơi nói cùng một câu cho cùng một ngày.
+// tiết công xuất ra, để hai nơi nói cùng một câu cho cùng một ngày.
 import type { KetQuaNgay } from './types'
 
 export function ghiChuNgay(kq: KetQuaNgay): string {

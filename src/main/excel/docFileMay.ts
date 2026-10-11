@@ -114,7 +114,7 @@ export async function docFileMay(duongDan: string): Promise<FileMayDaDoc> {
     throw new LoiDocFileMay('FILE_HONG', 'Không mở được file. File có thể hỏng hoặc không phải .xlsx.')
   }
 
-  // Vòng 11: file chi tiết xuất ra có sheet "Tổng hợp" đứng đầu — không có sheet "Chi Tiet" thì
+  // file chi tiết xuất ra có sheet "Tổng hợp" đứng đầu — không có sheet "Chi Tiet" thì
   // chọn sheet đầu tiên có dòng "Mã nhân viên:" (khuôn máy), không lấy mù sheet đầu.
   const ws = sheetKhuonMay(wb)
   if (!ws) {
@@ -175,7 +175,7 @@ export async function docFileMay(duongDan: string): Promise<FileMayDaDoc> {
     const trung = khoi.find((k) => k.maNhanVien === ma)
     if (trung) {
       // Khối trùng mã trong cùng file (máy lỗi / sửa tay) → gộp ngày, không cộng đôi.
-      // Nguồn: soi bug pha P (BH-7).
+      // Nguồn: soi bug.
       for (const d of dongNgay) {
         if (!trung.dongNgay.some((x) => x.ngay === d.ngay)) trung.dongNgay.push(d)
       }

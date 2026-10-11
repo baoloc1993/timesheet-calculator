@@ -5,8 +5,8 @@ import { PageHead } from '../components/PageHead'
 import type { NapFileKetQua } from '../../../preload/api-types'
 import { khoangNgayMacDinh } from '../../../preload/api-types'
 
-// Vòng 5 (AC-1/AC-3/AC-4): segment "Chọn file" / "Đồng bộ từ máy" thêm cạnh luồng cũ.
-// Vòng 9: khoảng ngày mặc định dùng chung `khoangNgayMacDinh` (core) — ngày≤5 tự lấy
+// segment "Chọn file" / "Đồng bộ từ máy" thêm cạnh luồng cũ.
+// khoảng ngày mặc định dùng chung `khoangNgayMacDinh` (core) — ngày≤5 tự lấy
 // tháng trước, thay vì luôn tháng hiện tại.
 
 export function S1NapFile() {
@@ -54,8 +54,8 @@ export function S1NapFile() {
   }
 
   async function dongBoTuMay() {
-    // Vòng 8: hết cảnh báo "mất chỉnh sửa tay chưa lưu" — kỳ đang xử lý đã tự lưu liên tục
-    // (`luuTuDong()`), đổi nguồn không còn mất gì (khác vòng 5, khi sửa tay còn ở bộ nhớ).
+    // hết cảnh báo "mất chỉnh sửa tay chưa lưu" — kỳ đang xử lý đã tự lưu liên tục
+    // (`luuTuDong()`), đổi nguồn không còn mất gì.
     setLoiMay(null)
     setChoXacNhan(null)
     setDangDongBo(true)

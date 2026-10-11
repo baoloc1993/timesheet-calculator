@@ -1,6 +1,6 @@
-// Vòng 6 — dùng chung S12 (phát từng người) + S13 (in phiếu). Luồng tiền quan trọng:
+// dùng chung S12 (phát từng người) + S13 (in phiếu). Luồng tiền quan trọng:
 // đúng công thức 5 khoản + đúng phân biệt "chan" (chặn thật) vs "coDonGia" (rút gọn giải trình).
-// Nguồn bug thật: dogfood pha I vòng 6 dùng nhầm `chan` để quyết định rút gọn — xem.
+// Nguồn bug thật: e2e dùng nhầm `chan` để quyết định rút gọn — xem.
 import { describe, it, expect } from 'vitest'
 import { dungNguoiPhat, dsNguoiPhat } from '../../src/core/phatLuong'
 import type { KetQuaKy, DongBang } from '../../src/core/ketQuaKy'
@@ -57,7 +57,7 @@ describe('dungNguoiPhat — coDonGia (rút gọn) khác chan (chặn thật)', (
   })
 })
 
-describe('dungNguoiPhat — 5 khoản itemize đúng cho giải trình (AC-2/AC-3)', () => {
+describe('dungNguoiPhat — 5 khoản itemize đúng cho giải trình', () => {
   it('field 5 khoản thiếu hẳn (kỳ cũ) → tất cả về 0, không throw', () => {
     const kq = ky({ dongBang: [dong({ maNhanVien: 'a' })] }) // không có chuyenCan/buLuong/le/baoHiem trên KetQuaKy
     const p = dungNguoiPhat(kq, kq.dongBang[0])

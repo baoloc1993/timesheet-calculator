@@ -16,22 +16,19 @@ const api: Api = {
   moGopY: () => ipcRenderer.invoke('mo-gop-y'),
   danhDauXemCong: () => ipcRenderer.invoke('ky-cong:danh-dau-xem-cong'),
 
-  // Vòng 3 (vòng 8: hết luuKy — mỗi lần tính/sửa tự ghi ngay, xem ipc.ts luuTuDong())
+  // (hết luuKy — mỗi lần tính/sửa tự ghi ngay, xem ipc.ts luuTuDong())
   danhSachKy: () => ipcRenderer.invoke('ky-luu:danh-sach'),
   docKy: (thang) => ipcRenderer.invoke('ky-luu:doc', thang),
   capNhatPhatLuong: (payload) => ipcRenderer.invoke('ky-luu:cap-nhat-phat-luong', payload),
   danhDauInDanhSach: (payload) => ipcRenderer.invoke('ky-luu:danh-dau-in', payload),
 
-  // Vòng 4
   layHienThi: () => ipcRenderer.invoke('hien-thi:doc'),
   capNhatHienThi: (patch) => ipcRenderer.invoke('hien-thi:cap-nhat', patch),
 
-  // Vòng 5
   layCauHinhMay: () => ipcRenderer.invoke('may-cham-cong:doc-cau-hinh'),
   capNhatCauHinhMay: (patch) => ipcRenderer.invoke('may-cham-cong:cap-nhat-cau-hinh', patch),
   dongBoTuMay: (payload) => ipcRenderer.invoke('may-cham-cong:dong-bo', payload),
 
-  // Vòng 7
   layNguonGanNhat: () => ipcRenderer.invoke('nguon-gan-nhat:doc'),
   tuDongNapNguonGanNhat: () => ipcRenderer.invoke('nguon-gan-nhat:tu-dong-nap')
 }

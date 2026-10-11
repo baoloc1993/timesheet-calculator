@@ -1,4 +1,4 @@
-// Vòng 6 — bảng công cả tháng (S11). Hàm thuần, không phụ thuộc Electron/fs/exceljs.
+// bảng công cả tháng (S11). Hàm thuần, không phụ thuộc Electron/fs/exceljs.
 
 export type KyHieuNgay = 'X' | '½' | 'CN' | 'vang'
 

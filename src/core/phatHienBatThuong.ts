@@ -8,11 +8,10 @@
 //  4. Chấm đúng MỘT cặp vào/ra → S = 0, KHÔNG cảnh báo. R tuỳ cặp:
 //       phủ trưa (vào < 12:00 và ra > 13:30) → R = 1 (làm cả ngày, quên chấm trưa);
 //       chỉ một buổi → R = 0.5 (nửa công).
-//     người dùng chốt 2026-09-01 (back-test pha E). Thay luật cũ "1 cặp > 6.5h phủ trưa →
-//     vàng + ép OT=0" (BH-1) và "S>4 trên 1 cặp → ép OT=0".
+//     người dùng chốt 2026-09-01. Thay luật cũ "1 cặp > 6.5h phủ trưa →
+//     vàng + ép OT=0" và "S>4 trên 1 cặp → ép OT=0".
 //  5. Không chấm gì cả ngày → KHÔNG cảnh báo (nghỉ thật): Q=R=S=0, mức = none.
 //
-// Vòng 10 pha E:
 //  · Đọc mốc ở CẢ 6 cột máy — máy hay đẩy lần chấm ra về muộn sang cột cặp 3, ngày đủ 4 lần
 //    chấm từng bị coi là "thiếu 1 mốc". Tổng đúng 4 mốc → hai cặp bình thường, không ép OT.
 //  · Ngày 3 mốc: gán từng mốc vào khe (vào sáng / ra sáng / vào chiều / ra chiều) gần GIỜ QUEN
@@ -74,7 +73,7 @@ export function tinhKetQuaNhanVien(
   nguongGioChuanNgay: number
 ): KetQuaNgay[] {
   const ketQua: KetQuaNgay[] = []
-  // Mốc thô đã lọc của cả kỳ — dùng để điền mốc thiếu và tính giờ quen (vòng 10 pha E).
+  // Mốc thô đã lọc của cả kỳ — dùng để điền mốc thiếu và tính giờ quen.
   const mocKy = dongNgay.map((d) => mocHopLe(d.moc.slice(0, 6)).moc.map((m) => m.phut))
   const quen = gioQuen(mocKy.filter((m) => m.length === 4))
 
@@ -137,11 +136,11 @@ export function tinhKetQuaNhanVien(
       ]
     } else if (n === 2 && moc[0].khe % 2 === 0 && moc[1].khe % 2 === 1) {
       // MỘT CẶP VÀO/RA (chấm đúng một lần vào + một lần ra). người dùng chốt 2026-09-01
-      // (back-test pha E, khớp 256/263 ngày lịch sử):
+      //:
       //  · cặp PHỦ TRƯA (vào trước 12:00 và ra sau 13:30) → làm cả ngày, quên chấm trưa
       //    → R = 1, S = 0, KHÔNG cảnh báo.
       //  · cặp CHỈ MỘT BUỔI (chỉ sáng, hoặc chỉ chiều) → NỬA CÔNG: R = 0.5, S = 0, KHÔNG cảnh báo.
-      // Thay luật cũ BH-1 ("1 cặp > 6.5h phủ trưa → vàng + ép OT=0") và "S>4 trên 1 cặp".
+      // Thay luật cũ ("1 cặp > 6.5h phủ trưa → vàng + ép OT=0") và "S>4 trên 1 cặp".
       const c = { vao: gioChuoi(moc[0].phut), ra: gioChuoi(moc[1].phut) }
       const phuTrua = moc[0].phut < 12 * 60 && moc[1].phut > 13 * 60 + 30
       ketQua.push({
@@ -179,7 +178,7 @@ export function tinhKetQuaNhanVien(
       }
     } else if (n === 2) {
       // Hai mốc cùng loại (2 "vào" / 2 "ra") hoặc thứ tự lạ → không dựng được cặp,
-      // điền cả hai cặp theo ngày kề, ép OT = 0 (BH-2).
+      // điền cả hai cặp theo ngày kề, ép OT = 0.
       epOtVe0 = true
       cap = [
         { vao: dienKhe(0), ra: dienKhe(1) },
@@ -187,7 +186,7 @@ export function tinhKetQuaNhanVien(
       ]
       ghiChu.push('mốc chấm không dựng được cặp vào/ra, điền theo ngày kề, ép OT = 0')
     } else {
-      // n === 3 → thiếu đúng một khe; khe nào do giờ quen của người đó quyết (vòng 10 pha E).
+      // n === 3 → thiếu đúng một khe; khe nào do giờ quen của người đó quyết.
       epOtVe0 = true
       const { khe, thieu } = khe3Moc(moc.map((m) => m.phut), quen)
       const gio = [0, 0, 0, 0]

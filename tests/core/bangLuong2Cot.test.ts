@@ -6,7 +6,7 @@ import { join } from 'path'
 import { chuanHoaMa } from '../../src/core/ma'
 import { docBangLuong, nhanVienTuBangLuong, bocMaVaTen } from '../../src/main/excel/docBangLuong'
 
-// Vòng 2 (AC-4): "Nạp từ file kỳ trước" parse đúng bảng lương 2 cột — mã 5 chữ số TÁCH
+// "Nạp từ file kỳ trước" parse đúng bảng lương 2 cột — mã 5 chữ số TÁCH
 // khỏi chữ số trong tên (My83 → mã 00003, không 0000383; Lan89 → không 0001189).
 
 describe('chuanHoaMa — lấy cụm chữ số đầu, không gộp chữ số trong tên', () => {

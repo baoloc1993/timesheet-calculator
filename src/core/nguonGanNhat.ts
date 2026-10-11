@@ -1,4 +1,4 @@
-// Vòng 7 — nguồn nạp/đồng bộ THÀNH CÔNG gần nhất, để tự chạy lại khi mở app (AC-1).
+// nguồn nạp/đồng bộ THÀNH CÔNG gần nhất, để tự chạy lại khi mở app.
 
 import { congHopLe } from './mayChamCong'
 

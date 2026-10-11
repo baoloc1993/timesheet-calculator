@@ -45,7 +45,7 @@ export async function dongBo(ip: string, port: number): Promise<MocChamTho[]> {
     return raw.map((r) => ({ userId: r.deviceUserId, timestamp: r.recordTime }))
   } catch (e) {
     // Ghi đủ ngữ cảnh (IP/cổng/lỗi gốc) — thứ duy nhất người dùng gửi được khi báo lỗi là
-    // file log (không gửi lỗi từ xa), nên lỗi kết nối phải lần lại được từ đó (reviewer pha P).
+    // file log (không gửi lỗi từ xa), nên lỗi kết nối phải lần lại được từ đó.
     log.error(
       'kết nối máy chấm công',
       `${ip}:${port}`,

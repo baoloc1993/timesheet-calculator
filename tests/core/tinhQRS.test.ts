@@ -96,7 +96,7 @@ describe('tinhS — ngưỡng riêng từng người + biên +0.1', () => {
     expect(tinhS(8.21, 8.1)).toBeCloseTo(0.11, 4)
   })
   it('cận Q = 8.20 bền với bụi số thực: Q phù du quanh 8.2 vẫn ra 0', () => {
-    // back-test pha E 2026-09-01: 5 dòng lệch vì 8.1+0.1 và Q phù du ±1e-15
+    // back-test 2026-09-01: 5 dòng lệch vì 8.1+0.1 và Q phù du ±1e-15
     expect(tinhS(8.1 + 0.1, 8.1)).toBe(0) // 8.200000000000001
     expect(tinhS(8.199999999999999, 8.1)).toBe(0)
     expect(tinhS(8.200000000000003, 8.1)).toBe(0)

@@ -18,7 +18,7 @@ export interface TheNhanVienBangLuong {
   oSoLuongGio: string
   oDonGiaNgay: string
   oDonGiaGio: string
-  // Vòng 6 (AC-5) — ô "Thành tiền" của 5 khoản nhập tay sẵn có trong mẫu. '' nếu không tìm thấy.
+  // ô "Thành tiền" của 5 khoản nhập tay sẵn có trong mẫu. '' nếu không tìm thấy.
   oChuyenCan: string
   oBuLuong: string
   oLe: string
@@ -64,7 +64,7 @@ function so(v: ExcelJS.CellValue): number {
 }
 
 // Với mỗi cụm cột (trái: A/B/C/D/E, phải: G/H/I/J/K) tìm thẻ nhân viên. `tt` = cột "Thành tiền",
-// nơi 5 khoản Chuyên cần/bù lương/Lễ/bảo hiểm/vay ghi số (vòng 6, AC-5).
+// nơi 5 khoản Chuyên cần/bù lương/Lễ/bảo hiểm/vay ghi số.
 const CUM = [
   { ten: 1, tenPhu: 2, ma: 4, dvt: 2, soLuong: 3, donGia: 4, tt: 5 }, // A B C D E
   { ten: 7, tenPhu: 8, ma: 10, dvt: 8, soLuong: 9, donGia: 10, tt: 11 } // G H I J K
@@ -142,7 +142,7 @@ export async function docBangLuong(duongDan: string): Promise<{ wb: ExcelJS.Work
       const rrNgay = rNgay > 0 ? timDong('ngay', /ngày/i) : -1
       const rrGio = rGio > 0 ? timDong('gio', /giờ/i) : -1
 
-      // Vòng 6 (AC-5) — quét tiếp xuống tìm 5 dòng khoản nhập tay (thường ngay sau dòng kỳ,
+      // quét tiếp xuống tìm 5 dòng khoản nhập tay (thường ngay sau dòng kỳ,
       // có thể cách một dòng trống — quét cửa sổ rộng hơn Lương tháng/Làm thêm ở trên).
       let rCC = -1
       let rBL = -1

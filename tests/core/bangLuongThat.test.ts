@@ -3,7 +3,7 @@ import { existsSync } from 'fs'
 import { join } from 'path'
 import { docBangLuong, nhanVienTuBangLuong } from '../../src/main/excel/docBangLuong'
 
-// Vòng 2 (AC-4): parser bảng lương phải đọc được file THẬT layout cũ (2 cột/nhân viên,
+// parser bảng lương phải đọc được file THẬT layout cũ (2 cột/nhân viên,
 // KHÔNG có ô mã riêng). Test trên hiện vật của người dùng, không phải file dựng tay.
 
 const FILE = join('deployment/local/mau', 'bang luong thang 07 (mau).xlsx')
@@ -33,7 +33,7 @@ suite('docBangLuong trên file bảng lương thật 07/2026 (layout cũ, không
     expect(dung!.oSoLuongNgay).toMatch(/^[A-Z]\d+$/)
   })
 
-  it('chữ số Ở CUỐI tên không bị nuốt thành mã (regression AC-4: "Bác Lan 68", "Lan89")', async () => {
+  it('chữ số Ở CUỐI tên không bị nuốt thành mã', async () => {
     const { doc } = await docBangLuong(FILE)
     const lan68 = doc.the.find((t) => /Lan 68$/.test(t.tenBangLuong))
     const lan89 = doc.the.find((t) => t.tenBangLuong === 'Lan89')

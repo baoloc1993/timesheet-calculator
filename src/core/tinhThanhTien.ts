@@ -2,7 +2,7 @@
 //
 //   thành tiền = Σ ngày công × đơn giá ngày + Σ giờ OT × đơn giá giờ OT
 //
-// Dẫn xuất — KHÔNG ghi vào file bảng lương xuất (file giữ cột "Đơn giá" như vòng 1,
+// Dẫn xuất — KHÔNG ghi vào file bảng lương xuất (file giữ cột "Đơn giá" như,
 // kế toán tự nhân). Chỉ hiển thị trong app.
 
 const lam0 = (x: number) => Math.round(x)

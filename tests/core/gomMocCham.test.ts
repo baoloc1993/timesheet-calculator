@@ -103,7 +103,7 @@ describe('gomMocCham — ghép cặp + lọc khoảng ngày', () => {
   })
 })
 
-describe('gomMocCham → xuLyKyCong (AC-2: đi thẳng vào luồng lõi, không có luồng tính công riêng)', () => {
+describe('gomMocCham → xuLyKyCong', () => {
   it('kết quả gom từ log máy tính Q/R/S giống hệt một ngày làm việc bình thường từ file Excel', () => {
     const { file } = gomMocCham(
       [
@@ -135,7 +135,7 @@ describe('gomMocCham → xuLyKyCong (AC-2: đi thẳng vào luồng lõi, không
     expect(kq.mucDoCanhBao).toBe('none')
   })
 
-  it('userId của máy không khớp mã nào trong Setup → rơi vào thieuSetup (AC-6), không throw', () => {
+  it('userId của máy không khớp mã nào trong Setup → rơi vào thieuSetup, không throw', () => {
     const { file } = gomMocCham(
       [moc('00099', '2026-08-01T07:00:00'), moc('00099', '2026-08-01T17:00:00')],
       '2026-08-01',

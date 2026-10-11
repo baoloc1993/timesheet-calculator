@@ -25,7 +25,7 @@ function formatSoNhap(raw: string): string {
   return digits ? Number(digits).toLocaleString('vi-VN') : ''
 }
 
-// Vòng 6 — 5 khoản: 3 cộng (chuyenCan/buLuong/le) + 2 trừ (baoHiem, khauTru = "Vay").
+// 5 khoản: 3 cộng (chuyenCan/buLuong/le) + 2 trừ (baoHiem, khauTru = "Vay").
 const KHOAN = [
   { truong: 'chuyenCan', nhan: 'Chuyên cần' },
   { truong: 'buLuong', nhan: 'Bù lương' },

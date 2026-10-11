@@ -8,7 +8,7 @@ import { xuLyKyCong } from '../../src/core/xuLyKyCong'
 import { ghiChiTietDaLamSach } from '../../src/main/excel/ghiChiTietDaLamSach'
 import type { NhanVien } from '../../src/core/types'
 
-// Smoke test luồng lõi trên fixture TỔNG HỢP (dựng bằng exceljs) —
+// Smoke test luồng lõi trên fixture TỔNG HỢP (dựng bằng exceljs)
 // chạy được trong CI không cần dữ liệu thật. Đọc file máy → tính cả kỳ → phát hiện +
 // sửa dòng bất thường → ghi file "chi tiết đã làm sạch". Gãy chỗ nào cũng đỏ ở đây.
 

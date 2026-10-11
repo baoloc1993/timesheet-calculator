@@ -8,7 +8,7 @@ import { xuLyKyCong } from '../../src/core/xuLyKyCong'
 import { ghiChiTietDaLamSach, ghiChiTietTuMocCham } from '../../src/main/excel/ghiChiTietDaLamSach'
 import type { KetQuaKyCong, NhanVien } from '../../src/core/types'
 
-// Vòng 11 — file chi tiết công dễ đọc: sheet "Tổng hợp" đầu, mỗi nhân viên
+// file chi tiết công dễ đọc: sheet "Tổng hợp" đầu, mỗi nhân viên
 // một sheet, sheet "Chi Tiet" khuôn máy giữ nguyên ở cuối và nạp lại được. Chạy trên file máy
 // THẬT 08/2026 cho cả hai nguồn ghi (bản sao file máy / workbook dựng mới).
 

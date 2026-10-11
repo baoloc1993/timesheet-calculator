@@ -10,7 +10,7 @@ import { ghiFileAtomic } from './ghiAtomic'
 import { ghiChuNgay } from '../../core/ghiChuNgay'
 
 // Fresh object mỗi lần — exceljs chia sẻ style theo tham chiếu, dùng chung 1 const
-// làm nền vàng lan sang cả hàng (cells cùng xf). Nguồn: dogfood 2026-09-01.
+// làm nền vàng lan sang cả hàng (cells cùng xf). Nguồn: e2e 2026-09-01.
 const vang = (): ExcelJS.Fill => ({
   type: 'pattern',
   pattern: 'solid',
@@ -24,7 +24,7 @@ function toVang(cell: ExcelJS.Cell): void {
 
 const RE_HEADER = /Mã nhân viên:\s*(\S+)\s+Tên nhân viên:/
 
-// ---- Vòng 11 — sheet "Tổng hợp" + mỗi nhân viên một sheet (phương án C) ----
+// ---- sheet "Tổng hợp" + mỗi nhân viên một sheet (phương án C) ----
 // Màu lấy cố định từ token sáng/thường (DESIGN-SYSTEM.md C21) — Excel không có nền tối.
 const MAU_NHAN = 'FFF3F2F1' // --color-bg
 const MAU_TIEU_DE = 'FF2564CF' // --color-primary
@@ -72,9 +72,9 @@ function dongTieuDe(ws: ExcelJS.Worksheet, tieuDe: string, phu: string): void {
  * 2026-09-30). Số lấy nguyên từ `KetQuaNgay` đã tính → khớp màn S7/S8.
  */
 function themSheetDeDoc(wb: ExcelJS.Workbook, khuonMay: ExcelJS.Worksheet, tongHop: TongHopNhanVien[]): void {
-  // Nguồn là chính file chi tiết đã xuất (nạp lại bằng "Chọn file") → gỡ sheet vòng 11 cũ trước khi
+  // Nguồn là chính file chi tiết đã xuất (nạp lại bằng "Chọn file") → gỡ sheet cũ trước khi
   // dựng lại, không thì exceljs ném "Worksheet name already exists" và xuất hỏng mãi (review P1).
-  // Chỉ gỡ sheet do vòng 11 sinh ra: tên "Tổng hợp" hoặc có liên kết "← Tổng hợp" ở H2.
+  // Chỉ gỡ sheet do sinh ra: tên "Tổng hợp" hoặc có liên kết "← Tổng hợp" ở H2.
   for (const w of [...wb.worksheets]) {
     if (w === khuonMay) continue
     const laSheetCu =
@@ -135,12 +135,12 @@ function themSheetDeDoc(wb: ExcelJS.Workbook, khuonMay: ExcelJS.Worksheet, tongH
       row.getCell(1).value = dmy(kq.ngay)
       row.getCell(2).value = kq.thu
       moc.forEach((m, k) => (row.getCell(3 + k).value = m ?? ''))
-      // Ngày nghỉ cả ngày (không chấm, không sửa) để trống số — cột toàn số 0 khó nhìn (vòng 11)
+      // Ngày nghỉ cả ngày (không chấm, không sửa) để trống số — cột toàn số 0 khó nhìn
       const nghi = kq.capVaoRa.length === 0 && !kq.daSua
       row.getCell(7).value = nghi ? '' : kq.gioLamQ
       row.getCell(8).value = nghi ? '' : kq.ngayCongR
       // số gốc, KHÔNG làm tròn từng ô — numFmt '0.00' lo hiển thị; làm tròn từng ngày rồi cộng lệch
-      // dòng Tổng 0,01–0,02 giờ khi người dùng tự SUM cột (bug-hunter P1 vòng 11)
+      // dòng Tổng 0,01–0,02 giờ khi người dùng tự SUM cột
       row.getCell(9).value = nghi ? '' : kq.gioOtS
       row.getCell(10).value = ghiChuNgay(kq)
       if (kq.daSua) for (const k of [3, 4, 5, 6, 10]) row.getCell(k).fill = vang()
@@ -193,7 +193,7 @@ function laNgay(v: ExcelJS.CellValue): string | null {
 
 /**
  * Ghi Q/R/S + mốc đã sửa vào MỘT dòng ngày, tô vàng ô nào khác mốc máy gốc — logic
- * dùng chung cho cả hai nguồn (file thật / dựng từ đầu cho nguồn máy LAN, vòng 5).
+ * dùng chung cho cả hai nguồn.
  * Trả về true nếu dòng có tô vàng (đếm vào `soDongToVang`).
  */
 function ghiVaToVangMotDong(row: ExcelJS.Row, kq: KetQuaNgay): boolean {
@@ -273,9 +273,9 @@ export async function ghiChiTietDaLamSach(
 }
 
 /**
- * Vòng 5 — nguồn "Đồng bộ từ máy" không có file .xlsx gốc để nhân bản layout (chỉ có
+ * nguồn "Đồng bộ từ máy" không có file .xlsx gốc để nhân bản layout (chỉ có
  * log thô qua LAN). Dựng workbook mới từ đầu, cùng cấu trúc cột với file máy thật
- * (A=ngày, C..H=3 cặp vào/ra, Q/R/S=17/18/19) để AC-2 vẫn đúng: S6 không phân biệt
+ * (A=ngày, C..H=3 cặp vào/ra, Q/R/S=17/18/19) để vẫn đúng: S6 không phân biệt
  * được kỳ nạp từ đâu. Nguồn: (chi tiết đã làm sạch — nguồn máy).
  */
 export async function ghiChiTietTuMocCham(
@@ -307,9 +307,9 @@ export async function ghiChiTietTuMocCham(
       for (let k = 0; k < 4; k++) row.getCell(3 + k).value = moc[k]
       // Cặp 3 (G/H) — công cụ KHÔNG tự sửa cặp 3 (chỉ cặp 1/2 đi vào capVaoRa, xem
       // phatHienBatThuong.ts), nên ghi thẳng mốc gốc như nguồn "Chọn file" vẫn giữ
-      // nguyên cột G/H khi nhân bản file thật. Cùng vị trí cột đã hứa ở
+      // nguyên cột G/H khi nhân bản file thật. Cùng vị trí cột đã hứa
       // 2026-09-05 ("A=ngày, C..H=3 cặp") — thiếu cột này thì audit-trail nguồn máy
-      // kém trung thực hơn nguồn file (BH pha P vòng 5).
+      // kém trung thực hơn nguồn file.
       row.getCell(7).value = kq.nguonGoc[4] ?? ''
       row.getCell(8).value = kq.nguonGoc[5] ?? ''
       if (ghiVaToVangMotDong(row, kq)) soDongToVang++

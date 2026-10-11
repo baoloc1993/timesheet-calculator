@@ -1,5 +1,5 @@
-// Vòng 6 — đọc số tiền thành chữ tiếng Việt (S13, phiếu lương). Hàm thuần.
-// Cổng từ bản thiết kế (hàm docSo/doc3, mockup người dùng tự dựng) —
+// đọc số tiền thành chữ tiếng Việt (S13, phiếu lương). Hàm thuần.
+// Cổng từ bản thiết kế (hàm docSo/doc3, mockup người dùng tự dựng)
 // không dùng Intl (kết quả phải khớp chính xác cách đọc kế toán quen dùng).
 
 const DVSO = ['không', 'một', 'hai', 'ba', 'bốn', 'năm', 'sáu', 'bảy', 'tám', 'chín']

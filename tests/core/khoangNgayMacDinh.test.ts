@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest'
 import { khoangNgayMacDinh } from '../../src/core/khoangNgayMacDinh'
 
 // Chốt qua chat người dùng 2026-09-09: mùng 1-5 trả lương, công tính từ mùng 1 đến hết
-// tháng trước. Ngưỡng ngày≤5 khớp `chonKyMacDinh` (AC-4 vòng 7) nhưng hàm này KHÔNG dùng
+// tháng trước. Ngưỡng ngày≤5 khớp `chonKyMacDinh` nhưng hàm này KHÔNG dùng
 // chung — mục đích khác (khoảng ngày ĐỒNG BỘ, không phải kỳ HIỂN THỊ).
 
 describe('khoangNgayMacDinh', () => {

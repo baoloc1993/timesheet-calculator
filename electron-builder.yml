@@ -7,14 +7,14 @@ files:
   - out/**/*
   - package.json
 extraResources:
-  # Mẫu bảng lương nhúng sẵn (vòng 3) — main đọc qua process.resourcesPath.
+  # Mẫu bảng lương nhúng sẵn — main đọc qua process.resourcesPath.
   - from: resources/mau-bang-luong.xlsx
     to: mau-bang-luong.xlsx
 win:
   target:
     - nsis
   # Tên file .exe ASCII: NSIS tạo shortcut với target rỗng khi exe có dấu tiếng Việt
-  # trong đường dẫn (perMachine:false) → shortcut hỏng, bấm không mở (phát hiện pha P vòng 2).
+  # trong đường dẫn (perMachine:false) → shortcut hỏng, bấm không mở.
   # productName (tiêu đề cửa sổ, mục "Add or remove programs") vẫn giữ tiếng Việt.
   executableName: TimesheetCalculator
   artifactName: TimesheetCalculator-${version}-setup.${ext}

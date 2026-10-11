@@ -7,7 +7,7 @@ import { ghiBangLuong } from '../../src/main/excel/ghiBangLuong'
 import { docBangLuong } from '../../src/main/excel/docBangLuong'
 import type { TongHopNhanVien } from '../../src/core/types'
 
-// Vòng 3 AC-5: mẫu bảng lương nhúng thiếu thẻ cho nhân viên trong kỳ → ghiBangLuong
+// mẫu bảng lương nhúng thiếu thẻ cho nhân viên trong kỳ → ghiBangLuong
 // tự thêm thẻ theo khuôn thẻ chuẩn, ĐÚNG bộ ô (Số lượng ngày / giờ OT / Đơn giá),
 // để trống Chuyên cần/bù lương/Lễ/BH/vay (hợp đồng BACKWARD-COMPATIBILITY §1f).
 // Sai ở đây = bỏ sót người khi phát lương hoặc phá bộ ô người khác đang dùng.

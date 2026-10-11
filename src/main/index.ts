@@ -5,7 +5,7 @@ import { dangKyIpc } from './ipc'
 import { log } from './logger'
 
 /** Màu nền cửa sổ trước khi renderer kịp vẽ (tránh chớp trắng/đen) — đoán theo thiết lập
- * Hiển thị đã lưu (vòng 4); "Theo Windows" thì đoán theo `nativeTheme` của OS. */
+ * Hiển thị đã lưu; "Theo Windows" thì đoán theo `nativeTheme` của OS. */
 function mauNenCuaSo(): string {
   const h = layHienThi()
   const toi = h.theme === 'dark' || (h.theme === 'auto' && nativeTheme.shouldUseDarkColors)

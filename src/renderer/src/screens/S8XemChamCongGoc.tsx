@@ -10,7 +10,7 @@ const so2 = (n: number) => Math.round(n * 100) / 100
 /** 4 khe cố định "HH:MM"/"–" (vào1 · ra1 · vào2 · ra2) — căn theo khe để thấy khe nào lệch. */
 function khe4(moc: (string | null)[]): string {
   const bon = [0, 1, 2, 3].map((k) => moc[k] || '–').join('  ·  ')
-  // Vòng 10 pha E: hiện luôn lần chấm thứ 5–6 (cột cặp 3 của máy) — trước chỉ hiện 4 cột đầu,
+  // hiện luôn lần chấm thứ 5–6 (cột cặp 3 của máy) — trước chỉ hiện 4 cột đầu,
   // ghi chú bảo "kiểm tra tay" mà người dùng không thấy giờ nào để kiểm.
   const cap3 = [moc[4], moc[5]].filter(Boolean)
   return cap3.length ? `${bon}  ·  cặp 3: ${cap3.join(' · ')}` : bon
@@ -21,8 +21,8 @@ export function S8XemChamCongGoc() {
   const th = ky?.tongHop.find((t) => t.maNhanVien === maNhanVienDangXem)
 
   // Dòng "cần xem lại" lên đầu trước, rồi mới theo ngày — hành vi gốc của S3 (đã gộp vào
-  // đây vòng 7), phục vụ soát nhanh bất thường; đọc theo ngày trong bảng vẫn dễ vì mỗi
-  // dòng đều có cột Ngày (soi bug pha P vòng 7 — mất khi gộp, không có chủ đích bỏ).
+  // đây), phục vụ soát nhanh bất thường; đọc theo ngày trong bảng vẫn dễ vì mỗi
+  // dòng đều có cột Ngày.
   const sap = useMemo(
     () =>
       th
@@ -52,7 +52,7 @@ export function S8XemChamCongGoc() {
     )
   }
 
-  // Vòng 7 (AC-2) — vào từ mục nav mới, chưa có ngữ cảnh người → hiện danh sách bấm-tên
+  // vào từ mục nav mới, chưa có ngữ cảnh người → hiện danh sách bấm-tên
   // trước (cùng khuôn danh sách chọn người ở S12), không phải khuôn "quay lại S2 tự chọn"
   // như hành vi cũ của mục nav S3.
   if (!th) {
@@ -145,7 +145,7 @@ export function S8XemChamCongGoc() {
               <tbody>
                 {sap.map((d) => (
                   <DongGiaiTrinh
-                    // Vòng 9 (soi bug pha P1): key CHỈ theo ngày khiến React tái dùng state
+                    // key CHỈ theo ngày khiến React tái dùng state
                     // `cap` (bên trong DongGiaiTrinh, useState lúc mount) khi đổi nhân viên qua
                     // dropdown "Chọn nhân viên khác" — ô đang gõ dở của người CŨ chưa blur thì
                     // vẫn dính lại, blur sau đó ghi giờ của người cũ vào đúng ngày nhưng gán
@@ -186,8 +186,8 @@ function DongGiaiTrinh({
   ])
   const [luu, setLuu] = useState(false)
   const [loi, setLoi] = useState<string | null>(null)
-  // Vòng 8: sửa xong tự ghi ngay (không còn "Lưu kỳ này") — nháy "✓ đã lưu" 1.5s để người
-  // dùng thấy rõ, tránh lo lắng không biết có mất khi tắt app hay không (dogfood newbie).
+  // sửa xong tự ghi ngay (không còn "Lưu kỳ này") — nháy "✓ đã lưu" 1.5s để người
+  // dùng thấy rõ, tránh lo lắng không biết có mất khi tắt app hay không.
   const [vuaLuu, setVuaLuu] = useState(false)
 
   async function guiSua() {
@@ -209,7 +209,7 @@ function DongGiaiTrinh({
     }
   }
 
-  // Vòng 9 (AC-2) — sửa thẳng "Ngày công" không qua giờ: mốc giờ ở cột "Mốc hiện tại"
+  // sửa thẳng "Ngày công" không qua giờ: mốc giờ ở cột "Mốc hiện tại"
   // giữ nguyên (không đụng `cap`), chỉ ép Giờ OT về 0 + đổi ghi chú (src/core/xuLyKyCong.ts
   // suaNgayCongTrucTiep). Sửa giờ sau đó ghi đè lại bình thường qua guiSua().
   async function guiSuaR(r: 0 | 0.5 | 1) {

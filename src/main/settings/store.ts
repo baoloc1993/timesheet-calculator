@@ -21,18 +21,18 @@ export interface AppConfig {
   thuMucXuatGanNhat: string
   fileMauBangLuongGanNhat: string
   kyXuLyGanNhat: string
-  /** Vòng 4 — optional: thiếu thì dùng mặc định tại code, KHÔNG cần migration. */
+  /** optional: thiếu thì dùng mặc định tại code, KHÔNG cần migration. */
   hienThi?: HienThi
-  /** Vòng 5 — optional: thiếu thì mặc định ip rỗng/cổng 4370 tại code, KHÔNG migration. */
+  /** optional: thiếu thì mặc định ip rỗng/cổng 4370 tại code, KHÔNG migration. */
   mayChamCong?: CauHinhMayChamCong
-  /** Vòng 7 — optional: nguồn nạp/đồng bộ THÀNH CÔNG gần nhất, tự chạy lại khi mở app. */
+  /** optional: nguồn nạp/đồng bộ THÀNH CÔNG gần nhất, tự chạy lại khi mở app. */
   nguonGanNhat?: NguonGanNhat
 }
 
 interface Schema {
   nhanVien: NhanVien[]
   appConfig: AppConfig
-  /** Vòng 3 — lịch sử kết quả từng kỳ, khoá theo `thang` ("2026-09"). */
+  /** lịch sử kết quả từng kỳ, khoá theo `thang` ("2026-09"). */
   ketQuaKy: Record<string, KetQuaKy>
 }
 
@@ -94,7 +94,7 @@ export function moStore(): Store<Schema> {
     }
   }
 
-  // seed cho dev/dogfood: nạp danh sách nhân viên nếu store rỗng và có TSC_SEED_FILE
+  // seed cho dev/e2e: nạp danh sách nhân viên nếu store rỗng và có TSC_SEED_FILE
   const seedFile = process.env.TSC_SEED_FILE
   if (seedFile && store.get('nhanVien', []).length === 0 && existsSync(seedFile)) {
     try {
@@ -105,7 +105,7 @@ export function moStore(): Store<Schema> {
     }
   }
 
-  // seed kỳ đã lưu cho dogfood dashboard nhiều kỳ.
+  // seed kỳ đã lưu cho e2e dashboard nhiều kỳ.
   const seedKy = process.env.TSC_SEED_KETQUAKY
   if (seedKy && Object.keys(store.get('ketQuaKy', {})).length === 0 && existsSync(seedKy)) {
     try {
@@ -146,7 +146,7 @@ export function ghiConfig(patch: Partial<AppConfig>): AppConfig {
   return moi
 }
 
-// ---- Hiển thị (vòng 4) ----
+// ---- Hiển thị ----
 
 export function layHienThi(): HienThi {
   return chuanHoaHienThi(layConfig().hienThi)
@@ -158,7 +158,7 @@ export function ghiHienThi(patch: Partial<HienThi>): HienThi {
   return hienThi
 }
 
-// ---- Cấu hình máy chấm công (vòng 5) ----
+// ---- Cấu hình máy chấm công ----
 
 export function layCauHinhMay(): CauHinhMayChamCong {
   return chuanHoaCauHinhMay(layConfig().mayChamCong)
@@ -170,7 +170,7 @@ export function ghiCauHinhMay(patch: Partial<CauHinhMayChamCong>): CauHinhMayCha
   return mayChamCong
 }
 
-// ---- Nguồn nạp/đồng bộ gần nhất (vòng 7) ----
+// ---- Nguồn nạp/đồng bộ gần nhất ----
 
 export function layNguonGanNhat(): NguonGanNhat | null {
   return chuanHoaNguonGanNhat(layConfig().nguonGanNhat)
@@ -180,7 +180,7 @@ export function ghiNguonGanNhat(n: NguonGanNhat): void {
   ghiConfig({ nguonGanNhat: n })
 }
 
-// ---- KếtQuảKỳ (vòng 3) ----
+// ---- KếtQuảKỳ ----
 
 /** Tất cả kỳ đã lưu, mới nhất trên đầu (sort theo `thang` giảm dần). */
 export function layDanhSachKy(): KetQuaKy[] {

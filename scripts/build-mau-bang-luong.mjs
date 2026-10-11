@@ -1,5 +1,5 @@
 // Sinh resources/mau-bang-luong.xlsx — KHUÔN TRỐNG (chỉ tiêu đề + bề rộng cột + khổ in).
-// Vòng 3 (pha E): mẫu công ty viết tay có cấu trúc thẻ không đều → xuất ra lệch cột, dòng
+// mẫu công ty viết tay có cấu trúc thẻ không đều → xuất ra lệch cột, dòng
 // trống rải rác, khó nhìn. Bỏ hẳn các thẻ mẫu — `ghiBangLuong.themThe` dựng MỌI thẻ theo
 // một khuôn cố định (lưới đều, 2 cột thẳng hàng, có viền). Khuôn trống → không mang tên /
 // số lương của ai vào .exe và không còn thẻ "giữ số cũ" thừa.

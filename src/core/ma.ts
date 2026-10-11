@@ -2,7 +2,7 @@
 // và ghép trong xuLyKyCong.
 // Máy luôn xuất mã 5 chữ số zero-pad ("00015"); người dùng có thể gõ "15" → cùng một người.
 //
-// Vòng 2 (AC-4): file bảng lương 2 cột đôi khi để mã DÍNH tên có chữ số ("00003 My83").
+// file bảng lương 2 cột đôi khi để mã DÍNH tên có chữ số ("00003 My83").
 // Lấy CỤM CHỮ SỐ ĐẦU TIÊN, không gộp mọi chữ số — nếu không "My83" bơm 83 vào mã
 // ("00003"+"83" = "0000383"). ("chuanHoaMa bóc chữ số bám tên").
 

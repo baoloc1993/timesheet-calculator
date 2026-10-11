@@ -10,7 +10,7 @@ const vnd = (n: number) => n.toLocaleString('vi-VN')
 export function S7XemCong() {
   const { ky, di, xemChamCongGoc, danhSachKy, moKy } = useApp()
 
-  // Vòng 7 (AC-4) — S7 chỉ biết hiện kỳ ĐANG MỞ trong bộ nhớ, không có model cho kỳ đã
+  // S7 chỉ biết hiện kỳ ĐANG MỞ trong bộ nhớ, không có model cho kỳ đã
   // lưu. Quy tắc ngày-trong-tháng chỉ ra một kỳ ĐÃ LƯU → không tự vẽ lại ở đây (thiếu dữ
   // liệu chi tiết), chuyển sang Dashboard (S9) đã hiển thị đúng kỳ đó thay (tái dùng UI,
   // không thêm state/IPC mới). Xem cho lý do chọn hướng này.
@@ -27,7 +27,7 @@ export function S7XemCong() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [macDinh])
 
-  // Mốc "đọc kết quả kỳ trong app" — success metric vòng 2.
+  // Mốc "đọc kết quả kỳ trong app" — success metric.
   const sanSang = !!ky && ky.thieuSetup.length === 0
   useEffect(() => {
     if (sanSang) window.api.danhDauXemCong()

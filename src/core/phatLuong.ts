@@ -1,6 +1,6 @@
-// Vòng 6 — dùng chung cho S12 (phát từng người) + S13 (in phiếu) — cùng đọc một KetQuaKy,
-// cùng công thức giải trình 5 khoản. Hàm thuần ( — logic nghiệp vụ chỉ ở
-// src/core/, không nằm trong component renderer — soi bug pha P vòng 6).
+// dùng chung cho S12 (phát từng người) + S13 (in phiếu) — cùng đọc một KetQuaKy,
+// cùng công thức giải trình 5 khoản. Hàm thuần ( — logic nghiệp vụ chỉ
+// src/core/, không nằm trong component renderer — soi bug).
 import type { KetQuaKy, DongBang } from './ketQuaKy'
 import { tinhThucNhanDayDu, chuyenCanCua } from './ketQuaKy'
 
@@ -8,7 +8,7 @@ export interface NguoiPhat {
   d: DongBang
   /** Lý do chặn phát/in — null = không chặn. */
   chan: string | null
-  /** false = kỳ lưu TRƯỚC vòng 6, thiếu đơn giá đóng băng → giải trình rút gọn (khác `chan`). */
+  /** false = kỳ lưu TRƯỚC, thiếu đơn giá đóng băng → giải trình rút gọn (khác `chan`). */
   coDonGia: boolean
   luongCong: number
   tienOt: number
@@ -26,7 +26,7 @@ export interface NguoiPhat {
 
 /**
  * Đơn giá đọc từ `dongBang[].donGiaNgay/donGiaGioOT` ĐÃ ĐÓNG BĂNG lúc lưu kỳ — không đọc
- * `NhanVien` hiện tại (có thể đã đổi giá sau khi lưu). Field thiếu hẳn (kỳ lưu trước vòng 6)
+ * `NhanVien` hiện tại (có thể đã đổi giá sau khi lưu). Field thiếu hẳn
  * → không chặn, giải trình rút gọn còn "Thành tiền". Có mặt và cả hai đều 0 → chặn thật.
  */
 export function dungNguoiPhat(kq: KetQuaKy, d: DongBang): NguoiPhat {

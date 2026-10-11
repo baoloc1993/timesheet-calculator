@@ -15,7 +15,7 @@ interface DiemQuy {
   hienTai: boolean
 }
 
-/** Biểu đồ quỹ lương 3 kỳ gần nhất (SVG tĩnh, không tương tác) — S9 vòng 4.
+/** Biểu đồ quỹ lương 3 kỳ gần nhất (SVG tĩnh, không tương tác) — S9.
  *  Chỉ ngữ cảnh hình ảnh, không phải "so sánh liên kỳ" đầy đủ. */
 function BieuDoQuyLuong({ diem }: { diem: DiemQuy[] }) {
   if (diem.length < 2) return null
@@ -85,7 +85,7 @@ export function S9Dashboard() {
     tuDongNapLoi,
     tuDongNapCanhBao
   } = useApp()
-  // Kỳ đang mở trong phiên LUÔN hiện như thẻ riêng ở đầu — vòng 8: mỗi
+  // Kỳ đang mở trong phiên LUÔN hiện như thẻ riêng ở đầu —: mỗi
   // lần tính/sửa tự ghi ngay vào lịch sử (không còn nút "Lưu kỳ này"), nên kỳ này LUÔN cũng
   // có mặt trong `danhSachKy`; tách riêng chỉ để hiện số liệu SỐNG từ bộ nhớ (nhanh hơn, phản
   // ánh sửa tay tức thì) thay vì đọc lại từ đĩa.
@@ -96,7 +96,7 @@ export function S9Dashboard() {
   const kyDaLuu: KetQuaKy | undefined =
     chon != null ? danhSachKy.find((k) => k.thang === chon) : undefined
 
-  // Vòng 7 (AC-4) — chưa có lựa chọn nào (tay hoặc mặc định trước đó) → áp quy tắc
+  // chưa có lựa chọn nào (tay hoặc mặc định trước đó) → áp quy tắc
   // ngày-trong-tháng để quyết BẢNG CHI TIẾT nào mở sẵn. KHÔNG đụng thứ tự thẻ trong danh
   // sách: ngày ≤5
   // có thể chọn một kỳ ĐÃ LƯU làm mặc định dù đang có kỳ chưa lưu (`chon` rời khỏi null).
@@ -150,9 +150,9 @@ export function S9Dashboard() {
 
   const trong = !kyChuaLuu && danhSachKy.length === 0
 
-  // Vòng 8 — thiếu Setup không còn chặn tự lưu (mọi kỳ đều tự ghi), chỉ khoá "Phát lương"
+  // thiếu Setup không còn chặn tự lưu (mọi kỳ đều tự ghi), chỉ khoá "Phát lương"
   // tới khi khai đủ rồi nạp lại (`KetQuaKy.thieuSetup`, persist để còn biết khi quay lại sau
-  // khi tắt/mở app — trước vòng 8 việc chặn nằm ở chính bước "Lưu kỳ này").
+  // khi tắt/mở app — trước việc chặn nằm ở chính bước "Lưu kỳ này").
   const thieuSetupCount =
     chon == null && kyChuaLuu && ky ? ky.thieuSetup.length : (kyDaLuu?.thieuSetup?.length ?? 0)
 

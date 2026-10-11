@@ -3,7 +3,7 @@ import { xuLyKyCong, tinhLaiMotDong, suaNgayCongTrucTiep, tinhLaiTongHop } from 
 import type { FileMayDaDoc, NhanVien, DongNgayMay, KetQuaNgay } from '../../src/core/types'
 
 // Luồng lõi bước 3-5: ghép nhân viên theo maNhanVien, chặn khi
-// thiếu Setup (AC-6), tính lại sạch khi nạp lại cùng kỳ, sửa tay một dòng.
+// thiếu Setup, tính lại sạch khi nạp lại cùng kỳ, sửa tay một dòng.
 
 function ngay(d: string, moc: (string | null)[]): DongNgayMay {
   return { ngay: d, thu: '', moc: [...moc, null, null, null, null, null, null].slice(0, 6), congMay: null, otMay: null }
@@ -27,7 +27,7 @@ function fileMay(khoi: { maNhanVien: string; tenMay: string; dongNgay: DongNgayM
   return { thang: '2026-08', ngayBatDau: '2026-08-01', ngayKetThuc: '2026-08-31', khoi }
 }
 
-describe('xuLyKyCong — ghép nhân viên + chặn thiếu Setup (AC-6)', () => {
+describe('xuLyKyCong — ghép nhân viên + chặn thiếu Setup', () => {
   it('khối trong file máy chưa khai Setup → vào thieuSetup, KHÔNG được tính', () => {
     const file = fileMay([
       { maNhanVien: '00002', tenMay: 'Hai', dongNgay: [ngay('2026-08-01', ngayThuong)] },

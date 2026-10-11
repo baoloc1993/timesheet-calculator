@@ -1,5 +1,5 @@
-// Vòng 5 — toàn vẹn dữ liệu config.json khi ghi/đọc AppConfig.mayChamCong qua
-// src/main/settings/store.ts. Cùng mẫu với tests/core/hienThiStore.test.ts (vòng 4).
+// toàn vẹn dữ liệu config.json khi ghi/đọc AppConfig.mayChamCong qua
+// src/main/settings/store.ts. Cùng mẫu với tests/core/hienThiStore.test.ts.
 // lại còn nguyên") (field optional, KHÔNG migration).
 
 import { describe, it, expect, afterEach, vi } from 'vitest'
@@ -36,7 +36,7 @@ const nv = (maNhanVien: string): NhanVien => ({
   an: false
 })
 
-describe('layCauHinhMay — config cũ (bản trước vòng 5, chưa có field mayChamCong)', () => {
+describe('layCauHinhMay — config cũ', () => {
   it('đọc config không có mayChamCong → trả mặc định (ip rỗng, cổng 4370), không throw', async () => {
     const d = mkdtempSync(join(tmpdir(), 'tsc-maycc-cu-'))
     writeFileSync(

@@ -10,7 +10,7 @@ import { xuLyKyCong } from '../../src/core/xuLyKyCong'
 import type { NhanVien, TongHopNhanVien } from '../../src/core/types'
 
 // .xlsx gốc, dựng workbook mới từ đầu, cùng cấu trúc cột (Q=17/R=18/S=19, ô sửa tô vàng
-// #FFF4CE) để S6/AC-2 không phân biệt được kỳ nạp từ đâu". Chưa có test integration nào
+// #FFF4CE) để S6/ không phân biệt được kỳ nạp từ đâu". Chưa có test integration nào
 // đọc lại file do hàm này ghi ra — bài trước (pipelineTongHop.test.ts) chỉ phủ nhánh
 // ghiChiTietDaLamSach() (có file gốc).
 
@@ -147,7 +147,7 @@ describe('ghiChiTietTuMocCham — dựng file "chi tiết đã làm sạch" từ
     expect(coHeaderKhongCham).toBe(true)
   })
 
-  it('ngày có cặp 3 (6 mốc) — cột G/H (cặp 3) phải ghi mốc gốc, không bị bỏ mất (BH pha P vòng 5)', async () => {
+  it('ngày có cặp 3 (6 mốc) — cột G/H (cặp 3) phải ghi mốc gốc, không bị bỏ mất', async () => {
     // Cặp 3 KHÔNG đi vào capVaoRa (chỉ cặp 1/2 — phatHienBatThuong.ts), chỉ nằm ở nguonGoc[4]/[5].
     // Nguồn máy không có file gốc để "giữ hộ" cột G/H như nguồn file — phải ghi tay.
     const { file } = gomMocCham(

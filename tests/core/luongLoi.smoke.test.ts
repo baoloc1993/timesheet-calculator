@@ -67,7 +67,7 @@ suite('luồng lõi end-to-end trên dữ liệu thật 08/2026', () => {
     }
   })
 
-  it('tổng ngày công cả kỳ khớp con số đối chiếu tay (AC-2): 339', () => {
+  it('tổng ngày công cả kỳ khớp con số đối chiếu tay: 339', () => {
     // Golden value: ngày công đã đối chiếu tay 100% (MEMORY: ot-reconciliation-status).
     expect(kq.tongNgayCongCaKy).toBe(339)
   })

@@ -1,4 +1,4 @@
-// Đường dẫn mẫu bảng lương NHÚNG SẴN (vòng 3 — bỏ bước "chọn file mẫu" ở S6).
+// Đường dẫn mẫu bảng lương NHÚNG SẴN.
 
 import { app } from 'electron'
 import { join, resolve } from 'path'

@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useApp } from '../store'
 import type { HienThi } from '../../../preload/api-types'
 
-// C15 — bảng chọn "Hiển thị" (vòng 4, AC-2). Titlebar, mọi màn.
+// C15 — bảng chọn "Hiển thị". Titlebar, mọi màn.
 // Nguồn: context/DESIGN-SYSTEM.md §4 (C15) + §2.5.
 
 const CO_CHU: [HienThi['scale'], string][] = [

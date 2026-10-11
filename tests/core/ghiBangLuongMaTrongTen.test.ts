@@ -6,7 +6,7 @@ import { join } from 'path'
 import { ghiBangLuong } from '../../src/main/excel/ghiBangLuong'
 import type { TongHopNhanVien } from '../../src/core/types'
 
-// Vòng 2 regression (AC-4 + AC-5): sau khi chuanHoaMa đổi ngữ nghĩa (bóc cụm chữ số đầu),
+// regression: sau khi chuanHoaMa đổi ngữ nghĩa (bóc cụm chữ số đầu),
 // ghiBangLuong vẫn phải khớp ĐÚNG thẻ theo mã, KHÔNG nhầm vì chữ số nằm trong tên
 // ("Lan89" không được ghép với thẻ mã "00089"). Nhầm = điền số công/OT sai người → lương sai.
 
@@ -80,7 +80,7 @@ describe('ghiBangLuong — khớp theo mã, không nhầm vì chữ số trong t
     expect(num('I6')).toBe(0)
   })
 
-  it('vòng 3 (AC-5): nhân viên chưa có thẻ trong mẫu → tự thêm thẻ theo khuôn, điền đúng số', async () => {
+  it('vòng 3: nhân viên chưa có thẻ trong mẫu → tự thêm thẻ theo khuôn, điền đúng số', async () => {
     const tongHop = [
       th({ maNhanVien: '00099', tenBangLuong: 'Không Có Thẻ', tongNgayCong: 22, tongGioOT: 3, donGiaNgay: 300000, donGiaGioOT: 60000 })
     ]

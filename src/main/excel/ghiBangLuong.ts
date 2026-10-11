@@ -1,7 +1,7 @@
-// Ghi file *bảng lương* — chép khuôn mẫu (vòng 3: nhúng sẵn `resources/mau-bang-luong.xlsx`),
+// Ghi file *bảng lương* — chép khuôn mẫu,
 // ghi đè Số lượng ngày / Số lượng giờ OT / Đơn giá. Nhân viên trong kỳ chưa có thẻ → thêm
 // thẻ mới theo khuôn thẻ chuẩn.
-// Nguồn: AC-5 + BACKWARD-COMPATIBILITY §1f (bộ ô KHÔNG đổi).
+// Nguồn: + BACKWARD-COMPATIBILITY §1f (bộ ô KHÔNG đổi).
 
 import { existsSync } from 'fs'
 import type { TongHopNhanVien } from '../../core/types'
@@ -177,7 +177,7 @@ function dongCuoiCoNoiDung(ws: import('exceljs').Worksheet): number {
   return max
 }
 
-/** Vòng 6 (AC-5) — 5 khoản phát lương của kỳ đang xuất, map maNhanVien → số VND. Thiếu (kỳ
+/** 5 khoản phát lương của kỳ đang xuất, map maNhanVien → số VND. Thiếu (kỳ
  * chưa từng "Lưu kỳ này") → để nguyên bộ ô trống trong mẫu, không bịa số. */
 export interface PhuCapBangLuong {
   chuyenCan?: Record<string, number>
@@ -227,10 +227,10 @@ export async function ghiBangLuong(
     if (the.oSoLuongNgay) ws.getCell(the.oSoLuongNgay).value = th.tongNgayCong
     if (the.oSoLuongGio) ws.getCell(the.oSoLuongGio).value = th.tongGioOT
     // "0 thật" (đơn giá/khoản = 0 hợp lệ) khác "không có dữ liệu" (undefined, ô để trống như mẫu
-    // gốc) — dùng != null thay vì truthy để không lẫn hai trạng thái (soi bug pha P vòng 6).
+    // gốc) — dùng != null thay vì truthy để không lẫn hai trạng thái.
     if (the.oDonGiaNgay && th.donGiaNgay != null) ws.getCell(the.oDonGiaNgay).value = th.donGiaNgay
     if (the.oDonGiaGio && th.donGiaGioOT != null) ws.getCell(the.oDonGiaGio).value = th.donGiaGioOT
-    // Vòng 6 (AC-5) — 5 khoản phát lương đã nhập ở S10, đọc từ kỳ đã lưu cùng thang (nếu có).
+    // 5 khoản phát lương đã nhập ở S10, đọc từ kỳ đã lưu cùng thang (nếu có).
     const cc = phuCap?.chuyenCan?.[th.maNhanVien]
     const bl = phuCap?.buLuong?.[th.maNhanVien]
     const le = phuCap?.le?.[th.maNhanVien]

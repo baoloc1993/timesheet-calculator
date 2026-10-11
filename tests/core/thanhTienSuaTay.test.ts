@@ -9,7 +9,7 @@ import {
 import { tinhThanhTien } from '../../src/core/tinhThanhTien'
 import type { FileMayDaDoc, NhanVien, DongNgayMay } from '../../src/core/types'
 
-// Vòng 2 (AC-2): sau khi người dùng sửa tay một dòng ở S3, "thành tiền" của nhân viên đó
+// sau khi người dùng sửa tay một dòng ở S3, "thành tiền" của nhân viên đó
 // và tổng thành tiền cả kỳ phải tính lại theo tổng ngày công / giờ OT MỚI — nếu không,
 // S7 hiện số tiền cũ → trả lương sai.
 
@@ -92,11 +92,11 @@ describe('thành tiền tính lại sau khi sửa tay (S3 → S7)', () => {
   })
 })
 
-// Vòng 9 (AC-2): sửa thẳng "Ngày công" ép gioOtS về 0 — nếu tongGioOTCaKy/tongNgayCongCaKy
+// sửa thẳng "Ngày công" ép gioOtS về 0 — nếu tongGioOTCaKy/tongNgayCongCaKy
 // (dùng ở S9/S10 để tính thanhTien → thucNhan) không tính lại đúng theo giá trị MỚI thì
 // nhân viên bị trả OT của một ngày đã bị người dùng đổi thành "không tăng ca" → mất tiền
 // hoặc thừa tiền so với ý sửa thật.
-describe('thành tiền tính lại sau khi sửa thẳng "Ngày công" (vòng 9 AC-2)', () => {
+describe('thành tiền tính lại sau khi sửa thẳng "Ngày công"', () => {
   it('ép gioOtS về 0 cho một ngày đang có OT → thanhTien của nhân viên GIẢM đúng phần OT + phần công đổi', () => {
     const file: FileMayDaDoc = {
       thang: '2026-08',

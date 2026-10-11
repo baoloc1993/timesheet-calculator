@@ -1,4 +1,4 @@
-// Di trú schema config.json. Mỗi bước có `up` và `down` (BACKWARD-COMPATIBILITY §2 —
+// Di trú schema config.json. Mỗi bước có `up` và `down` (BACKWARD-COMPATIBILITY §2
 // migration nào cũng phải có đường xuống). `make migrate` chạy tuần tự tới version đích.
 
 import type { NhanVien } from '../../core/types'
@@ -50,7 +50,7 @@ const BUOC: BuocMigration[] = [
     // Không có gì để bỏ khi về v0 — chỉ hạ số version.
     down: (d) => ({ ...d, appConfig: { ...d.appConfig, schemaVersion: 0 } })
   },
-  // v1 ↔ v2 (vòng 3): THÊM collection KếtQuảKỳ. Additive thuần — NhanVien/AppConfig không đụng.
+  // v1 ↔ v2: THÊM collection KếtQuảKỳ. Additive thuần — NhanVien/AppConfig không đụng.
   {
     up: (d) => ({
       ...d,

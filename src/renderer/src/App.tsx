@@ -45,7 +45,7 @@ import { S12PhatLuongTungNguoi } from './screens/S12PhatLuongTungNguoi'
 import { S13InPhieuLuong } from './screens/S13InPhieuLuong'
 
 
-// Vòng 10 (C7): icon kiểu danh sách Microsoft To Do — bundleIcon hiện nét Filled khi mục đang
+// (C7): icon kiểu danh sách Microsoft To Do — bundleIcon hiện nét Filled khi mục đang
 // chọn (aria-current), Regular khi không. Màu theo nhóm qua class .ic-* (theme.css).
 const Ic = {
   s9: bundleIcon(HomeFilled, HomeRegular),
@@ -93,7 +93,7 @@ function MucNav({
       disabled={disabled}
       title={title}
       // Rail thu cột icon (< 1024px) ẩn .lbl bằng display:none → tên truy cập chỉ còn số badge.
-      // aria-label giữ tên đúng ở mọi độ rộng (soi review pha P1 vòng 10).
+      // aria-label giữ tên đúng ở mọi độ rộng.
       aria-label={title}
       onClick={onClick}
     >
@@ -108,7 +108,7 @@ function MucNav({
   )
 }
 
-// Nav-rail gộp theo việc. Vòng 7: bỏ mục "Rà dòng
+// Nav-rail gộp theo việc.: bỏ mục "Rà dòng
 // vàng" (S3) — gộp vào S8, đổi tên "Xem chấm công gốc" → "Giải trình & sửa công".
 const KY_HIEN_TAI_SUB: { id: 's2' | 's7' | 's8' | 's11'; nhan: string }[] = [
   { id: 's2', nhan: 'Bảng tổng hợp' },
@@ -116,7 +116,7 @@ const KY_HIEN_TAI_SUB: { id: 's2' | 's7' | 's8' | 's11'; nhan: string }[] = [
   { id: 's8', nhan: 'Giải trình & sửa công' },
   { id: 's11', nhan: 'Bảng công cả tháng' }
 ]
-// Vòng 6 — nhóm "Phát lương": S10 danh sách + S12 phát từng người + S13 in phiếu.
+// nhóm "Phát lương": S10 danh sách + S12 phát từng người + S13 in phiếu.
 const PHAT_LUONG_SUB: { id: 's10' | 's12' | 's13'; nhan: string }[] = [
   { id: 's10', nhan: 'Danh sách' },
   { id: 's12', nhan: 'Phát từng người' },
@@ -137,8 +137,8 @@ function Rail() {
       <div className="rail-group">
         <span className="rail-group-label">Kỳ hiện tại</span>
         {KY_HIEN_TAI_SUB.map((m) => (
-          // Vòng 7: S8 không còn khoá theo "đã chọn ai chưa" — chưa có ngữ cảnh thì S8 tự
-          // hiện danh sách bấm-tên (khuôn S12), không cần chọn trước ở màn khác (AC-2).
+          // S8 không còn khoá theo "đã chọn ai chưa" — chưa có ngữ cảnh thì S8 tự
+          // hiện danh sách bấm-tên (khuôn S12), không cần chọn trước ở màn khác.
           <MucNav
             key={m.id}
             id={m.id}

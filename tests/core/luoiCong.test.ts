@@ -1,4 +1,4 @@
-// Vòng 6 — bảng công cả tháng (S11). Ký hiệu ngày + suy Chủ Nhật từ lịch thật.
+// bảng công cả tháng (S11). Ký hiệu ngày + suy Chủ Nhật từ lịch thật.
 import { describe, it, expect, afterEach } from 'vitest'
 import { dungKyHieuNgay, ngayLaChuNhat } from '../../src/core/luoiCong'
 

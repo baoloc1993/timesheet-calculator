@@ -1,4 +1,4 @@
-// Vòng 3 — lưu kết quả một kỳ + phát lương. Hàm thuần, không phụ thuộc Electron/fs/exceljs.
+// lưu kết quả một kỳ + phát lương. Hàm thuần, không phụ thuộc Electron/fs/exceljs.
 
 import type { TongHopNhanVien, KetQuaKyCong, NhanVienThieuSetup, SuaTay } from './types'
 
@@ -11,8 +11,8 @@ export interface DongBang {
   thanhTien: number
   soDongDaSua: number
   /**
-   * Vòng 6, optional — đơn giá TẠI THỜI ĐIỂM LƯU (đóng băng cùng lúc với thanhTien) để
-   * S12/S13 giải trình đúng "ngày công × giá + OT × giá". Kỳ lưu TRƯỚC vòng 6 thiếu field
+   * Optional — đơn giá TẠI THỜI ĐIỂM LƯU (đóng băng cùng lúc với thanhTien) để
+   * S12/S13 giải trình đúng "ngày công × giá + OT × giá". Kỳ lưu TRƯỚC thiếu field
    * này → giải trình rút gọn còn một dòng "Thành tiền".
    */
   donGiaNgay?: number
@@ -29,33 +29,33 @@ export interface KetQuaKy {
   khoangNgay: { tu: string; den: string }
   /** Đóng băng lúc lưu. */
   dongBang: DongBang[]
-  /** Sửa được sau khi lưu — map maNhanVien → số VND ≥ 0. Hiển thị là "Vay" từ vòng 6. */
+  /** Sửa được sau khi lưu — map maNhanVien → số VND ≥ 0. Hiển thị là "Vay". */
   khauTru: MapTien
   /** Sửa được sau khi lưu — map maNhanVien → đã trả chưa. */
   daTra: Record<string, boolean>
   /**
-   * Vòng 6, optional — 3 khoản CỘNG vào thực nhận (map maNhanVien → số VND ≥ 0).
-   * Thiếu field (kỳ lưu trước vòng 6) → đọc như rỗng `{}`, không throw.
+   * Optional — 3 khoản CỘNG vào thực nhận (map maNhanVien → số VND ≥ 0).
+   * Thiếu field → đọc như rỗng `{}`, không throw.
    */
   chuyenCan?: MapTien
   buLuong?: MapTien
   le?: MapTien
-  /** Vòng 6, optional — khoản TRỪ (cùng chiều `khauTru`). */
+  /** Optional — khoản TRỪ (cùng chiều `khauTru`). */
   baoHiem?: MapTien
   /**
-   * Vòng 8, optional — các chỗ đã sửa tay ở "Giải trình & sửa công" tại thời điểm ghi.
-   * Persist để tự động nạp lại (vòng 7 AC-1) tái áp dụng đúng sau khi tắt/mở lại app —
-   * trước vòng 8, mảng này chỉ sống trong bộ nhớ tiến trình nên mất khi đóng app.
+   * Optional — các chỗ đã sửa tay ở "Giải trình & sửa công" tại thời điểm ghi.
+   * Persist để tự động nạp lại tái áp dụng đúng sau khi tắt/mở lại app
+   * trước, mảng này chỉ sống trong bộ nhớ tiến trình nên mất khi đóng app.
    */
   suaTay?: SuaTay[]
   /**
-   * Vòng 8, optional — nhân viên còn thiếu Setup TẠI THỜI ĐIỂM GHI (không phải lúc xem lại).
+   * Optional — nhân viên còn thiếu Setup TẠI THỜI ĐIỂM GHI (không phải lúc xem lại).
    * Khác `0` → "Phát lương kỳ này" bị khoá tới khi khai đủ Setup rồi nạp lại (thay cho việc
-   * chặn hẳn không cho lưu như trước vòng 8 — giờ mọi kỳ đều tự lưu, kể cả kỳ thiếu người).
+   * chặn hẳn không cho lưu như trước — giờ mọi kỳ đều tự lưu, kể cả kỳ thiếu người).
    */
   thieuSetup?: NhanVienThieuSetup[]
   /**
-   * Vòng 11 (E) — true = ô Chuyên cần của mã CHƯA nhập tay tự tính từ ngày công
+   * true = ô Chuyên cần của mã CHƯA nhập tay tự tính từ ngày công
    * (`tinhChuyenCan`). Khác `true` (kỳ lưu trước 0.11.2, hoặc `false` do 0.11.2/0.11.3 ghi)
    * → người ĐÃ TRẢ giữ số cũ, người chưa trả vẫn tự tính (`chuyenCanCua`); `chotChuyenCan` chốt cứng.
    */
@@ -134,7 +134,7 @@ export function tinhThucNhan(thanhTien: number, khauTru: number): number {
 }
 
 /**
- * Vòng 6 — thực nhận đầy đủ 5 khoản: thành tiền + Chuyên cần + Bù lương + Lễ − Bảo hiểm − Vay
+ * thực nhận đầy đủ 5 khoản: thành tiền + Chuyên cần + Bù lương + Lễ − Bảo hiểm − Vay
  * (`khauTru`), làm tròn nghìn. Field thiếu (kỳ cũ chưa khai) → coi như 0.
  */
 export function tinhThucNhanDayDu(
@@ -204,7 +204,7 @@ export function mergePhatLuongCu(kqMoi: KetQuaKy, kqCu: KetQuaKy | null | undefi
   for (const [ma, v] of Object.entries(kqCu.daTra)) {
     if (maTrongKyMoi.has(ma)) kqMoi.daTra[ma] = v
   }
-  // Vòng 6 — 4 khoản mới giữ cùng cơ chế khauTru/daTra (kỳ cũ chưa vòng 6 thì thiếu field, bỏ qua).
+  // 4 khoản mới giữ cùng cơ chế khauTru/daTra.
   for (const truong of ['chuyenCan', 'buLuong', 'le', 'baoHiem'] as const) {
     const cu = kqCu[truong]
     if (!cu) continue

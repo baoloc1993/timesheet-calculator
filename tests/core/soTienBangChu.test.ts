@@ -1,4 +1,4 @@
-// Vòng 6 — đọc số tiền thành chữ tiếng Việt (S13, phiếu lương).
+// đọc số tiền thành chữ tiếng Việt (S13, phiếu lương).
 import { describe, it, expect } from 'vitest'
 import { docSoTienBangChu } from '../../src/core/soTienBangChu'
 

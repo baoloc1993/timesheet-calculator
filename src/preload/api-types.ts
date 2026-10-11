@@ -24,7 +24,7 @@ export type {
 export { chonKyMacDinh } from '../core/chonKy'
 export type { KyMacDinh } from '../core/chonKy'
 export { khoangNgayMacDinh } from '../core/khoangNgayMacDinh'
-// Hàm thuần vòng 3 — renderer dùng để tính "thực nhận" / Σ mà không cần round-trip IPC.
+// Hàm thuần — renderer dùng để tính "thực nhận" / Σ mà không cần round-trip IPC.
 export { tinhThucNhan, tinhThucNhanDayDu, lamTronNghin, tongKetQuaKy, tinhChuyenCan, chuyenCanCua, chuyenCanLaSoTay } from '../core/ketQuaKy'
 export { dungKyHieuNgay, ngayLaChuNhat } from '../core/luoiCong'
 export type { KyHieuNgay } from '../core/luoiCong'
@@ -95,7 +95,7 @@ export interface Api {
     KetQua<NhanVien[]> & { ky?: KetQuaKyCong | null; canhBaoLamMoi?: string }
   >
   layKyHienTai(): Promise<KetQuaKyCong | null>
-  /** Vòng 9: `cap` (sửa giờ, có từ vòng 1) HOẶC `r` (sửa thẳng "Ngày công", AC-2 vòng 9) — không cả hai. */
+  /** `cap` HOẶC `r` — không cả hai. */
   tinhLaiNgay(
     payload:
       | { maNhanVien: string; ngay: string; cap: { vao: string | null; ra: string | null }[] }
@@ -109,16 +109,16 @@ export interface Api {
   moGopY(): Promise<void>
   /**
    * Ghi mốc "đã xem kết quả trong app" vào log cục bộ ( 4,
-   * success metric vòng 2 — đọc công trong app thay vì mở Excel). Fire-and-forget.
+   * success metric — đọc công trong app thay vì mở Excel). Fire-and-forget.
    */
   danhDauXemCong(): Promise<void>
 
-  // ---- Vòng 3 — dashboard + phát lương (vòng 8: hết "Lưu kỳ này" — mỗi lần tính/sửa tự ghi ngay) ----
+  // ---- dashboard + phát lương ----
   /** Danh sách kỳ đã lưu, mới nhất trên đầu. */
   danhSachKy(): Promise<KetQuaKy[]>
   /** Một kỳ đã lưu theo `thang`. */
   docKy(thang: string): Promise<KetQuaKy | null>
-  /** Cập nhật khấu trừ / trạng thái đã-trả / 4 khoản vòng 6 của MỘT nhân viên trong MỘT kỳ đã lưu. */
+  /** Cập nhật khấu trừ / trạng thái đã-trả / 4 khoản của MỘT nhân viên trong MỘT kỳ đã lưu. */
   capNhatPhatLuong(payload: {
     thang: string
     maNhanVien: string
@@ -132,13 +132,13 @@ export interface Api {
   /** Ghi mốc "đã in danh sách phát lương" vào log cục bộ (§Nhóm 4). Fire-and-forget. */
   danhDauInDanhSach(payload: { thang: string; soNguoi: number }): Promise<void>
 
-  // ---- Vòng 4 — thiết lập Hiển thị ----
+  // ---- thiết lập Hiển thị ----
   /** Đọc `AppConfig.hienThi` (thiếu → mặc định tại code, không throw). */
   layHienThi(): Promise<HienThi>
   /** Ghi đè một phần thiết lập Hiển thị, trả về bộ đầy đủ đã chuẩn hoá. */
   capNhatHienThi(patch: Partial<HienThi>): Promise<HienThi>
 
-  // ---- Vòng 5 — kết nối máy chấm công (LAN) ----
+  // ---- kết nối máy chấm công (LAN) ----
   /** Đọc `AppConfig.mayChamCong` (thiếu → ip rỗng/cổng 4370 tại code, không throw). */
   layCauHinhMay(): Promise<CauHinhMayChamCong>
   /** Ghi đè một phần cấu hình kết nối máy, trả về bộ đầy đủ đã chuẩn hoá. */
@@ -148,7 +148,7 @@ export interface Api {
     KetQua<NapFileKetQua> & { canhBao?: string[] }
   >
 
-  // ---- Vòng 7 — tự động nạp/đồng bộ nguồn gần nhất khi mở app (AC-1) ----
+  // ---- tự động nạp/đồng bộ nguồn gần nhất khi mở app ----
   /** Đọc `AppConfig.nguonGanNhat` (null nếu chưa từng nạp/đồng bộ lần nào). */
   layNguonGanNhat(): Promise<NguonGanNhat | null>
   /** Main tự chạy lại đúng nguồn gần nhất (file hoặc máy). Không có nguồn / đang có kỳ mở dở → ok:false. */

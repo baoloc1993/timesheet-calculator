@@ -350,7 +350,7 @@ body {
   min-height: 0;
 }
 
-/* ---- C15 — bảng chọn "Hiển thị" (vòng 4) ---- */
+/* ---- C15 — bảng chọn "Hiển thị" ---- */
 .popwrap {
   position: relative;
 }
@@ -481,7 +481,7 @@ nav.rail .badge {
   color: var(--color-on-primary);
 }
 
-/* ---- Vùng nội dung + đầu trang dính (vòng 4, AC-1) ---- */
+/* ---- Vùng nội dung + đầu trang dính ---- */
 .content {
   flex: 1;
   min-width: 0;
@@ -868,7 +868,7 @@ tr.rest td {
 .empty .btn {
   margin: var(--space-xs);
 }
-/* Khối lỗi (C16 mức err) — giữ class .errorbox nguyên vẹn (dogfood dò `.errorbox`). */
+/* Khối lỗi (C16 mức err) — giữ class .errorbox nguyên vẹn. */
 .errorbox {
   display: flex;
   gap: var(--space-md);
@@ -967,7 +967,7 @@ tr.rest td {
   background: var(--color-surface);
   color: var(--color-text);
 }
-/* Vòng 7 — 4 ô "Mốc hiện tại" (vào1·ra1·vào2·ra2) gộp chung một ô bảng ở S8 (trước là 4
+/* 4 ô "Mốc hiện tại" (vào1·ra1·vào2·ra2) gộp chung một ô bảng ở S8 (trước là 4
    cột riêng ở S3). Dùng token khoảng cách sẵn có, không token mới. */
 td > .inline-input {
   margin-right: var(--space-xs);
@@ -999,7 +999,7 @@ td > .inline-input:nth-last-child(-n + 2) {
   border-color: var(--color-primary);
 }
 
-/* ---- Nav-rail: nhóm + submục (vòng 3) ---- */
+/* ---- Nav-rail: nhóm + submục ---- */
 .rail-group {
   margin: var(--space-md) 0 var(--space-xs);
 }
@@ -1209,7 +1209,7 @@ td.tiennhan.am {
   border-color: var(--color-danger-line);
 }
 
-/* ---- C17 — lưới công cả tháng (S11, vòng 6) ---- */
+/* ---- C17 — lưới công cả tháng ---- */
 .gridwrap {
   overflow: auto;
   max-height: calc(100vh - 320px);
@@ -1425,7 +1425,7 @@ td.lgk {
   color: var(--color-text-muted);
 }
 
-/* ---- C18 — phát lương một việc một màn (S12, vòng 6) ---- */
+/* ---- C18 — phát lương một việc một màn ---- */
 .pay1 {
   max-width: 52rem;
   margin: 0 auto;
@@ -1764,7 +1764,7 @@ td.lgk {
   color: var(--color-text-muted);
 }
 
-/* ---- C19 — phiếu lương in (S13, vòng 6) — tách hẳn khỏi .printsheet (C14, S10) ---- */
+/* ---- C19 — phiếu lương in — tách hẳn khỏi .printsheet (C14, S10) ---- */
 .sheetbar {
   display: flex;
   flex-wrap: wrap;
@@ -2000,7 +2000,7 @@ td.lgk {
   }
 }
 
-/* ===== Vòng 10 — theme Microsoft To Do (DESIGN-SYSTEM.md C3 · C7 · C20) ===== */
+/* ===== — theme Microsoft To Do (DESIGN-SYSTEM.md C3 · C7 · C20) ===== */
 
 /* C20 — tiêu đề màn: to, đậm 600, màu nhấn như tên danh sách của To Do. Chữ trong h1 giữ
    nguyên (dogfood dò h1:has-text). Đầu trang nền trùng --color-bg, bỏ kẻ dưới. */

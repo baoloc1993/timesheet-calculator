@@ -48,7 +48,7 @@ type NguonKy =
 interface KyHienTai {
   nguon: NguonKy
   ky: KetQuaKyCong
-  /** Các dòng người dùng đã sửa tay ở S3 — phát lại sau khi dựng lại kỳ (BH vòng 2). */
+  /** Các dòng người dùng đã sửa tay ở S3 — phát lại sau khi dựng lại kỳ. */
   suaTay: SuaTay[]
 }
 
@@ -58,7 +58,7 @@ function win(): BrowserWindow | null {
   return BrowserWindow.getFocusedWindow() || BrowserWindow.getAllWindows()[0] || null
 }
 
-// Test seam (dogfood/e2e): Playwright không bấm được dialog OS gốc. Khi biến
+// Test seam: Playwright không bấm được dialog OS gốc. Khi biến
 // TSC_TEST_* được đặt, handler dùng luôn đường dẫn đó thay vì mở dialog.
 // KHÔNG ảnh hưởng bản build phát hành (biến không bao giờ được đặt ở đó).
 function duongDanTest(bien: string): string | null {
@@ -69,7 +69,7 @@ function duongDanTest(bien: string): string | null {
   return v && existsSync(v) ? v : null
 }
 
-// Test seam cho "Đồng bộ từ máy" (vòng 5) — dogfood/e2e không có máy ZKTeco-compatible thật.
+// Test seam cho "Đồng bộ từ máy" — e2e/e2e không có máy ZKTeco-compatible thật.
 // TSC_TEST_MOC_CHAM_JSON trỏ tới file JSON [{userId, timestamp}] thay cho dongBoTuMay();
 // TSC_TEST_MAY_LOI ép nhánh lỗi kết nối. Cùng guard app.isPackaged như duongDanTest ở trên.
 function mocChamThoTest(): MocChamTho[] | null {
@@ -88,7 +88,7 @@ function loi(e: unknown) {
   if (e instanceof LoiDocFileMay) return { ok: false, loi: e.message, maLoi: e.ma }
   const raw = (e as Error)?.message || ''
   log.error('IPC', raw || 'lỗi không xác định', (e as Error)?.stack || '')
-  // Map lỗi Node thô sang câu tiếng Việt nói được phải làm gì (CONVENTIONS §5) —
+  // Map lỗi Node thô sang câu tiếng Việt nói được phải làm gì (CONVENTIONS §5)
   // không đẩy đường dẫn nội bộ / message hệ thống ra UI.
   let than = 'Có lỗi khi xử lý. Thử lại; nếu vẫn lỗi, gửi file log qua nút "Góp ý / báo lỗi".'
   if (/EBUSY|EPERM|resource busy|being used by another process/i.test(raw))
@@ -165,8 +165,8 @@ export function dangKyIpc(): void {
   ipcMain.handle('nhan-vien:xoa', async (_e, p: { id: string; xacNhan?: boolean }) => {
     const nv = layNhanVien().find((n) => n.id === p.id)
     if (!nv) return { ok: false, loi: 'Không tìm thấy nhân viên.' }
-    // Cảnh báo nếu người này đang có trong kỳ vừa nạp —
-    // và luôn đòi xác nhận (xoá cứng, mất ngưỡng + đơn giá đã khai — BH-3).
+    // Cảnh báo nếu người này đang có trong kỳ vừa nạp
+    // và luôn đòi xác nhận.
     const trongKy = kyHienTai?.ky.tongHop.some((t) => t.maNhanVien === nv.maNhanVien)
     if (!p.xacNhan) {
       return {
@@ -225,8 +225,8 @@ export function dangKyIpc(): void {
     }
   })
 
-  // Vòng 9 — payload là union: sửa giờ (`cap`, có từ vòng 1) HOẶC sửa thẳng "Ngày công"
-  // (`r`, AC-2 vòng 9). Discriminate bằng khoá `r` — renderer chỉ bao giờ gửi đúng một
+  // payload là union: sửa giờ HOẶC sửa thẳng "Ngày công"
+  //. Discriminate bằng khoá `r` — renderer chỉ bao giờ gửi đúng một
   // trong hai (S8: ô giờ onBlur → cap; select "Ngày công" onChange → r), không có ca
   // "gửi cả hai"/"gửi không cái nào" vì kiểu TypeScript ở preload/api-types.ts đã chặn.
   ipcMain.handle(
@@ -249,7 +249,7 @@ export function dangKyIpc(): void {
         // Validate ở tầng main — TypeScript chỉ chặn compile-time (renderer luôn gửi đúng
         // 0/0.5/1 từ <select>), nhưng window.api gọi được trực tiếp qua DevTools console,
         // bỏ qua type-check. Giá trị lạ chảy thẳng vào thanhTien mà không lỗi là sai lương
-        // im lặng — nặng nhất với app này (code review pha P1 vòng 9).
+        // im lặng — nặng nhất với app này.
         if (p.r !== 0 && p.r !== 0.5 && p.r !== 1)
           return { ok: false, loi: 'Ngày công phải là 0, 0.5 hoặc 1.' }
         dongMoi = suaNgayCongTrucTiep(th.ketQuaNgay[idx], p.r)
@@ -270,7 +270,7 @@ export function dangKyIpc(): void {
       const thMoi = tinhLaiTongHop(th, th.ketQuaNgay)
       Object.assign(th, thMoi)
       capNhatTongKy()
-      // Ghi lại để phát lại sau khi dựng lại kỳ (Setup đổi) — không mất chỉnh tay (BH vòng 2).
+      // Ghi lại để phát lại sau khi dựng lại kỳ (Setup đổi) — không mất chỉnh tay.
       kyHienTai.suaTay = kyHienTai.suaTay.filter(
         (s) => !(s.maNhanVien === p.maNhanVien && s.ngay === p.ngay)
       )
@@ -320,9 +320,9 @@ export function dangKyIpc(): void {
         if (trung.length) return { ok: false, canXacNhanGhiDe: trung }
       }
 
-      // Vòng 6 (AC-5) — 5 khoản phát lương chỉ tồn tại trên kỳ ĐÃ lưu (nhập ở S10); kỳ đang
+      // 5 khoản phát lương chỉ tồn tại trên kỳ ĐÃ lưu (nhập ở S10); kỳ đang
       // xuất chưa từng "Lưu kỳ này" → không có, giữ nguyên bộ ô trống trong mẫu (challenge
-      // pha I 2026-09-05 log).
+      // 2026-09-05 log).
       const kqDaLuu = layMotKy(kyHienTai.ky.thang)
       const bl = await ghiBangLuong(
         fileMau,
@@ -346,7 +346,7 @@ export function dangKyIpc(): void {
             ? await ghiChiTietDaLamSach(kyHienTai.nguon.duongDan, pCT, kyHienTai.ky.tongHop)
             : await ghiChiTietTuMocCham(pCT, kyHienTai.ky.tongHop)
       } catch (e) {
-        // Bảng lương đã ghi xong, file chi tiết lỗi → nói rõ trạng thái từng file (BH-12).
+        // Bảng lương đã ghi xong, file chi tiết lỗi → nói rõ trạng thái từng file.
         const r = loi(e)
         return { ...r, loi: `Đã ghi xong "${ten.bangLuong}". Nhưng "${ten.chiTiet}": ${r.loi} Bấm Xuất lại để ghi nốt file chi tiết.` }
       }
@@ -387,7 +387,7 @@ export function dangKyIpc(): void {
     shell.openPath(duongDan)
   })
 
-  // Mốc "đã mở màn Xem công" — tín hiệu hỗ trợ cho success metric vòng 2.
+  // Mốc "đã mở màn Xem công" — tín hiệu hỗ trợ cho success metric.
   // KHÔNG suy trực tiếp "không mở Excel" từ đây: người dùng vẫn xuất file mỗi kỳ để gửi đi
   // (S6 là đường phụ, không bỏ), nên `xuat-hoan-tat` bắn mỗi kỳ. Metric thật đo bằng
   // người dùng tự báo; event này chỉ cho
@@ -401,14 +401,14 @@ export function dangKyIpc(): void {
     })
   })
 
-  // Kênh phản hồi trong sản phẩm. Địa chỉ cố định ở main —
+  // Kênh phản hồi trong sản phẩm. Địa chỉ cố định ở main
   // renderer không truyền URL vào (tránh mở link tuỳ ý).
   ipcMain.handle('mo-gop-y', () => {
     const tieuDe = encodeURIComponent('Góp ý / báo lỗi — Timesheet Calculator')
     shell.openExternal(`mailto:feedback@example.com?subject=${tieuDe}`)
   })
 
-  // ---- Vòng 4 — thiết lập Hiển thị (cỡ chữ/độ cao hàng/nền/tương phản) ----
+  // ---- thiết lập Hiển thị (cỡ chữ/độ cao hàng/nền/tương phản) ----
   ipcMain.handle('hien-thi:doc', () => layHienThi())
   ipcMain.handle('hien-thi:cap-nhat', (_e, patch: Partial<HienThi>) => {
     try {
@@ -419,7 +419,7 @@ export function dangKyIpc(): void {
     }
   })
 
-  // ---- Vòng 5 — kết nối máy chấm công vân tay (LAN) ----
+  // ---- kết nối máy chấm công vân tay (LAN) ----
   ipcMain.handle('may-cham-cong:doc-cau-hinh', () => layCauHinhMay())
   ipcMain.handle('may-cham-cong:cap-nhat-cau-hinh', (_e, patch: Partial<CauHinhMayChamCong>) => {
     try {
@@ -439,7 +439,7 @@ export function dangKyIpc(): void {
         if (!ipHopLe(ip))
           return { ok: false, loi: 'Địa chỉ IP không đúng dạng (ví dụ: 192.0.2.201).' }
         if (!congHopLe(port)) return { ok: false, loi: 'Cổng phải là số từ 1 đến 65535.' }
-        // Lưu cấu hình NGAY, kể cả khi kết nối bên dưới thất bại — IP/cổng đã gõ không mất (AC-3).
+        // Lưu cấu hình NGAY, kể cả khi kết nối bên dưới thất bại — IP/cổng đã gõ không mất.
         ghiCauHinhMay({ ip, port })
 
         let logTho = mocChamThoTest()
@@ -478,7 +478,7 @@ export function dangKyIpc(): void {
     }
   )
 
-  // ---- Vòng 7 — tự động nạp/đồng bộ nguồn gần nhất khi mở app (AC-1) ----
+  // ---- tự động nạp/đồng bộ nguồn gần nhất khi mở app ----
   ipcMain.handle('nguon-gan-nhat:doc', () => layNguonGanNhat())
 
   ipcMain.handle('nguon-gan-nhat:tu-dong-nap', async () => {
@@ -499,10 +499,10 @@ export function dangKyIpc(): void {
         // Đọc file/mạng là bất đồng bộ — trong lúc chờ, người dùng có thể đã tự tay nạp
         // kỳ khác qua S1 (thấy Dashboard vẫn dùng được, không biết auto-nap đang chạy nền).
         // Re-check TRƯỚC khi ghi đè: kỳ tay luôn thắng, không để auto-nap đè lên sau
-        // (soi bug pha P vòng 7 — TOCTOU, cùng nguyên tắc "an toàn dữ liệu thắng tiện lợi").
+        //.
         if (kyHienTai) return { ok: false, loi: 'Đã có kỳ khác được nạp trong lúc chờ.' }
         const ky = xuLyKyCong(file, layNhanVien())
-        // Vòng 8 — tái áp dụng sửa tay đã lưu từ phiên trước (persist trong `KetQuaKy.suaTay`,
+        // tái áp dụng sửa tay đã lưu từ phiên trước (persist trong `KetQuaKy.suaTay`,
         // phiên cũ đã đóng nên không còn gì ở bộ nhớ tiến trình để đọc như `lamMoiKyHienTai`).
         const suaTayCu = layMotKy(file.thang)?.suaTay ?? []
         const conHieuLuc = apDungSuaTay(ky, suaTayCu)
@@ -526,7 +526,7 @@ export function dangKyIpc(): void {
       if (kyHienTai) return { ok: false, loi: 'Đã có kỳ khác được nạp trong lúc chờ.' }
       // canhBao (mốc dư bị bỏ, v.v.) không được nuốt im lặng — nhánh nạp tay (may-cham-cong:dong-bo)
       // đã trả cho renderer hỏi xác nhận; nhánh tự động không thể hỏi (không chặn UI
-      // §7 bước 0), nhưng vẫn phải trả về để renderer hiện banner thông tin (soi bug pha P vòng 7).
+      // §7 bước 0), nhưng vẫn phải trả về để renderer hiện banner thông tin.
       const { file, canhBao } = gomMocCham(logTho, tu, den)
       const ky = xuLyKyCong(file, layNhanVien())
       const suaTayCu = layMotKy(file.thang)?.suaTay ?? []
@@ -551,13 +551,13 @@ export function dangKyIpc(): void {
     }
   })
 
-  // ---- Vòng 3 — dashboard + phát lương (vòng 8: hết "Lưu kỳ này", auto-lưu qua luuTuDong()) ----
+  // ---- dashboard + phát lương (hết "Lưu kỳ này", auto-lưu qua luuTuDong()) ----
 
   ipcMain.handle('ky-luu:danh-sach', () => layDanhSachKy())
 
   ipcMain.handle('ky-luu:doc', (_e, thang: string) => {
     const kq = layMotKy(thang)
-    // Mốc "tra cứu kỳ đã lưu trong app" — tín hiệu hỗ trợ cho success metric vòng 3
+    // Mốc "tra cứu kỳ đã lưu trong app" — tín hiệu hỗ trợ cho success metric
     //. Metric thật đo
     // bằng người dùng tự báo; event này chỉ cho thấy màn Phát lương CÓ được dùng.
     if (kq) log.event('doc-ky-da-luu', { thang })
@@ -569,7 +569,7 @@ export function dangKyIpc(): void {
     log.event('in-danh-sach-phat-luong', { thang: p?.thang, soNguoi: p?.soNguoi })
   })
 
-  // Cập nhật khấu trừ / đã-trả / 4 khoản phát lương (vòng 6) một nhân viên trong một kỳ đã lưu.
+  // Cập nhật khấu trừ / đã-trả / 4 khoản phát lương một nhân viên trong một kỳ đã lưu.
   ipcMain.handle(
     'ky-luu:cap-nhat-phat-luong',
     (
@@ -613,7 +613,7 @@ export function dangKyIpc(): void {
       if (p.daTra !== undefined) {
         kq.daTra = { ...kq.daTra, [p.maNhanVien]: !!p.daTra }
       }
-      // Vòng 6 — 4 khoản mới, cùng luật validate ≥ 0.
+      // 4 khoản mới, cùng luật validate ≥ 0.
       const KHOAN_MOI = [
         ['chuyenCan', 'Chuyên cần'],
         ['buLuong', 'Bù lương'],
@@ -634,10 +634,10 @@ export function dangKyIpc(): void {
 }
 
 /**
- * Vòng 8 — ghi kỳ đang mở (`kyHienTai`) vào lịch sử NGAY, mỗi khi tính (nạp file/đồng bộ/tự
- * động nạp) hoặc sửa tay. Thay cho nút "Lưu kỳ này" (vòng 3–7) — người dùng chốt bỏ hẳn qua
+ * ghi kỳ đang mở (`kyHienTai`) vào lịch sử NGAY, mỗi khi tính (nạp file/đồng bộ/tự
+ * động nạp) hoặc sửa tay. Thay cho nút "Lưu kỳ này" — người dùng chốt bỏ hẳn qua
  * chat 2026-09-07. Đóng băng đơn giá
- * (vòng 6) vẫn đúng — chỉ đổi THỜI ĐIỂM kích hoạt sang lúc tính/sửa thay vì lúc bấm lưu.
+ * vẫn đúng — chỉ đổi THỜI ĐIỂM kích hoạt sang lúc tính/sửa thay vì lúc bấm lưu.
  * Không hỏi xác nhận ghi đè: `mergePhatLuongCu` đã giữ khauTru/daTra/4 khoản cho mã còn khớp,
  * số công/OT/thành tiền được thay bằng số vừa tính là đúng ý "nạp lại" (không phải mất mát).
  */
@@ -657,17 +657,17 @@ function luuTuDong(): KetQuaKy | null {
 
 /**
  * Phát lại các chỗ đã sửa tay lên một `KetQuaKyCong` vừa dựng lại từ nguồn thô (khớp
- * maNhanVien + ngay). Bỏ entry nào không còn khớp (nhân viên bị xoá / ngày không còn) —
+ * maNhanVien + ngay). Bỏ entry nào không còn khớp (nhân viên bị xoá / ngày không còn)
  * không ném. Dùng chung cho `lamMoiKyHienTai` (Setup đổi, suaTay lấy từ bộ nhớ phiên) và
- * `nguon-gan-nhat:tu-dong-nap` (vòng 8: suaTay lấy từ đĩa, phiên trước đã đóng).
+ * `nguon-gan-nhat:tu-dong-nap`.
  */
-/** Shape của `SuaTay` trên đĩa TRƯỚC vòng 9 — không có `loai` (chỉ loại "sửa giờ" từng tồn tại). */
+/** Shape của `SuaTay` trên đĩa TRƯỚC — không có `loai` (chỉ loại "sửa giờ" từng tồn tại). */
 type SuaTayCu = { maNhanVien: string; ngay: string; cap: { vao: string | null; ra: string | null }[] }
 
 function apDungSuaTay(ky: KetQuaKyCong, suaTay: SuaTay[]): SuaTay[] {
   const conHieuLuc: SuaTay[] = []
   for (const s0 of suaTay) {
-    // Vòng 9: bản ghi trên đĩa TỪ TRƯỚC vòng 9 không có `loai` — coi như 'gio', không
+    // bản ghi trên đĩa TỪ TRƯỚC không có `loai` — coi như 'gio', không
     // migrate dữ liệu.
     const s: SuaTay = 'loai' in s0 ? s0 : { ...(s0 as SuaTayCu), loai: 'gio' }
     const th = ky.tongHop.find((t) => t.maNhanVien === s.maNhanVien)
@@ -686,7 +686,7 @@ function apDungSuaTay(ky: KetQuaKyCong, suaTay: SuaTay[]): SuaTay[] {
 }
 
 /**
- * Sau khi Setup đổi → tính lại kỳ đang mở (nếu có) để AC-6 phản ánh ngay.
+ * Sau khi Setup đổi → tính lại kỳ đang mở (nếu có) để phản ánh ngay.
  * Đọc lại file máy thất bại (file bị di chuyển/khoá) → KHÔNG nuốt lỗi: trả cảnh báo
  * để renderer báo người dùng nạp lại, thay vì hành động trên kỳ cũ.
  */

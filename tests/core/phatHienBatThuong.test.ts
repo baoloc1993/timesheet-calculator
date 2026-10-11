@@ -33,7 +33,7 @@ describe('phát hiện + tự sửa dòng bất thường', () => {
   })
 
   it('một cặp PHỦ TRƯA (vào sáng, ra chiều) → cả ngày công, 0 OT, không cảnh báo', () => {
-    // người dùng 2026-09-01 (back-test pha E): quên chấm trưa nhưng có mặt cả ngày → R=1, S=0.
+    // người dùng 2026-09-01: quên chấm trưa nhưng có mặt cả ngày → R=1, S=0.
     const r = tinhKetQuaNhanVien([dong('2026-08-10', ['06:00', '22:30'])], 8.1)
     expect(r[0].ngayCongR).toBe(1)
     expect(r[0].gioOtS).toBe(0)
@@ -138,7 +138,7 @@ describe('phát hiện + tự sửa dòng bất thường', () => {
   })
 })
 
-// Vòng 10 pha E — phản hồi dùng thật 2026-09-30 (người dùng, kỳ 09/2026): ngày 3 mốc bị đoán sai
+// phản hồi dùng thật 2026-09-30 (người dùng, kỳ 09/2026): ngày 3 mốc bị đoán sai
 // khe thiếu (luật cũ "khoảng hở dài nhất = nghỉ trưa") + điền mốc lấy nhầm giờ ra chiều của ngày
 // chỉ một cặp. Ngày kề đủ 4 mốc để giờ quen/điền có căn cứ.
 describe('vòng 10 pha E — ngày 3 mốc đoán đúng khe thiếu theo giờ quen', () => {

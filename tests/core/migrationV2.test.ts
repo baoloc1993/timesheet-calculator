@@ -1,4 +1,4 @@
-// Vòng 3 — migration config.json v1 ↔ v2. BACKWARD-COMPATIBILITY §2: migration nào cũng
+// migration config.json v1 ↔ v2. BACKWARD-COMPATIBILITY §2: migration nào cũng
 // phải có đường xuống; round-trip up→down→up phải giữ NhanVien + AppConfig nguyên vẹn.
 import { describe, it, expect } from 'vitest'
 import { chayMigration, SCHEMA_VERSION_HIEN_TAI } from '../../src/main/settings/migrations'

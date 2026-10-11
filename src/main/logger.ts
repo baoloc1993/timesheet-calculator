@@ -62,7 +62,7 @@ export const log = {
   },
   /**
    * Event của luồng lõi — thay cho analytics từ xa (app offline, một người dùng,
-   * dữ liệu không rời máy —). Đủ để pha E đối chiếu số kỳ đã xử lý
+   * dữ liệu không rời máy —). Đủ để đối chiếu số kỳ đã xử lý
    * với sổ. Tên event: `nap-file-may`, `xuat-hoan-tat`,
    * `xuat-that-bai`, `khai-nhan-vien-thieu`.
    */
