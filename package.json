@@ -3,8 +3,8 @@
   "version": "0.11.6",
   "description": "Timesheet calculator for ZKTeco attendance machines",
   "main": "./out/main/index.js",
-  "author": "Bao Loc <baoloc1993@gmail.com>",
-  "license": "UNLICENSED",
+  "author": "baoloc1993",
+  "license": "MIT",
   "private": true,
   "type": "module",
   "scripts": {
