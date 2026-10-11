@@ -1,7 +1,4 @@
-# Secret — không bao giờ commit
-# `.env.*` bắt mọi biến thể (.env.local, .env.production, .env.staging...).
-# Chỉ deployment/.env.example được commit — nó chỉ có TÊN biến, không có giá trị thật.
-# Mẫu không có dấu / nên khớp ở MỌI cấp: deployment/local/.env cũng bị chặn.
+# Secrets
 .env
 .env.*
 !deployment/.env.example
@@ -10,69 +7,31 @@
 
 # OS
 .DS_Store
-**/.DS_Store
 Thumbs.db
 Desktop.ini
 
-# Node
+# Node / build output
 node_modules/
-.next/
-.turbo/
 dist/
 build/
 out/
 *.tsbuildinfo
 npm-debug.log*
-yarn-error.log*
-
-# Python
-__pycache__/
-*.pyc
-.venv/
-venv/
-.pytest_cache/
-.ruff_cache/
-
-# Go — chỉ bin/ ở GỐC repo (neo bằng "/"); stack khác cần commit thư mục bin/ thì xoá dòng này
-/bin/
-*.test
-
-# Java
-target/
-*.class
 
 # Test / coverage
 coverage/
-.nyc_output/
-playwright-report/
 test-results/
-
-# Dogfood — Playwright MCP ghi snapshot/ảnh vào đây mỗi lần duyệt
-.playwright-mcp/
-
-
-# Dữ liệu thật của công ty dùng để dogfood — không commit (chép tay từ your data folder)
-deployment/local/mau/
-deployment/local/out/
-deployment/local/dogfood-shots/
-deployment/local/video/
-# Import Setup thật cho máy người dùng (tên + đơn giá 15 nhân viên) — không commit
-deployment/local/config-import-15.json
-deployment/local/nhan-vien-full-15.json
-deployment/local/ketquaky-seed.json
-
-# Mẫu bảng lương nhúng — sinh từ mẫu công ty (gitignored) lúc build, chứa tên + đơn giá thật.
-resources/mau-bang-luong.xlsx
-
-# Local database
-*.sqlite
-*.sqlite3
-*.db
+playwright-report/
 
 # Editor
 .idea/
 *.swp
 .vscode/*
 !.vscode/extensions.json
-# Bản chép config.json từ PC văn phòng (dữ liệu lương thật) để thử ở máy dev — không commit
+
+# Local-only data (real attendance exports, payroll copies, config copies)
+deployment/local/mau/
+deployment/local/out/
 deployment/local/prod/
+deployment/local/*-import-*.json
+deployment/local/ketquaky-seed.json

@@ -1,4 +1,4 @@
-// `make doctor` — kiểm môi trường chạy Timesheet Calculator.
+// `npm run doctor` — kiểm môi trường chạy Timesheet Calculator.
 import { existsSync, accessSync, constants, mkdirSync } from 'fs'
 import { join } from 'path'
 import { homedir, platform } from 'os'
@@ -46,9 +46,11 @@ try {
   no(`không ghi được thư mục cấu hình: ${cfgDir}`)
 }
 
-// file mẫu dogfood
+// file mẫu tuỳ chọn (xuất thật từ máy chấm công, không nằm trong repo) — chỉ báo, không coi là lỗi
 const mau = join(process.cwd(), 'deployment', 'local', 'mau')
-existsSync(mau) ? ok(`có file mẫu dogfood: ${mau}`) : no(`thiếu ${mau} (chép từ D:\\Bang luong)`)
+existsSync(mau)
+  ? ok(`có file mẫu cục bộ: ${mau}`)
+  : console.log(`  · không có ${mau} — các test dùng file thật sẽ tự bỏ qua`)
 
 console.log(loi === 0 ? '\nTất cả OK.\n' : `\n${loi} vấn đề cần xử.\n`)
 process.exit(loi === 0 ? 0 : 1)
