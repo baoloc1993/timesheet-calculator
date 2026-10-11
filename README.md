@@ -1,6 +1,5 @@
 # Timesheet Calculator
 
-[![check](https://github.com/baoloc1993/timesheet-calculator/actions/workflows/check.yml/badge.svg)](https://github.com/baoloc1993/timesheet-calculator/actions/workflows/check.yml)
 ![license](https://img.shields.io/badge/license-MIT-blue.svg)
 
 A Windows desktop app that turns raw fingerprint-machine punches into hours, overtime and pay. It reads attendance data from a ZKTeco-compatible time clock (over the LAN) or from an exported Excel file, repairs the usual human mistakes (forgotten punches, shifts that cross midnight), computes working days and overtime per employee, writes the result into an Excel payroll sheet, and prints payslips.
