@@ -569,7 +569,7 @@ nav.rail .badge {
   margin-top: var(--space-sm);
   line-height: var(--leading);
 }
-/* Cảnh báo dạng câu (C16 mức warn) — banner nhẹ inline, không đổi class/markup hiện có
+/* Cảnh báo dạng câu (warn level) — banner nhẹ inline, không đổi class/markup hiện có
    (dogfood dò `.note:has-text(...)`) — chỉ khi có role="status" mới lên khuôn banner. */
 .note[role="status"] {
   display: flex;
@@ -866,7 +866,7 @@ tr.rest td {
 .empty .btn {
   margin: var(--space-xs);
 }
-/* Khối lỗi (C16 mức err) — giữ class .errorbox nguyên vẹn. */
+/* Khối lỗi (error level) — giữ class .errorbox nguyên vẹn. */
 .errorbox {
   display: flex;
   gap: var(--space-md);
@@ -1368,7 +1368,7 @@ table.month.dim .cellbtn.hi {
   box-shadow: inset 0 0 0 3px var(--color-primary);
 }
 
-/* bảng nghĩa ký hiệu (C17) */
+/* bảng nghĩa ký hiệu */
 table.lgtable tbody tr:hover > td {
   background: var(--color-primary-soft);
 }
@@ -1762,7 +1762,7 @@ td.lgk {
   color: var(--color-text-muted);
 }
 
-/* ---- C19 — phiếu lương in — tách hẳn khỏi .printsheet (C14, S10) ---- */
+/* ---- C19 — phiếu lương in — tách hẳn khỏi .printsheet ---- */
 .sheetbar {
   display: flex;
   flex-wrap: wrap;

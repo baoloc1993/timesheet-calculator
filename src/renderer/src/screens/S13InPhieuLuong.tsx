@@ -244,7 +244,7 @@ export function S13InPhieuLuong() {
         )}
       </div>
 
-      {/* Bản in phiếu (C19) — tách khỏi .printsheet (C14, S10) bằng class riêng, không đè khổ giấy. */}
+      {/* Bản in phiếu — tách khỏi .printsheet bằng class riêng, không đè khổ giấy. */}
       <div className="phieusheet" aria-hidden="true">
         {to.map((ba, i) => (
           <div className="sheet" key={i}>

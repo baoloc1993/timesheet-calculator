@@ -414,7 +414,7 @@ export function S10PhatLuong() {
         </p>
       </div>
 
-      {/* Bản in (C14) — CSS @media print chỉ chừa vùng này */}
+      {/* Bản in — CSS @media print chỉ chừa vùng này */}
       <div className="printsheet" aria-hidden="true">
         <h2>DANH SÁCH PHÁT LƯƠNG — kỳ {kq.thang}</h2>
         <p>
